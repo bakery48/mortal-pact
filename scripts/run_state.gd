@@ -16,6 +16,9 @@ const SCENE_REWARD := "res://scenes/ui/reward.tscn"
 const SCENE_SHOP := "res://scenes/ui/shop.tscn"
 const SCENE_RESULT := "res://scenes/ui/result.tscn"
 
+const SAVE_PATH := "user://savegame.json"
+const SAVE_VERSION := 1
+
 enum NodeType { BATTLE_ZAKO, BATTLE_ELITE, BATTLE_BOSS, REST_SHOP }
 
 var deck: Array[MonsterData] = []
@@ -30,7 +33,11 @@ var current_encounter := {}    # 戦闘シーンへ渡す敵パラメータ
 var last_result := ""          # "clear" / "lose"
 
 func _ready() -> void:
-	if deck.is_empty():
+	# セーブがあれば自動的に続きから、無ければ新しいランを開始。
+	if has_save():
+		if not load_game():
+			start_new_run()
+	elif deck.is_empty():
 		start_new_run()
 
 # --- ランの初期化 -----------------------------------------------------------
@@ -149,3 +156,65 @@ func rest_heal() -> int:
 	var before := player_hp
 	player_hp = mini(player_max_hp, player_hp + amount)
 	return player_hp - before
+
+# --- セーブ / ロード ---------------------------------------------------------
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+## 現在のラン状態を user:// に JSON で保存する（ノード間の安全な地点で呼ぶ）。
+func save_game() -> void:
+	var deck_data: Array = []
+	for m in deck:
+		deck_data.append(m.to_dict())
+	var data := {
+		"version": SAVE_VERSION,
+		"player_max_hp": player_max_hp,
+		"player_hp": player_hp,
+		"gold": gold,
+		"current_floor": current_floor,
+		"current_index": current_index,
+		"map_nodes": map_nodes,
+		"deck": deck_data,
+	}
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "\t"))
+		file.close()
+
+## セーブを読み込んで状態を復元する。成功で true。
+func load_game() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file == null:
+		return false
+	var text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return false
+	var data: Dictionary = parsed
+
+	player_max_hp = int(data.get("player_max_hp", STARTING_HP))
+	player_hp = int(data.get("player_hp", STARTING_HP))
+	gold = int(data.get("gold", STARTING_GOLD))
+	current_floor = int(data.get("current_floor", 1))
+	current_index = int(data.get("current_index", 0))
+
+	var loaded: Array[MonsterData] = []
+	for md in data.get("deck", []):
+		loaded.append(MonsterData.from_dict(md))
+	deck.assign(loaded)
+
+	# マップは保存された配列をそのまま使う（数値は利用側で int() 変換済み）。
+	map_nodes = data.get("map_nodes", [])
+	if map_nodes.is_empty():
+		_build_map()
+	# 念のため進行ポインタを範囲内に収める。
+	current_index = clampi(current_index, 0, map_nodes.size())
+	return true
+
+func delete_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)

@@ -4,6 +4,8 @@ extends Control
 ## 現在地のノードに進入できる。状態は autoload の Run が保持する。
 
 func _ready() -> void:
+	# マップはノード間の安全な地点なので、ここで自動セーブする。
+	Run.save_game()
 	_build_ui()
 	Audio.play_bgm("res://assets/audio/bgm_map.ogg")
 
@@ -41,6 +43,17 @@ func _build_ui() -> void:
 
 	for i in range(Run.map_nodes.size()):
 		vbox.add_child(_make_node_row(i, Run.map_nodes[i]))
+
+	vbox.add_child(HSeparator.new())
+
+	var restart := Button.new()
+	restart.text = "最初からやり直す（進行を消去）"
+	restart.pressed.connect(_on_restart)
+	vbox.add_child(restart)
+
+func _on_restart() -> void:
+	Run.delete_save()
+	Run.restart_run()
 
 func _make_node_row(index: int, node: Dictionary) -> Control:
 	var row := HBoxContainer.new()

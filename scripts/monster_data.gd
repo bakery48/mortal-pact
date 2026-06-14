@@ -116,6 +116,45 @@ func element_label() -> String:
 		parts.append(String(ELEMENT_LABEL[e]))
 	return "/".join(parts)
 
+# --- セーブ/ロード用シリアライズ -------------------------------------------
+
+func to_dict() -> Dictionary:
+	var cmds: Array = []
+	for c in commands:
+		cmds.append(c.to_dict())
+	return {
+		"monster_name": monster_name,
+		"attack": attack,
+		"defense": defense,
+		"stage": int(stage),
+		"exp": exp,
+		"growth_speed": growth_speed,
+		"elements": elements.duplicate(),
+		"rarity": int(rarity),
+		"commands": cmds,
+	}
+
+static func from_dict(d: Dictionary) -> MonsterData:
+	var m := MonsterData.new()
+	m.monster_name = String(d.get("monster_name", "魔物"))
+	m.attack = int(d.get("attack", 10))
+	m.defense = int(d.get("defense", 5))
+	m.stage = int(d.get("stage", 0)) as Stage
+	m.exp = float(d.get("exp", 0.0))
+	m.growth_speed = float(d.get("growth_speed", 1.0))
+	var els: Array[int] = []
+	for e in d.get("elements", []):
+		els.append(int(e))
+	if els.is_empty():
+		els.append(Element.NONE)
+	m.elements = els
+	m.rarity = int(d.get("rarity", 0)) as Rarity
+	var cmds: Array[CommandData] = []
+	for cd in d.get("commands", []):
+		cmds.append(CommandData.from_dict(cd))
+	m.commands = cmds
+	return m
+
 ## 報酬・ショップ画面用の概要テキスト（基礎ステータスを表示）。
 func summary() -> String:
 	var text := "%s %s %s\n属性:%s  ATK:%d DEF:%d  成長:%.1f" % [

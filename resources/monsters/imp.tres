@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3 uid="uid://b0mortalpactimp"]
+
+[ext_resource type="Script" path="res://scripts/monster_data.gd" id="1_monster"]
+[ext_resource type="Script" path="res://scripts/command_data.gd" id="2_command"]
+
+[sub_resource type="Resource" id="cmd_scratch"]
+script = ExtResource("2_command")
+command_name = "引っかき"
+cost = 1
+effect = 0
+power = 8
+description = "敵に8ダメージ"
+
+[sub_resource type="Resource" id="cmd_taunt"]
+script = ExtResource("2_command")
+command_name = "挑発"
+cost = 1
+effect = 1
+power = 2
+description = "このターンの与ダメージ+2"
+
+[resource]
+script = ExtResource("1_monster")
+monster_name = "インプ"
+attack = 10
+defense = 5
+stage = "成体"
+exp = 0
+commands = [SubResource("cmd_scratch"), SubResource("cmd_taunt")]

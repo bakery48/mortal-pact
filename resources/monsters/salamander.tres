@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3 uid="uid://b0mortalpactsalamander"]
+
+[ext_resource type="Script" path="res://scripts/monster_data.gd" id="1_monster"]
+[ext_resource type="Script" path="res://scripts/command_data.gd" id="2_command"]
+
+[sub_resource type="Resource" id="cmd_fang"]
+script = ExtResource("2_command")
+command_name = "火炎の牙"
+cost = 1
+effect = 0
+power = 9
+description = "敵に9ダメージ"
+
+[sub_resource type="Resource" id="cmd_blaze"]
+script = ExtResource("2_command")
+command_name = "業火"
+cost = 2
+effect = 0
+power = 18
+description = "敵に18ダメージ"
+
+[resource]
+script = ExtResource("1_monster")
+monster_name = "サラマンダー"
+attack = 14
+defense = 4
+stage = "成体"
+exp = 0
+commands = [SubResource("cmd_fang"), SubResource("cmd_blaze")]

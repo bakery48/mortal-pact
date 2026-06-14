@@ -1,0 +1,23 @@
+; Engine configuration file.
+; Godot 4.x project for "Mortal Pact" (Phase 1: Core Combat)
+
+config_version=5
+
+[application]
+
+config/name="Mortal Pact"
+config/description="デッキ構築型ローグライト（フェーズ1：コア戦闘）"
+run/main_scene="res://scenes/battle/battle.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

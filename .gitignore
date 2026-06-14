@@ -1,0 +1,14 @@
+# Godot 4.x
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
+# Mono / .NET (未使用だが念のため)
+.mono/
+data_*/
+mono_crash.*.json
+
+# OS
+.DS_Store
+Thumbs.db

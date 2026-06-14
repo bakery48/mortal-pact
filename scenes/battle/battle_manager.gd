@@ -167,7 +167,7 @@ func _start_player_turn() -> void:
 	# プレイヤーの状態異常を処理（毒ダメージ・再生回復）。
 	var pt := player_status.tick_turn()
 	if pt.poison > 0:
-		player_hp = max(0, player_hp - int(pt.poison))
+		player_hp = maxi(0, player_hp - int(pt.poison))
 		_flash_message("毒で %d ダメージ" % int(pt.poison))
 	if pt.regen > 0:
 		player_hp = mini(player_max_hp, player_hp + int(pt.regen))
@@ -301,10 +301,10 @@ func _enemy_turn() -> void:
 			_flash_message("毒 %d を受けた" % enemy.intent_value)
 		elif dmg > 0:
 			# プレイヤーのブロックで軽減する。
-			var actual := max(0, dmg - player_block)
-			player_block = max(0, player_block - dmg)
+			var actual := maxi(0, dmg - player_block)
+			player_block = maxi(0, player_block - dmg)
 			if actual > 0:
-				player_hp = max(0, player_hp - actual)
+				player_hp = maxi(0, player_hp - actual)
 				Audio.play_se("hit")
 	_refresh()
 	if player_hp <= 0:

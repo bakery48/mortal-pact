@@ -220,7 +220,7 @@ func effective_cost(cmd: CommandData) -> int:
 	return clampi(cmd.cost + int(STAGE_COST_DELTA[stage]), 1, 99)
 
 func effective_power(cmd: CommandData) -> int:
-	return max(0, roundi(cmd.power * _mult()))
+	return maxi(0, roundi(cmd.power * _mult()))
 
 ## コマンドのステータス依存係数。負なら自動（コストが高い技ほど依存大）。
 func _stat_scale(cmd: CommandData) -> float:

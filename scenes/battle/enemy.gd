@@ -5,13 +5,14 @@ extends PanelContainer
 ## 行動パターン（pattern）を順に実行し、次の行動を「予告（intent）」として表示する。
 ## 行動種別：攻撃 / 防御（ブロック獲得）/ 強化（攻撃力上昇）/ 回復。
 
-enum Intent { ATTACK, DEFEND, BUFF, HEAL }
+enum Intent { ATTACK, DEFEND, BUFF, HEAL, POISON }
 
 const INTENT_ICON := {
 	Intent.ATTACK: "⚔",
 	Intent.DEFEND: "🛡",
 	Intent.BUFF: "💪",
 	Intent.HEAL: "✚",
+	Intent.POISON: "☠",
 }
 
 var enemy_name: String = "敵"
@@ -19,6 +20,7 @@ var max_hp: int = 60
 var hp: int = 60
 var block: int = 0
 var attack_bonus: int = 0
+var status := StatusSet.new()
 
 ## 行動パターン（Dictionary の配列）。各要素は {"type": Intent, "value": int}。
 var pattern: Array = []
@@ -113,7 +115,7 @@ func reset_block() -> void:
 	_update()
 
 func take_damage(amount: int) -> void:
-	var remaining := amount
+	var remaining := roundi(amount * status.damage_multiplier()) # 炎上中は被ダメ増加
 	if block > 0:
 		var absorbed := mini(block, remaining)
 		block -= absorbed
@@ -123,7 +125,20 @@ func take_damage(amount: int) -> void:
 
 ## ブロックを無視してダメージを与える（貫通攻撃）。
 func take_damage_pierce(amount: int) -> void:
+	hp = maxi(0, hp - roundi(amount * status.damage_multiplier()))
+	_update()
+
+## 毒など、ブロック・炎上補正を無視する固定ダメージ。
+func take_fixed(amount: int) -> void:
 	hp = maxi(0, hp - amount)
+	_update()
+
+func heal(amount: int) -> void:
+	hp = mini(max_hp, hp + amount)
+	_update()
+
+func add_status(s: int, amount: int) -> void:
+	status.add(s, amount)
 	_update()
 
 ## 攻撃力を下げる（弱体化）。予告中の攻撃にも即時反映する。
@@ -153,10 +168,15 @@ func _update() -> void:
 				_intent_label.text = "次の行動: %s 攻撃力+%d" % [icon, intent_value]
 			Intent.HEAL:
 				_intent_label.text = "次の行動: %s 回復 %d" % [icon, intent_value]
+			Intent.POISON:
+				_intent_label.text = "次の行動: %s 毒 %d を付与" % [icon, intent_value]
 	if _status_label != null:
 		var parts: Array[String] = []
 		if block > 0:
 			parts.append("🛡%d" % block)
 		if attack_bonus > 0:
 			parts.append("攻撃+%d" % attack_bonus)
+		var st := status.label()
+		if st != "":
+			parts.append(st)
 		_status_label.text = "  ".join(parts)

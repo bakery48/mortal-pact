@@ -227,6 +227,32 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("禁呪", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	]))
 
+	# --- 状態異常特化 ---
+	list.append(_monster("バジリスク", 11, 5, MonsterData.Element.DARK, 1.0, [
+		_cmd("猛毒の牙", 1, CommandData.Effect.POISON, 4, "敵に毒4を付与"),
+		_cmd("石化の眼", 2, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
+	]))
+	list.append(_monster("毒沼の主", 9, 9, MonsterData.Element.EARTH, 0.9, [
+		_cmd("汚泥", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
+		_cmd("飲み込む", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+	]))
+	list.append(_monster("イグニス", 13, 4, MonsterData.Element.FIRE, 1.1, [
+		_cmd("発火", 1, CommandData.Effect.BURN, 2, "敵を2ターン炎上"),
+		_cmd("火炎弾", 2, CommandData.Effect.DAMAGE, 15, "敵に15ダメージ"),
+	]))
+	list.append(_monster("フロストゴーレム", 8, 13, MonsterData.Element.ICE, 0.8, [
+		_cmd("絶対零度", 2, CommandData.Effect.FREEZE, 1, "敵を1回凍結"),
+		_cmd("氷塊", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+	]))
+	list.append(_monster("世界樹の苗", 5, 8, MonsterData.Element.LIGHT, 1.2, [
+		_cmd("芽吹き", 1, CommandData.Effect.REGEN, 4, "再生4を得る"),
+		_cmd("癒やしの光", 2, CommandData.Effect.HEAL, 12, "HPを12回復"),
+	]))
+	list.append(_monster("コカトリス", 12, 5, MonsterData.Element.WIND, 1.0, [
+		_cmd("毒の翼", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
+		_cmd("つつき", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+	]))
+
 	return list
 
 ## プールからランダムに count 体を選んで返す。

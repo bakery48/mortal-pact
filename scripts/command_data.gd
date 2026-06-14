@@ -13,6 +13,10 @@ enum Effect {
 	PIERCE,      ## 敵のブロックを無視して power ダメージ
 	WEAKEN,      ## 敵の攻撃力を power 下げる
 	ENERGY,      ## このターンのエネルギーを power 回復
+	POISON,      ## 敵に毒 power を付与（毎ターンダメージ）
+	BURN,        ## 敵に炎上 power ターンを付与（被ダメ1.5倍）
+	FREEZE,      ## 敵を power 回凍結（行動スキップ）
+	REGEN,       ## プレイヤーに再生 power を付与（毎ターン回復）
 }
 
 @export var command_name: String = "コマンド"

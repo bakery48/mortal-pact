@@ -8,7 +8,8 @@ ELEMENT = {0:"無",1:"炎",2:"氷",3:"風",4:"土",5:"光",6:"闇"}
 ELEMENT_NAME = {0:"NONE",1:"FIRE",2:"ICE",3:"WIND",4:"EARTH",5:"LIGHT",6:"DARK"}
 ELEM_BY_NAME = {v:k for k,v in ELEMENT_NAME.items()}
 RARITY = {0:"★",1:"★★",2:"★★★",3:"★★★★"}
-EFFECT_NAME = {0:"DAMAGE",1:"BUFF_ATK",2:"DOUBLE_NEXT",3:"HEAL",4:"GUARD",5:"PIERCE",6:"WEAKEN",7:"ENERGY"}
+EFFECT_NAME = {0:"DAMAGE",1:"BUFF_ATK",2:"DOUBLE_NEXT",3:"HEAL",4:"GUARD",5:"PIERCE",6:"WEAKEN",7:"ENERGY",
+               8:"POISON",9:"BURN",10:"FREEZE",11:"REGEN"}
 EFF_BY_NAME = {v:k for k,v in EFFECT_NAME.items()}
 
 def cmd_text(eff, p):
@@ -16,6 +17,7 @@ def cmd_text(eff, p):
         0:f"敵に{p}ダメージ", 1:f"与ダメージ+{p}", 2:"次のダメージ2倍",
         3:f"HP{p}回復", 4:f"ブロック{p}", 5:f"貫通{p}ダメージ",
         6:f"敵攻撃力-{p}", 7:f"エネルギー+{p}",
+        8:f"毒{p}付与", 9:f"炎上{p}ターン", 10:f"凍結{p}回", 11:f"再生{p}",
     }[eff]
 
 ELEM_CLASS = {0:"e-none",1:"e-fire",2:"e-ice",3:"e-wind",4:"e-earth",5:"e-light",6:"e-dark"}
@@ -87,7 +89,7 @@ starters = [parse_tres(ROOT/f"resources/monsters/{n}.tres") for n in starter_fil
 catalog = parse_factory_pool("reward_pool")
 
 section = ['<h2 id="monsters">魔物図鑑 <span class="badge">初期 %d種 + 図鑑 %d種</span></h2>' % (len(starters), len(catalog))]
-section.append('<p>初期デッキの5体と、報酬・ショップで仲間にできる40体。すべて幼体から育ち、合体で特性を継承できる。</p>')
+section.append(f'<p>初期デッキの{len(starters)}体と、報酬・ショップで仲間にできる{len(catalog)}体。すべて幼体から育ち、合体で特性を継承できる。</p>')
 section.append('<h3>初期デッキ</h3>')
 section.append('<div class="mon-grid">' + "".join(card_html(m) for m in starters) + '</div>')
 section.append('<h3>図鑑（報酬・ショップ）</h3>')
@@ -122,9 +124,10 @@ doc = path.read_text(encoding="utf-8")
 # CSS を </style> 直前に追加（未追加なら）
 if ".mon-grid" not in doc:
     doc = doc.replace("</style>", CSS + "</style>", 1)
-# TOC に項目追加
-doc = doc.replace('<li><a href="#ref">参考タイトル</a></li>',
-                  '<li><a href="#monsters">魔物図鑑</a></li>\n      <li><a href="#ref">参考タイトル</a></li>', 1)
+# TOC に項目追加（未追加のときだけ）
+if 'href="#monsters"' not in doc:
+    doc = doc.replace('<li><a href="#ref">参考タイトル</a></li>',
+                      '<li><a href="#monsters">魔物図鑑</a></li>\n      <li><a href="#ref">参考タイトル</a></li>', 1)
 # 既存の図鑑セクションがあれば置換、無ければ footer 直前に挿入
 if '<h2 id="monsters">' in doc:
     doc = re.sub(r'<h2 id="monsters">.*?(?=  <h2 id="ref">)', section_html + "\n\n  ", doc, flags=re.S)

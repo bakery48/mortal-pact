@@ -332,7 +332,8 @@
 
   <h3>フェーズ5：コンテンツ拡充</h3>
   <ul class="checklist">
-    <li class="done">魔物の種類を増やす（カタログ40種・コマンド効果8種でロール分化）</li>
+    <li class="done">魔物の種類を増やす（カタログ46種・コマンド効果12種でロール分化）</li>
+    <li class="done">状態異常システム（毒・炎上・凍結・再生）</li>
     <li class="done">敵の種類を増やす</li>
     <li class="done">ボスの実装</li>
     <li class="done">BGM・SE</li>
@@ -374,8 +375,8 @@
     <li>セーブデータは <code>JSON</code> 形式でユーザーディレクトリに保存</li>
   </ul>
 
-  <h2 id="monsters">魔物図鑑 <span class="badge">初期 5種 + 図鑑 40種</span></h2>
-<p>初期デッキの5体と、報酬・ショップで仲間にできる40体。すべて幼体から育ち、合体で特性を継承できる。</p>
+  <h2 id="monsters">魔物図鑑 <span class="badge">初期 5種 + 図鑑 46種</span></h2>
+<p>初期デッキの5体と、報酬・ショップで仲間にできる46体。すべて幼体から育ち、合体で特性を継承できる。</p>
 <h3>初期デッキ</h3>
 <div class="mon-grid"><div class="mon e-dark">
   <div class="mon-head"><span class="mon-name">フェンリル</span><span class="mon-rarity">★</span></div>
@@ -559,9 +560,33 @@
   <div class="mon-head"><span class="mon-name">グリモワール</span><span class="mon-rarity">★</span></div>
   <div class="mon-meta"><span class="tag">無</span> ATK 6 / DEF 5 / 成長 1.2</div>
   <ul class="mon-cmds"><li><span class="cmd-name">詠唱</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">エネルギー+2</span></li><li><span class="cmd-name">禁呪</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">バジリスク</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 11 / DEF 5 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">猛毒の牙</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">毒4付与</span></li><li><span class="cmd-name">石化の眼</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に13ダメージ</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">毒沼の主</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 9 / DEF 9 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">汚泥</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">毒3付与</span></li><li><span class="cmd-name">飲み込む</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に14ダメージ</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">イグニス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 13 / DEF 4 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">発火</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">炎上2ターン</span></li><li><span class="cmd-name">火炎弾</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に15ダメージ</span></li></ul>
+</div><div class="mon e-ice">
+  <div class="mon-head"><span class="mon-name">フロストゴーレム</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">氷</span> ATK 8 / DEF 13 / 成長 0.8</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">絶対零度</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">凍結1回</span></li><li><span class="cmd-name">氷塊</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">世界樹の苗</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 5 / DEF 8 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">芽吹き</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">再生4</span></li><li><span class="cmd-name">癒やしの光</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">HP12回復</span></li></ul>
+</div><div class="mon e-wind">
+  <div class="mon-head"><span class="mon-name">コカトリス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">風</span> ATK 12 / DEF 5 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">毒の翼</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">毒3付与</span></li><li><span class="cmd-name">つつき</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li></ul>
 </div></div>
 
-  <h2 id="ref">参考タイトル</h2>
+    <h2 id="ref">参考タイトル</h2>
   <table>
     <tr><th>タイトル</th><th>参考にする点</th></tr>
     <tr><td>Slay the Spire</td><td>デッキ構築の基本設計・UI</td></tr>

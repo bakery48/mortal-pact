@@ -94,6 +94,14 @@ func _command_text(cmd: CommandData) -> String:
 			return "敵の攻撃力-%d" % p
 		CommandData.Effect.ENERGY:
 			return "エネルギー+%d" % cmd.power
+		CommandData.Effect.POISON:
+			return "敵に毒%dを付与" % p
+		CommandData.Effect.BURN:
+			return "敵を%dターン炎上(被ダメ1.5倍)" % cmd.power
+		CommandData.Effect.FREEZE:
+			return "敵を%d回凍結させる" % cmd.power
+		CommandData.Effect.REGEN:
+			return "再生%dを得る(毎ターン回復)" % p
 	return cmd.description
 
 ## 現在のエネルギーに応じて、払えないコマンドのボタンを無効化する。

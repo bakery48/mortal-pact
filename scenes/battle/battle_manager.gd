@@ -22,6 +22,8 @@ var atk_buff := 0
 var double_next := false
 ## プレイヤーのブロック（敵の攻撃を軽減）。プレイヤーターン開始でリセット。
 var player_block := 0
+## プレイヤーにかかった状態異常（毒・再生など）。
+var player_status := StatusSet.new()
 var battle_over := false
 
 var enemy: EnemyUI
@@ -159,6 +161,19 @@ func _spawn_enemy() -> void:
 func _start_player_turn() -> void:
 	if battle_over:
 		return
+
+	# プレイヤーの状態異常を処理（毒ダメージ・再生回復）。
+	var pt := player_status.tick_turn()
+	if pt.poison > 0:
+		player_hp = max(0, player_hp - int(pt.poison))
+		_flash_message("毒で %d ダメージ" % int(pt.poison))
+	if pt.regen > 0:
+		player_hp = mini(player_max_hp, player_hp + int(pt.regen))
+	if player_hp <= 0:
+		_refresh()
+		_lose()
+		return
+
 	energy = MAX_ENERGY
 	atk_buff = 0
 	double_next = false
@@ -240,6 +255,14 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 			enemy.apply_weaken(p)
 		CommandData.Effect.ENERGY:
 			energy += cmd.power # エネルギーは段階補正なしの素の値
+		CommandData.Effect.POISON:
+			enemy.add_status(StatusSet.Status.POISON, p)
+		CommandData.Effect.BURN:
+			enemy.add_status(StatusSet.Status.BURN, cmd.power) # 炎上は素のターン数
+		CommandData.Effect.FREEZE:
+			enemy.add_status(StatusSet.Status.FREEZE, cmd.power) # 凍結は素の回数
+		CommandData.Effect.REGEN:
+			player_status.add(StatusSet.Status.REGEN, p)
 
 func _on_end_turn_pressed() -> void:
 	if battle_over:
@@ -247,16 +270,35 @@ func _on_end_turn_pressed() -> void:
 	_enemy_turn()
 
 func _enemy_turn() -> void:
-	# 自ターン開始でブロックをリセットし、予告した行動を実行。
-	enemy.reset_block()
-	var dmg := enemy.execute()
-	if dmg > 0:
-		# プレイヤーのブロックで軽減する。
-		var actual := max(0, dmg - player_block)
-		player_block = max(0, player_block - dmg)
-		if actual > 0:
-			player_hp = max(0, player_hp - actual)
-			Audio.play_se("hit")
+	# 敵の状態異常を処理（毒ダメージ・再生回復）。
+	var et := enemy.status.tick_turn()
+	if et.poison > 0:
+		enemy.take_fixed(int(et.poison))
+		_flash_message("%s は毒で %d ダメージ" % [enemy.enemy_name, int(et.poison)])
+	if et.regen > 0:
+		enemy.heal(int(et.regen))
+	_refresh()
+	if enemy.is_dead():
+		_win()
+		return
+
+	# 凍結中なら行動をスキップ。
+	if enemy.status.consume_freeze():
+		_flash_message("%s は凍結して動けない！" % enemy.enemy_name)
+	else:
+		# 自ターン開始でブロックをリセットし、予告した行動を実行。
+		enemy.reset_block()
+		var dmg := enemy.execute()
+		if enemy.intent_type == EnemyUI.Intent.POISON:
+			player_status.add(StatusSet.Status.POISON, enemy.intent_value)
+			_flash_message("毒 %d を受けた" % enemy.intent_value)
+		elif dmg > 0:
+			# プレイヤーのブロックで軽減する。
+			var actual := max(0, dmg - player_block)
+			player_block = max(0, player_block - dmg)
+			if actual > 0:
+				player_hp = max(0, player_hp - actual)
+				Audio.play_se("hit")
 	_refresh()
 	if player_hp <= 0:
 		_lose()
@@ -340,6 +382,9 @@ func _refresh() -> void:
 	var hp_text := "プレイヤー HP: %d / %d" % [player_hp, player_max_hp]
 	if player_block > 0:
 		hp_text += "  🛡%d" % player_block
+	var pst := player_status.label()
+	if pst != "":
+		hp_text += "  " + pst
 	_hp_label.text = hp_text
 	_energy_label.text = "⚡ エネルギー: %d / %d" % [energy, MAX_ENERGY]
 

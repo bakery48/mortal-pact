@@ -76,6 +76,12 @@ func _apply_window_mode() -> void:
 	var win := get_window()
 	if win != null:
 		win.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED
+		print("[Audio] フルスクリーン=", fullscreen, " window.mode=", win.mode)
+
+## F11 でいつでもフルスクリーンを切り替えられる（診断・利便用）。
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F11:
+		set_fullscreen(not fullscreen)
 
 func set_master_volume(v: float) -> void:
 	master_volume = clampf(v, 0.0, 1.0)

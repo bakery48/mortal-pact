@@ -43,7 +43,7 @@ func _build_ui() -> void:
 
 	var info := Label.new()
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	info.text = "到達フロア: %d    所持金: %d    デッキ: %d枚" % [Run.current_floor, Run.gold, Run.deck.size()]
+	info.text = "到達フロア: %d    所持金: %d    デッキ: %d枚" % [Run.current_floor, Run.gold, Run.deck_card_count()]
 	vbox.add_child(info)
 
 	var btn_box := CenterContainer.new()

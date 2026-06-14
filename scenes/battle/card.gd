@@ -1,25 +1,31 @@
 class_name CardUI
 extends PanelContainer
 
-## 手札に並ぶ魔物カード1枚のUI。
-## battle_manager が data をセットしてから add_child することで _ready で描画する。
-## 表示は data の現在の成長段階に応じた実効値（effective_*）を反映する。
+## 手札に並ぶ1枚の「スキルカード」のUI。所属モンスター＋1スキルを表示する。
+## 同じモンスターの別スキルは別カードとして並ぶ。
+## battle_manager が monster / command をセットしてから add_child する。
 
-signal command_selected(card: CardUI, command: CommandData)
-## 合体候補としての選択トグル（成体のみ選択可能）。
+signal command_selected(card: CardUI)
+## 合体候補としての選択トグル（成体・老体のみ）。
 signal fusion_toggled(card: CardUI)
 
-var data: MonsterData
-## このバトルの敵の属性（相性表示用）。battle_manager がセットする。
+var monster: MonsterData
+var command: CommandData
+## 山札側の対応エントリ（捨札へ送る際に使う）。
+var source: SkillCard
+## このバトルの敵の属性（相性表示用）。
 var enemy_element: int = MonsterData.Element.NONE
 
-var _command_buttons: Array[Button] = []
+var _title: Label
+var _stats: Label
+var _exp_bar: ProgressBar
+var _cmd_button: Button
 var _select_button: Button
 var _selected := false
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(190, 300)
-	if data != null:
+	custom_minimum_size = Vector2(190, 250)
+	if monster != null and command != null:
 		_build()
 
 func _build() -> void:
@@ -34,54 +40,54 @@ func _build() -> void:
 	vbox.add_theme_constant_override("separation", 4)
 	margin.add_child(vbox)
 
-	var title := Label.new()
-	title.text = "%s %s %s" % [data.rarity_label(), data.monster_name, data.stage_label()]
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(title)
+	_title = Label.new()
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_title)
 
-	var stats := Label.new()
-	stats.text = "属性:%s  ATK:%d DEF:%d" % [data.element_label(), data.effective_attack(), data.effective_defense()]
-	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(stats)
+	_stats = Label.new()
+	_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_stats)
 
-	# EXP バー（次の段階までの進捗）
-	var exp_bar := ProgressBar.new()
-	exp_bar.max_value = 1.0
-	exp_bar.value = data.exp_progress()
-	exp_bar.show_percentage = false
-	exp_bar.custom_minimum_size = Vector2(0, 8)
-	vbox.add_child(exp_bar)
+	_exp_bar = ProgressBar.new()
+	_exp_bar.max_value = 1.0
+	_exp_bar.show_percentage = false
+	_exp_bar.custom_minimum_size = Vector2(0, 8)
+	vbox.add_child(_exp_bar)
 
 	vbox.add_child(HSeparator.new())
 
-	for cmd in data.commands:
-		var btn := Button.new()
-		var cost := data.effective_cost(cmd)
-		btn.text = "▶ %s  (コスト%d)\n%s" % [cmd.command_name, cost, _command_text(cmd)]
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.set_meta("cost", cost)
-		btn.pressed.connect(func() -> void: command_selected.emit(self, cmd))
-		vbox.add_child(btn)
-		_command_buttons.append(btn)
+	_cmd_button = Button.new()
+	_cmd_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_cmd_button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cmd_button.pressed.connect(func() -> void: command_selected.emit(self))
+	vbox.add_child(_cmd_button)
 
-	# 合体候補の選択ボタン（成体のみ有効）
 	_select_button = Button.new()
 	_select_button.toggle_mode = true
-	if data.can_fuse():
-		_select_button.text = "合体候補にする"
-	else:
-		_select_button.text = "合体は成体/老体のみ"
-		_select_button.disabled = true
 	_select_button.pressed.connect(func() -> void: fusion_toggled.emit(self))
 	vbox.add_child(_select_button)
 
-## コマンドの効果説明を、現在の段階の実効値（威力＋ステータス補正）で生成する。
-func _command_text(cmd: CommandData) -> String:
-	var p := data.effective_power(cmd)
-	match cmd.effect:
+	_refresh_texts()
+
+## モンスターの現在状態に合わせて表示を更新する。
+func _refresh_texts() -> void:
+	_title.text = "%s %s %s" % [monster.rarity_label(), monster.monster_name, monster.stage_label()]
+	_stats.text = "属性:%s  ATK:%d DEF:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense()]
+	_exp_bar.value = monster.exp_progress()
+	_cmd_button.text = "▶ %s  (コスト%d)\n%s" % [command.command_name, monster.effective_cost(command), _command_text()]
+	if monster.can_fuse():
+		if not _selected:
+			_select_button.text = "合体候補にする"
+	else:
+		_select_button.text = "合体は成体/老体のみ"
+		_select_button.disabled = true
+
+func _command_text() -> String:
+	var p := monster.effective_power(command)
+	match command.effect:
 		CommandData.Effect.DAMAGE:
-			return "敵に%dダメージ%s" % [data.command_value(cmd), _affinity_mark()]
+			return "敵に%dダメージ%s" % [monster.command_value(command), _affinity_mark()]
 		CommandData.Effect.BUFF_ATK:
 			return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT:
@@ -89,48 +95,47 @@ func _command_text(cmd: CommandData) -> String:
 		CommandData.Effect.HEAL:
 			return "HPを%d回復" % p
 		CommandData.Effect.GUARD:
-			return "ブロック%dを得る" % data.command_value(cmd)
+			return "ブロック%dを得る" % monster.command_value(command)
 		CommandData.Effect.PIERCE:
-			return "防御無視で%dダメージ%s" % [data.command_value(cmd), _affinity_mark()]
+			return "防御無視で%dダメージ%s" % [monster.command_value(command), _affinity_mark()]
 		CommandData.Effect.WEAKEN:
 			return "敵の攻撃力-%d" % p
 		CommandData.Effect.ENERGY:
-			return "エネルギー+%d" % cmd.power
+			return "エネルギー+%d" % command.power
 		CommandData.Effect.POISON:
 			return "敵に毒%dを付与" % p
 		CommandData.Effect.BURN:
-			return "敵を%dターン炎上(被ダメ1.5倍)" % cmd.power
+			return "敵を%dターン炎上(被ダメ1.5倍)" % command.power
 		CommandData.Effect.FREEZE:
-			return "敵を%d回凍結させる" % cmd.power
+			return "敵を%d回凍結させる" % command.power
 		CommandData.Effect.REGEN:
 			return "再生%dを得る(毎ターン回復)" % p
-	return cmd.description
+	return command.description
 
-## 現在の敵に対する属性相性の印。
 func _affinity_mark() -> String:
-	var aff := MonsterData.affinity(data.elements, enemy_element)
+	var aff := MonsterData.affinity(monster.elements, enemy_element)
 	if aff > 1.0:
 		return " ▲有利"
 	if aff < 1.0:
 		return " ▽不利"
 	return ""
 
-## 現在のエネルギーに応じて、払えないコマンドのボタンを無効化する。
+## 現在のエネルギーに応じて表示と使用可否を更新する。
 func refresh(energy: int) -> void:
-	for btn in _command_buttons:
-		btn.disabled = int(btn.get_meta("cost")) > energy
+	_refresh_texts()
+	_cmd_button.disabled = monster.effective_cost(command) > energy
 
-## 合体候補としての選択状態を反映する（battle_manager から呼ばれる）。
+## 合体候補としての選択状態を反映する。
 func set_fusion_selected(value: bool) -> void:
 	_selected = value
 	if _select_button != null:
 		_select_button.button_pressed = value
-		_select_button.text = "✔ 合体候補" if value else "合体候補にする"
+		if monster.can_fuse():
+			_select_button.text = "✔ 合体候補" if value else "合体候補にする"
 	modulate = Color(1.0, 0.9, 0.4) if value else Color.WHITE
 
-## 勝敗確定時など、入力を完全に止める。
 func disable_all() -> void:
-	for btn in _command_buttons:
-		btn.disabled = true
+	if _cmd_button != null:
+		_cmd_button.disabled = true
 	if _select_button != null:
 		_select_button.disabled = true

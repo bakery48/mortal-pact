@@ -43,7 +43,7 @@ func _build_ui() -> void:
 	vbox.add_child(spacer)
 
 	if Run.has_save():
-		var cont := _make_button("つづきから（B%dF / デッキ%d枚）" % [Run.current_floor, Run.deck.size()])
+		var cont := _make_button("つづきから（B%dF / デッキ%d枚）" % [Run.current_floor, Run.deck_card_count()])
 		cont.pressed.connect(Run.continue_game)
 		vbox.add_child(cont)
 

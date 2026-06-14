@@ -30,9 +30,9 @@ func _build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 26)
 	vbox.add_child(title)
 
-	if not Run.can_add_card():
+	if not Run.can_add(2):
 		var warn := Label.new()
-		warn.text = "デッキが上限（%d枚）です。獲得するには合体で減らす必要があります。" % Run.DECK_LIMIT
+		warn.text = "デッキが上限（%d枚）に近いです。獲得には合体で枠を空ける必要があるかも。" % Run.DECK_LIMIT
 		warn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		warn.modulate = Color(1.0, 0.7, 0.5)
 		vbox.add_child(warn)
@@ -73,7 +73,7 @@ func _make_choice(monster: MonsterData) -> Control:
 
 	var pick := Button.new()
 	pick.text = "獲得する"
-	pick.disabled = not Run.can_add_card()
+	pick.disabled = not Run.can_add(monster.commands.size())
 	pick.pressed.connect(func() -> void: _on_pick(monster))
 	vbox.add_child(pick)
 

@@ -107,7 +107,7 @@ func _on_rest() -> void:
 	_status_label.text = "休憩した（HP +%d）" % healed
 
 func _on_buy(monster: MonsterData, panel: PanelContainer) -> void:
-	if Run.gold < Run.SHOP_CARD_COST or not Run.can_add_card():
+	if Run.gold < Run.SHOP_CARD_COST or not Run.can_add(monster.commands.size()):
 		return
 	Audio.play_se("coin")
 	Run.gold -= Run.SHOP_CARD_COST
@@ -118,7 +118,7 @@ func _on_buy(monster: MonsterData, panel: PanelContainer) -> void:
 
 func _refresh() -> void:
 	_status_label.text = "HP %d/%d    💰 %d    デッキ %d/%d枚" % [
-		Run.player_hp, Run.player_max_hp, Run.gold, Run.deck.size(), Run.DECK_LIMIT,
+		Run.player_hp, Run.player_max_hp, Run.gold, Run.deck_card_count(), Run.DECK_LIMIT,
 	]
 	if _rested or Run.player_hp >= Run.player_max_hp:
 		_rest_button.text = "休憩済み" if _rested else "HP満タン"
@@ -126,6 +126,6 @@ func _refresh() -> void:
 	else:
 		_rest_button.text = "休憩する（HP +%d）" % roundi(Run.player_max_hp * Run.REST_HEAL_RATIO)
 		_rest_button.disabled = false
-	var affordable := Run.gold >= Run.SHOP_CARD_COST and Run.can_add_card()
+	var affordable := Run.gold >= Run.SHOP_CARD_COST and Run.can_add(2)
 	for r in _offer_rows:
 		(r["button"] as Button).disabled = not affordable

@@ -39,8 +39,8 @@ var _event_label: Label
 var _end_turn_button: Button
 var _fuse_button: Button
 
-## 合体候補として選択中のカード（最大2枚）。
-var _fusion_selection: Array[CardUI] = []
+## 合体候補として選択中のモンスター（最大2体）。
+var _fusion_selection: Array[MonsterData] = []
 
 func _ready() -> void:
 	# ランから直接バトルを起動した場合のフォールバック（単体テスト用）。
@@ -181,58 +181,68 @@ func _start_player_turn() -> void:
 	double_next = false
 	player_block = 0
 
-	# 手札を HAND_SIZE まで補充。
+	# 手札を HAND_SIZE まで補充（どのモンスターのどのスキルかは運次第）。
 	for i in range(HAND_SIZE):
-		var monster := deck.draw_card()
-		if monster == null:
+		var sc := deck.draw_card()
+		if sc == null:
 			break
-		_add_card_to_hand(monster)
+		_add_card_to_hand(sc)
 
 	# 敵の次の行動は敵ターン終了時に予告済み（plan_next）。
 	_refresh()
 
-func _add_card_to_hand(monster: MonsterData) -> void:
+func _add_card_to_hand(sc: SkillCard) -> void:
 	var card := CardScene.instantiate() as CardUI
-	card.data = monster
+	card.monster = sc.monster
+	card.command = sc.command
+	card.source = sc
 	card.enemy_element = enemy.element # 相性表示のため敵の属性を渡す
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
 	card.fusion_toggled.connect(_on_fusion_toggled)
 
-func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
+func _on_command_selected(card: CardUI) -> void:
 	if battle_over:
 		return
-	var cost := card.data.effective_cost(cmd)
+	var monster := card.monster
+	var cmd := card.command
+	var cost := monster.effective_cost(cmd)
 	if energy < cost:
 		return
 
 	energy -= cost
-	_apply_command(card.data, cmd)
+	_apply_command(monster, cmd)
 	Audio.play_se("attack" if cmd.effect == CommandData.Effect.DAMAGE else "select")
 
-	# 使用するたびに EXP（=成長速度分）を蓄積し、ライフサイクルを進める。
-	var monster_name := card.data.monster_name
-	var grew := card.data.gain_exp(card.data.growth_speed)
-	if grew and not card.data.is_dead():
+	# 使用するたびに、そのモンスターが EXP（=成長速度分）を得て成長する。
+	var grew := monster.gain_exp(monster.growth_speed)
+	if grew and not monster.is_dead():
 		Audio.play_se("grow")
-		_flash_message("%s は %s に成長した！" % [monster_name, card.data.stage_label()])
+		_flash_message("%s は %s に成長した！" % [monster.monster_name, monster.stage_label()])
 
-	# 合体候補に選ばれていたカードなら選択を解除しておく。
-	_deselect_fusion(card)
-
-	if card.data.is_dead():
-		# 消滅：デッキから完全に除外し、捨札にも戻さない。
-		deck.remove_card(card.data)
-		_flash_message("%s は老いて消滅した…" % monster_name)
-	else:
-		# 通常使用：捨札へ送る。
-		deck.discard_card(card.data)
+	# 使ったスキルカードは捨札へ。
+	deck.discard_card(card.source)
 	card.queue_free()
+
+	# 消滅したら、そのモンスターのスキルカードを全て除外する。
+	if monster.is_dead():
+		_kill_monster(monster)
 
 	if enemy.is_dead():
 		_win()
 		return
 	_refresh()
+
+## モンスターを消滅させ、デッキ・手札からスキルカードを一掃する。
+func _kill_monster(monster: MonsterData) -> void:
+	deck.remove_monster(monster)
+	Run.deck.erase(monster)
+	_fusion_selection.erase(monster)
+	for child in _hand_container.get_children():
+		if child is CardUI and (child as CardUI).monster == monster:
+			child.queue_free()
+	_flash_message("%s は老いて消滅した…" % monster.monster_name)
+	_update_fuse_button()
 
 func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 	var p := card_data.effective_power(cmd)
@@ -329,21 +339,23 @@ func _clear_hand_nodes() -> void:
 func _on_fusion_toggled(card: CardUI) -> void:
 	if battle_over:
 		return
-	if card in _fusion_selection:
-		_deselect_fusion(card)
+	var m := card.monster
+	if not m.can_fuse():
+		return
+	if m in _fusion_selection:
+		_fusion_selection.erase(m)
 	elif _fusion_selection.size() < 2:
-		_fusion_selection.append(card)
-		card.set_fusion_selected(true)
-	else:
-		# すでに2枚選択済み。トグルを元に戻す。
-		card.set_fusion_selected(false)
+		_fusion_selection.append(m)
+	# すでに2体選択済みで別モンスターなら無視（下で見た目を戻す）。
+	_update_fusion_visuals()
 	_update_fuse_button()
 
-func _deselect_fusion(card: CardUI) -> void:
-	if card in _fusion_selection:
-		_fusion_selection.erase(card)
-		card.set_fusion_selected(false)
-		_update_fuse_button()
+## 各カードの選択ハイライトを、選択中モンスター集合に合わせて更新する。
+func _update_fusion_visuals() -> void:
+	for child in _hand_container.get_children():
+		if child is CardUI:
+			var c := child as CardUI
+			c.set_fusion_selected(c.monster in _fusion_selection)
 
 func _update_fuse_button() -> void:
 	if _fuse_button == null:
@@ -357,10 +369,10 @@ func _on_fuse_pressed() -> void:
 	_open_fusion_dialog(_fusion_selection[0], _fusion_selection[1])
 
 ## 継承スキルを選ぶモーダルを開く。
-func _open_fusion_dialog(card_a: CardUI, card_b: CardUI) -> void:
-	var element := MonsterFactory.choose_child_element(card_a.data, card_b.data)
-	var max_inherit := MonsterFactory.max_inheritable(card_a.data, card_b.data)
-	var pool := MonsterFactory.inheritable_pool(card_a.data, card_b.data)
+func _open_fusion_dialog(mon_a: MonsterData, mon_b: MonsterData) -> void:
+	var element := MonsterFactory.choose_child_element(mon_a, mon_b)
+	var max_inherit := MonsterFactory.max_inheritable(mon_a, mon_b)
+	var pool := MonsterFactory.inheritable_pool(mon_a, mon_b)
 	var innate := MonsterFactory.element_innate_kit(element)
 	var chosen: Array[CommandData] = []
 
@@ -394,7 +406,7 @@ func _open_fusion_dialog(card_a: CardUI, card_b: CardUI) -> void:
 	vbox.add_child(title)
 
 	var elem_label := Label.new()
-	elem_label.text = "子孫の属性: %s ／ 固有スキル3つ＋継承 最大%d" % [String(MonsterData.ELEMENT_LABEL[element]), max_inherit]
+	elem_label.text = "子孫の属性: %s ／ 固有スキル2つ＋継承 最大%d" % [String(MonsterData.ELEMENT_LABEL[element]), max_inherit]
 	elem_label.modulate = Color(0.8, 0.85, 0.95)
 	vbox.add_child(elem_label)
 
@@ -420,7 +432,7 @@ func _open_fusion_dialog(card_a: CardUI, card_b: CardUI) -> void:
 		vbox.add_child(btn)
 	if pool.is_empty():
 		var none_label := Label.new()
-		none_label.text = "継承できるスキルがありません（固有3つで誕生）"
+		none_label.text = "継承できるスキルがありません（固有2つで誕生）"
 		none_label.modulate = Color(0.7, 0.7, 0.7)
 		vbox.add_child(none_label)
 
@@ -438,15 +450,15 @@ func _open_fusion_dialog(card_a: CardUI, card_b: CardUI) -> void:
 
 	var confirm := Button.new()
 	confirm.text = "合体する"
-	confirm.pressed.connect(_on_fusion_confirm.bind(card_a, card_b, element, chosen, overlay))
+	confirm.pressed.connect(_on_fusion_confirm.bind(mon_a, mon_b, element, chosen, overlay))
 	buttons.add_child(confirm)
 
 	count_label.text = "継承 0 / %d" % max_inherit
 
-func _on_fusion_confirm(card_a: CardUI, card_b: CardUI, element: int, chosen: Array, overlay: Control) -> void:
-	var child := MonsterFactory.make_child(card_a.data, card_b.data, element, chosen)
+func _on_fusion_confirm(mon_a: MonsterData, mon_b: MonsterData, element: int, chosen: Array, overlay: Control) -> void:
+	var child := MonsterFactory.make_child(mon_a, mon_b, element, chosen)
 	overlay.queue_free()
-	_commit_fusion(card_a, card_b, child)
+	_commit_fusion(mon_a, mon_b, child)
 
 func _on_inherit_toggled(pressed: bool, cmd: CommandData, btn: Button, chosen: Array, max_inherit: int, count_label: Label) -> void:
 	if pressed:
@@ -459,19 +471,27 @@ func _on_inherit_toggled(pressed: bool, cmd: CommandData, btn: Button, chosen: A
 	count_label.text = "継承 %d / %d" % [chosen.size(), max_inherit]
 
 ## 合体を確定し、両親を消滅させ子孫を手札に加える。
-func _commit_fusion(card_a: CardUI, card_b: CardUI, child: MonsterData) -> void:
-	deck.remove_card(card_a.data)
-	deck.remove_card(card_b.data)
-	card_a.queue_free()
-	card_b.queue_free()
+func _commit_fusion(mon_a: MonsterData, mon_b: MonsterData, child: MonsterData) -> void:
+	# 両親のスキルカードをデッキ・手札から除去。
+	deck.remove_monster(mon_a)
+	deck.remove_monster(mon_b)
+	Run.deck.erase(mon_a)
+	Run.deck.erase(mon_b)
+	for node in _hand_container.get_children():
+		if node is CardUI and (node as CardUI).monster in [mon_a, mon_b]:
+			node.queue_free()
 	_fusion_selection.clear()
 
-	deck.hand.append(child)
-	_add_card_to_hand(child)
+	# 子孫をデッキに加え、そのスキルカードを手札に出す。
+	Run.deck.append(child)
+	for sc in deck.add_monster_to_hand(child):
+		_add_card_to_hand(sc)
 
 	Audio.play_se("fuse")
 	_flash_message("合体！ %s（%s %s）が誕生した" % [child.monster_name, child.rarity_label(), child.element_label()])
+	_update_fusion_visuals()
 	_update_fuse_button()
+	_refresh()
 	_refresh()
 
 # --- 表示更新・終了処理 -----------------------------------------------------
@@ -513,9 +533,9 @@ func _win() -> void:
 	_message_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
 	_end_battle_input()
 	Audio.play_se("win")
-	# 生き残ったデッキとHPをランへ書き戻し、報酬画面へ。
+	# HPをランへ書き戻し、報酬画面へ（デッキ＝モンスターは戦闘中に直接更新済み）。
 	await get_tree().create_timer(1.0).timeout
-	Run.on_battle_won(deck.surviving_cards(), player_hp)
+	Run.on_battle_won(player_hp)
 
 func _lose() -> void:
 	battle_over = true

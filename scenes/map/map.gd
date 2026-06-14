@@ -21,7 +21,7 @@ func _build_ui() -> void:
 
 	var header := Label.new()
 	header.text = "第 %d フロア      HP %d/%d      💰 %d      デッキ %d/%d" % [
-		Run.current_floor, Run.player_hp, Run.player_max_hp, Run.gold, Run.deck.size(), Run.DECK_LIMIT,
+		Run.current_floor, Run.player_hp, Run.player_max_hp, Run.gold, Run.deck_card_count(), Run.DECK_LIMIT,
 	]
 	header.position = Vector2(24, 20)
 	header.add_theme_font_size_override("font_size", 18)

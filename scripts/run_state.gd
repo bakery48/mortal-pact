@@ -225,8 +225,8 @@ func go_after_node() -> void:
 
 # --- バトル結果 -------------------------------------------------------------
 
-func on_battle_won(remaining_deck: Array[MonsterData], hp: int) -> void:
-	deck.assign(remaining_deck)
+func on_battle_won(hp: int) -> void:
+	# デッキ（モンスター）の成長・消滅・合体は戦闘中に直接反映済み。HPと報酬のみ処理。
 	player_hp = hp
 	if current_encounter.has("gold"):
 		gold += int(current_encounter["gold"])
@@ -239,11 +239,19 @@ func on_battle_lost() -> void:
 
 # --- デッキ操作（報酬・ショップ用） -----------------------------------------
 
-func can_add_card() -> bool:
-	return deck.size() < DECK_LIMIT
+## デッキの総スキルカード枚数（各モンスターの所持コマンド数の合計）。
+func deck_card_count() -> int:
+	var n := 0
+	for m in deck:
+		n += m.commands.size()
+	return n
+
+## skill_count 枚を追加してもデッキ上限以内か。
+func can_add(skill_count: int) -> bool:
+	return deck_card_count() + skill_count <= DECK_LIMIT
 
 func add_card(card: MonsterData) -> bool:
-	if not can_add_card():
+	if not can_add(card.commands.size()):
 		return false
 	deck.append(card)
 	return true

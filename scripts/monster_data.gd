@@ -9,7 +9,7 @@ extends Resource
 ## ピークを過ぎると弱体化し、老体はコスト増・効果減、消滅でデッキから除外される。
 ##
 ## 成体2体を合体させると、属性・コマンド・成長速度・レアリティを継承した
-## 子孫カードが生まれる（MonsterFactory.fuse 参照）。
+## 子孫カードが生まれる（MonsterFactory.make_child 参照）。
 
 enum Stage { INFANT, YOUNG, ADULT, ELDER, DEAD }
 enum Element { NONE, FIRE, WATER, WIND, EARTH, LIGHT, DARK }

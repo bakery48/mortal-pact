@@ -353,19 +353,118 @@ func _update_fuse_button() -> void:
 func _on_fuse_pressed() -> void:
 	if battle_over or _fusion_selection.size() != 2:
 		return
-	var card_a := _fusion_selection[0]
-	var card_b := _fusion_selection[1]
+	_open_fusion_dialog(_fusion_selection[0], _fusion_selection[1])
 
-	var child := MonsterFactory.fuse(card_a.data, card_b.data)
+## 継承スキルを選ぶモーダルを開く。
+func _open_fusion_dialog(card_a: CardUI, card_b: CardUI) -> void:
+	var element := MonsterFactory.choose_child_element(card_a.data, card_b.data)
+	var max_inherit := MonsterFactory.max_inheritable(card_a.data, card_b.data)
+	var pool := MonsterFactory.inheritable_pool(card_a.data, card_b.data)
+	var innate := MonsterFactory.element_innate_kit(element)
+	var chosen: Array[CommandData] = []
 
-	# 両親はデッキから消滅。
+	# 暗幕
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.65)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(560, 0)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 18)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "合体：継承するスキルを選択"
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var elem_label := Label.new()
+	elem_label.text = "子孫の属性: %s ／ 固有スキル3つ＋継承 最大%d" % [String(MonsterData.ELEMENT_LABEL[element]), max_inherit]
+	elem_label.modulate = Color(0.8, 0.85, 0.95)
+	vbox.add_child(elem_label)
+
+	var innate_label := Label.new()
+	var innate_names: Array[String] = []
+	for c in innate:
+		innate_names.append(c.command_name)
+	innate_label.text = "固有: " + "／".join(innate_names)
+	vbox.add_child(innate_label)
+
+	vbox.add_child(HSeparator.new())
+
+	var count_label := Label.new()
+	vbox.add_child(count_label)
+
+	# 継承候補トグル
+	for cmd in pool:
+		var btn := Button.new()
+		btn.toggle_mode = true
+		btn.disabled = max_inherit <= 0
+		btn.text = "%s（コスト%d）" % [cmd.command_name, cmd.cost]
+		btn.toggled.connect(_on_inherit_toggled.bind(cmd, btn, chosen, max_inherit, count_label))
+		vbox.add_child(btn)
+	if pool.is_empty():
+		var none_label := Label.new()
+		none_label.text = "継承できるスキルがありません（固有3つで誕生）"
+		none_label.modulate = Color(0.7, 0.7, 0.7)
+		vbox.add_child(none_label)
+
+	vbox.add_child(HSeparator.new())
+
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override("separation", 10)
+	vbox.add_child(buttons)
+
+	var cancel := Button.new()
+	cancel.text = "キャンセル"
+	cancel.pressed.connect(func() -> void: overlay.queue_free())
+	buttons.add_child(cancel)
+
+	var confirm := Button.new()
+	confirm.text = "合体する"
+	confirm.pressed.connect(_on_fusion_confirm.bind(card_a, card_b, element, chosen, overlay))
+	buttons.add_child(confirm)
+
+	count_label.text = "継承 0 / %d" % max_inherit
+
+func _on_fusion_confirm(card_a: CardUI, card_b: CardUI, element: int, chosen: Array, overlay: Control) -> void:
+	var child := MonsterFactory.make_child(card_a.data, card_b.data, element, chosen)
+	overlay.queue_free()
+	_commit_fusion(card_a, card_b, child)
+
+func _on_inherit_toggled(pressed: bool, cmd: CommandData, btn: Button, chosen: Array, max_inherit: int, count_label: Label) -> void:
+	if pressed:
+		if chosen.size() >= max_inherit:
+			btn.button_pressed = false # 上限超過は取り消し
+			return
+		chosen.append(cmd)
+	else:
+		chosen.erase(cmd)
+	count_label.text = "継承 %d / %d" % [chosen.size(), max_inherit]
+
+## 合体を確定し、両親を消滅させ子孫を手札に加える。
+func _commit_fusion(card_a: CardUI, card_b: CardUI, child: MonsterData) -> void:
 	deck.remove_card(card_a.data)
 	deck.remove_card(card_b.data)
 	card_a.queue_free()
 	card_b.queue_free()
 	_fusion_selection.clear()
 
-	# 子孫カードがデッキ（手札）に加わる。
 	deck.hand.append(child)
 	_add_card_to_hand(child)
 

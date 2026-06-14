@@ -267,8 +267,110 @@ static func random_rewards(count: int) -> Array[MonsterData]:
 
 # --- 合体（子孫生成） -------------------------------------------------------
 
-## 成体2体から子孫カードを生成する。子孫は「生まれたて」の幼体になる。
-static func fuse(a: MonsterData, b: MonsterData) -> MonsterData:
+## 子孫の固有スキル数。属性に応じた基礎キット。
+const INNATE_COUNT := 3
+## 1体が持てるスキルの最大数。
+const MAX_SKILLS := 6
+## 属性継承：基本は両親いずれか、15%で両親と異なる属性に突然変異。
+const ELEMENT_MUTATION_CHANCE := 0.15
+
+## 継承可能なスキル数を返す。
+## 親のスキル合計 6→1 / 7→2 / 8→3。ただし1世代で増やせるのは+1まで（max(親)+1）。最大6。
+static func max_inheritable(a: MonsterData, b: MonsterData) -> int:
+	var combined := a.commands.size() + b.commands.size()
+	var by_combined := 0
+	if combined >= 8:
+		by_combined = 3
+	elif combined >= 7:
+		by_combined = 2
+	elif combined >= 6:
+		by_combined = 1
+	# 1世代で +1 まで：子の総数 ≤ max(親の枚数)+1 → 継承数 ≤ max(親)+1-固有数
+	var gen_cap := maxi(a.commands.size(), b.commands.size()) + 1 - INNATE_COUNT
+	return clampi(mini(by_combined, gen_cap), 0, MAX_SKILLS - INNATE_COUNT)
+
+## 両親から継承候補にできるスキル一覧（技名で重複排除）。
+static func inheritable_pool(a: MonsterData, b: MonsterData) -> Array[CommandData]:
+	var pool: Array[CommandData] = []
+	var seen := {}
+	for c in (a.commands + b.commands):
+		if not seen.has(c.command_name):
+			seen[c.command_name] = true
+			pool.append(c)
+	return pool
+
+## 子孫の属性を決める（両親いずれか／15%で両親と異なる属性に突然変異）。
+static func choose_child_element(a: MonsterData, b: MonsterData) -> int:
+	var parent_elems: Array[int] = []
+	for e in a.elements:
+		if int(e) not in parent_elems:
+			parent_elems.append(int(e))
+	for e in b.elements:
+		if int(e) not in parent_elems:
+			parent_elems.append(int(e))
+
+	if randf() < ELEMENT_MUTATION_CHANCE:
+		var pool: Array[int] = []
+		for el in [MonsterData.Element.FIRE, MonsterData.Element.WATER, MonsterData.Element.WIND,
+				MonsterData.Element.EARTH, MonsterData.Element.LIGHT, MonsterData.Element.DARK]:
+			if el not in parent_elems:
+				pool.append(el)
+		if not pool.is_empty():
+			return pool.pick_random()
+
+	if parent_elems.is_empty():
+		return MonsterData.Element.NONE
+	return parent_elems.pick_random()
+
+## 属性ごとの固有基礎キット（3スキル）。毎回新インスタンスを返す。
+static func element_innate_kit(element: int) -> Array[CommandData]:
+	match element:
+		MonsterData.Element.FIRE:
+			return [
+				_cmd("火の弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("業火", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
+				_cmd("火だるま", 1, CommandData.Effect.BURN, 2, "敵を2ターン炎上"),
+			]
+		MonsterData.Element.WATER:
+			return [
+				_cmd("水弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("治癒の水", 1, CommandData.Effect.HEAL, 8, "HPを8回復"),
+				_cmd("大波", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
+			]
+		MonsterData.Element.WIND:
+			return [
+				_cmd("風刃", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("追い風", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
+				_cmd("疾風突き", 2, CommandData.Effect.PIERCE, 12, "防御無視で12ダメージ"),
+			]
+		MonsterData.Element.EARTH:
+			return [
+				_cmd("礫", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("守りの構え", 1, CommandData.Effect.GUARD, 9, "ブロック9を得る"),
+				_cmd("大地砕き", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
+			]
+		MonsterData.Element.LIGHT:
+			return [
+				_cmd("光弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("祝福", 1, CommandData.Effect.HEAL, 9, "HPを9回復"),
+				_cmd("浄化の光", 1, CommandData.Effect.REGEN, 4, "再生4を得る"),
+			]
+		MonsterData.Element.DARK:
+			return [
+				_cmd("闇撃ち", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("毒霧", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
+				_cmd("衰弱", 1, CommandData.Effect.WEAKEN, 5, "敵の攻撃力-5"),
+			]
+		_:
+			return [
+				_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+				_cmd("構え", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
+				_cmd("充填", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
+			]
+
+## 子孫を生成する。element は choose_child_element の結果、
+## inherited はプレイヤーが選んだ継承スキル（0個も可）。
+static func make_child(a: MonsterData, b: MonsterData, element: int, inherited: Array) -> MonsterData:
 	var child := MonsterData.new()
 	child.monster_name = a.monster_name.left(2) + b.monster_name.left(2) + "の子"
 
@@ -286,57 +388,24 @@ static func fuse(a: MonsterData, b: MonsterData) -> MonsterData:
 
 	# 成長速度：両親の平均。
 	child.growth_speed = (a.growth_speed + b.growth_speed) / 2.0
+	child.elements = [element]
 
-	# 属性：どちらか一方、または混合。
-	child.elements = _inherit_elements(a, b)
-
-	# コマンド：両親のコマンドプールからランダムに継承。
-	child.commands = _inherit_commands(a, b)
+	# スキル：固有キット ＋ 継承（重複名は除外、最大6）。
+	var cmds: Array[CommandData] = element_innate_kit(element)
+	var names := {}
+	for c in cmds:
+		names[c.command_name] = true
+	for c in inherited:
+		if cmds.size() >= MAX_SKILLS:
+			break
+		var cmd := c as CommandData
+		if not names.has(cmd.command_name):
+			names[cmd.command_name] = true
+			cmds.append(cmd.duplicate(true))
+	child.commands = cmds
 
 	# 生まれたて。
 	child.stage = MonsterData.Stage.INFANT
 	child.exp = 0.0
 	return child
 
-## 属性継承：基本は両親いずれかの属性を引き継ぐが、
-## 15%の確率で両親とは異なる属性に突然変異する。
-const ELEMENT_MUTATION_CHANCE := 0.15
-
-static func _inherit_elements(a: MonsterData, b: MonsterData) -> Array[int]:
-	# 両親の属性集合（重複排除）。
-	var parent_elems: Array[int] = []
-	for e in a.elements:
-		if int(e) not in parent_elems:
-			parent_elems.append(int(e))
-	for e in b.elements:
-		if int(e) not in parent_elems:
-			parent_elems.append(int(e))
-
-	# 15%：両親のどちらとも異なる属性へ突然変異。
-	if randf() < ELEMENT_MUTATION_CHANCE:
-		var pool: Array[int] = []
-		for el in [MonsterData.Element.FIRE, MonsterData.Element.WATER, MonsterData.Element.WIND,
-				MonsterData.Element.EARTH, MonsterData.Element.LIGHT, MonsterData.Element.DARK]:
-			if el not in parent_elems:
-				pool.append(el)
-		if not pool.is_empty():
-			var mutated: int = pool.pick_random()
-			return [mutated]
-
-	# 通常：両親いずれかの属性を引き継ぐ。
-	if parent_elems.is_empty():
-		return [MonsterData.Element.NONE]
-	var inherited: int = parent_elems.pick_random()
-	return [inherited]
-
-static func _inherit_commands(a: MonsterData, b: MonsterData) -> Array[CommandData]:
-	var pool: Array[CommandData] = []
-	pool.append_array(a.commands)
-	pool.append_array(b.commands)
-	pool.shuffle()
-	var count: int = mini(3, pool.size()) # 子孫は最大3コマンド
-	var chosen: Array[CommandData] = []
-	for i in range(count):
-		# 親と独立させるため複製する。
-		chosen.append((pool[i] as CommandData).duplicate(true))
-	return chosen

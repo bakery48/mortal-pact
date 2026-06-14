@@ -5,13 +5,14 @@ extends RefCounted
 ## ・starter_monsters(): リソース欠如時のフォールバック用初期デッキ
 ## ・fuse(): 成体2体から子孫カードを生成（フェーズ3：合体システム）
 
-static func _cmd(name: String, cost: int, effect: int, power: int, desc: String) -> CommandData:
+static func _cmd(name: String, cost: int, effect: int, power: int, desc: String, scale := -1.0) -> CommandData:
 	var c := CommandData.new()
 	c.command_name = name
 	c.cost = cost
 	c.effect = effect
 	c.power = power
 	c.description = desc
+	c.stat_scale = scale # 負なら自動係数（コスト依存）
 	return c
 
 static func _monster(name: String, atk: int, def: int, element: int, growth: float, cmds: Array[CommandData]) -> MonsterData:

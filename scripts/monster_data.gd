@@ -222,21 +222,27 @@ func effective_cost(cmd: CommandData) -> int:
 func effective_power(cmd: CommandData) -> int:
 	return max(0, roundi(cmd.power * _mult()))
 
-## ダメージ系コマンドに上乗せされる ATK 由来ボーナス（実効ATKの半分）。
-func damage_bonus() -> int:
-	return effective_attack() / 2
+## コマンドのステータス依存係数。負なら自動（コストが高い技ほど依存大）。
+func _stat_scale(cmd: CommandData) -> float:
+	if cmd.stat_scale >= 0.0:
+		return cmd.stat_scale
+	return clampf(0.4 + 0.3 * float(cmd.cost - 1), 0.4, 1.0)
 
-## ガード系コマンドに上乗せされる DEF 由来ボーナス（実効DEFの半分）。
-func guard_bonus() -> int:
-	return effective_defense() / 2
+## ダメージ系コマンドに上乗せされる ATK 由来ボーナス。
+func damage_bonus(cmd: CommandData) -> int:
+	return roundi(effective_attack() * _stat_scale(cmd))
+
+## ガード系コマンドに上乗せされる DEF 由来ボーナス。
+func guard_bonus(cmd: CommandData) -> int:
+	return roundi(effective_defense() * _stat_scale(cmd))
 
 ## コマンドの実効値（威力＋ステータス補正）を効果種別に応じて返す。
 func command_value(cmd: CommandData) -> int:
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			return effective_power(cmd) + damage_bonus()
+			return effective_power(cmd) + damage_bonus(cmd)
 		CommandData.Effect.GUARD:
-			return effective_power(cmd) + guard_bonus()
+			return effective_power(cmd) + guard_bonus(cmd)
 		CommandData.Effect.ENERGY:
 			return cmd.power # エネルギーは段階・ステータス補正なし
 		_:

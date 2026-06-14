@@ -24,6 +24,9 @@ enum Effect {
 @export var effect: Effect = Effect.DAMAGE
 @export var power: int = 0
 @export var description: String = ""
+## ステータス依存係数：ダメージ系はATK、ガード系はDEFにこの倍率を掛けて上乗せ。
+## 負の値（既定）なら、コストに応じた自動係数を使う（重い技ほど依存が大きい）。
+@export var stat_scale: float = -1.0
 
 # --- セーブ/ロード用シリアライズ -------------------------------------------
 
@@ -34,6 +37,7 @@ func to_dict() -> Dictionary:
 		"effect": int(effect),
 		"power": power,
 		"description": description,
+		"stat_scale": stat_scale,
 	}
 
 static func from_dict(d: Dictionary) -> CommandData:
@@ -43,4 +47,5 @@ static func from_dict(d: Dictionary) -> CommandData:
 	c.effect = int(d.get("effect", 0)) as Effect
 	c.power = int(d.get("power", 0))
 	c.description = String(d.get("description", ""))
+	c.stat_scale = float(d.get("stat_scale", -1.0))
 	return c

@@ -4,8 +4,8 @@
 import re, pathlib, html
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-ELEMENT = {0:"無",1:"炎",2:"氷",3:"風",4:"土",5:"光",6:"闇"}
-ELEMENT_NAME = {0:"NONE",1:"FIRE",2:"ICE",3:"WIND",4:"EARTH",5:"LIGHT",6:"DARK"}
+ELEMENT = {0:"無",1:"炎",2:"水",3:"風",4:"土",5:"光",6:"闇"}
+ELEMENT_NAME = {0:"NONE",1:"FIRE",2:"WATER",3:"WIND",4:"EARTH",5:"LIGHT",6:"DARK"}
 ELEM_BY_NAME = {v:k for k,v in ELEMENT_NAME.items()}
 RARITY = {0:"★",1:"★★",2:"★★★",3:"★★★★"}
 EFFECT_NAME = {0:"DAMAGE",1:"BUFF_ATK",2:"DOUBLE_NEXT",3:"HEAL",4:"GUARD",5:"PIERCE",6:"WEAKEN",7:"ENERGY",

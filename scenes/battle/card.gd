@@ -10,6 +10,8 @@ signal command_selected(card: CardUI, command: CommandData)
 signal fusion_toggled(card: CardUI)
 
 var data: MonsterData
+## このバトルの敵の属性（相性表示用）。battle_manager がセットする。
+var enemy_element: int = MonsterData.Element.NONE
 
 var _command_buttons: Array[Button] = []
 var _select_button: Button
@@ -79,7 +81,7 @@ func _command_text(cmd: CommandData) -> String:
 	var p := data.effective_power(cmd)
 	match cmd.effect:
 		CommandData.Effect.DAMAGE:
-			return "敵に%dダメージ" % p
+			return "敵に%dダメージ%s" % [p, _affinity_mark()]
 		CommandData.Effect.BUFF_ATK:
 			return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT:
@@ -89,7 +91,7 @@ func _command_text(cmd: CommandData) -> String:
 		CommandData.Effect.GUARD:
 			return "ブロック%dを得る" % p
 		CommandData.Effect.PIERCE:
-			return "防御無視で%dダメージ" % p
+			return "防御無視で%dダメージ%s" % [p, _affinity_mark()]
 		CommandData.Effect.WEAKEN:
 			return "敵の攻撃力-%d" % p
 		CommandData.Effect.ENERGY:
@@ -103,6 +105,15 @@ func _command_text(cmd: CommandData) -> String:
 		CommandData.Effect.REGEN:
 			return "再生%dを得る(毎ターン回復)" % p
 	return cmd.description
+
+## 現在の敵に対する属性相性の印。
+func _affinity_mark() -> String:
+	var aff := MonsterData.affinity(data.elements, enemy_element)
+	if aff > 1.0:
+		return " ▲有利"
+	if aff < 1.0:
+		return " ▽不利"
+	return ""
 
 ## 現在のエネルギーに応じて、払えないコマンドのボタンを無効化する。
 func refresh(energy: int) -> void:

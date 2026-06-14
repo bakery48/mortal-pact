@@ -16,6 +16,7 @@ const INTENT_ICON := {
 }
 
 var enemy_name: String = "敵"
+var element: int = MonsterData.Element.NONE
 var max_hp: int = 60
 var hp: int = 60
 var block: int = 0
@@ -49,7 +50,7 @@ func _ready() -> void:
 	margin.add_child(vbox)
 
 	_name_label = Label.new()
-	_name_label.text = enemy_name
+	_name_label.text = "%s 〈%s〉" % [enemy_name, String(MonsterData.ELEMENT_LABEL[element])]
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_name_label.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(_name_label)

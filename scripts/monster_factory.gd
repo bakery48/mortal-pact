@@ -80,7 +80,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("呪詛", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 		_cmd("死の宣告", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	]))
-	list.append(_monster("アイススピリット", 10, 6, MonsterData.Element.ICE, 1.0, [
+	list.append(_monster("アイススピリット", 10, 6, MonsterData.Element.WATER, 1.0, [
 		_cmd("氷礫", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
 		_cmd("吹雪", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
 	]))
@@ -120,7 +120,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("火の翼", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 		_cmd("再生の焔", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	]))
-	list.append(_monster("クラーケン", 17, 9, MonsterData.Element.ICE, 0.8, [
+	list.append(_monster("クラーケン", 17, 9, MonsterData.Element.WATER, 0.8, [
 		_cmd("触手", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
 		_cmd("大渦", 3, CommandData.Effect.DAMAGE, 26, "敵に26ダメージ"),
 	]))
@@ -140,7 +140,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("電撃", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 		_cmd("雷鳴", 2, CommandData.Effect.DAMAGE, 19, "敵に19ダメージ"),
 	]))
-	list.append(_monster("マーメイド", 9, 7, MonsterData.Element.ICE, 1.1, [
+	list.append(_monster("マーメイド", 9, 7, MonsterData.Element.WATER, 1.1, [
 		_cmd("水鞭", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 		_cmd("癒やしの歌", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
 	]))
@@ -186,7 +186,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("影縫い", 1, CommandData.Effect.PIERCE, 10, "防御無視で10ダメージ"),
 		_cmd("闇討ち", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
 	]))
-	list.append(_monster("氷壁の精", 6, 12, MonsterData.Element.ICE, 0.9, [
+	list.append(_monster("氷壁の精", 6, 12, MonsterData.Element.WATER, 0.9, [
 		_cmd("氷の盾", 1, CommandData.Effect.GUARD, 10, "ブロック10を得る"),
 		_cmd("凍てつく息", 2, CommandData.Effect.WEAKEN, 6, "敵の攻撃力-6"),
 	]))
@@ -218,7 +218,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("大地割り", 2, CommandData.Effect.DAMAGE, 20, "敵に20ダメージ"),
 		_cmd("巨壁", 1, CommandData.Effect.GUARD, 12, "ブロック12を得る"),
 	]))
-	list.append(_monster("セイレーン", 10, 6, MonsterData.Element.ICE, 1.1, [
+	list.append(_monster("セイレーン", 10, 6, MonsterData.Element.WATER, 1.1, [
 		_cmd("惑わしの歌", 1, CommandData.Effect.WEAKEN, 5, "敵の攻撃力-5"),
 		_cmd("水流弾", 2, CommandData.Effect.DAMAGE, 15, "敵に15ダメージ"),
 	]))
@@ -240,7 +240,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("発火", 1, CommandData.Effect.BURN, 2, "敵を2ターン炎上"),
 		_cmd("火炎弾", 2, CommandData.Effect.DAMAGE, 15, "敵に15ダメージ"),
 	]))
-	list.append(_monster("フロストゴーレム", 8, 13, MonsterData.Element.ICE, 0.8, [
+	list.append(_monster("フロストゴーレム", 8, 13, MonsterData.Element.WATER, 0.8, [
 		_cmd("絶対零度", 2, CommandData.Effect.FREEZE, 1, "敵を1回凍結"),
 		_cmd("氷塊", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 	]))

@@ -152,6 +152,7 @@ func _spawn_enemy() -> void:
 	var hp := int(enc["max_hp"])
 	enemy = EnemyScene.instantiate() as EnemyUI
 	enemy.enemy_name = ("【ボス】" if enc.get("is_boss", false) else "") + String(enc["name"])
+	enemy.element = int(enc.get("element", MonsterData.Element.NONE))
 	enemy.max_hp = hp
 	enemy.hp = hp
 	enemy.set_pattern(enc.get("pattern", []))
@@ -192,6 +193,7 @@ func _start_player_turn() -> void:
 func _add_card_to_hand(monster: MonsterData) -> void:
 	var card := CardScene.instantiate() as CardUI
 	card.data = monster
+	card.enemy_element = enemy.element # 相性表示のため敵の属性を渡す
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
 	card.fusion_toggled.connect(_on_fusion_toggled)
@@ -235,10 +237,13 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 	var p := card_data.effective_power(cmd)
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			var dmg := p + atk_buff
+			var base := p + atk_buff
 			if double_next:
-				dmg *= 2
+				base *= 2
 				double_next = false
+			# 属性相性を反映（有利×1.5 / 不利×0.75）。
+			var mult := MonsterData.affinity(card_data.elements, enemy.element)
+			var dmg := roundi(base * mult)
 			if cmd.effect == CommandData.Effect.PIERCE:
 				enemy.take_damage_pierce(dmg)
 			else:

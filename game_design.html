@@ -163,6 +163,7 @@
       <li><a href="#lifecycle">魔物のライフサイクル</a></li>
       <li><a href="#fusion">合体システム（子孫生成）</a></li>
       <li><a href="#battle">戦闘システム</a></li>
+      <li><a href="#affinity">属性相性</a></li>
       <li><a href="#deck">デッキ構成</a></li>
       <li><a href="#run">ランの構造</a></li>
       <li><a href="#mvp">MVP（開発マイルストーン）</a></li>
@@ -277,6 +278,26 @@
     <li>毎ターン<strong>エネルギー3</strong>から開始</li>
     <li>コマンドにはコスト1〜3がある</li>
     <li>エネルギーは翌ターンに持ち越せない</li>
+  </ul>
+
+  <h2 id="affinity">属性相性</h2>
+  <p>属性は <strong>6種（＋無属性）</strong>。攻撃属性と相手の属性の相性で与ダメージが増減する。</p>
+  <h3>4すくみ（有利で ×1.5 / 不利で ×0.75）</h3>
+  <pre>水 ＞ 炎 ＞ 風 ＞ 土 ＞ 水 …（一周）</pre>
+  <ul>
+    <li>水は炎に強い／炎は風に強い／風は土に強い／土は水に強い</li>
+    <li>有利な側の与ダメージは <strong>×1.5</strong>、不利な側は <strong>×0.75</strong></li>
+  </ul>
+  <h3>光 ⇔ 闇（相互弱点）</h3>
+  <ul>
+    <li>光と闇は互いに弱点。どちらから攻撃しても <strong>×1.5</strong></li>
+  </ul>
+  <h3>仕様メモ</h3>
+  <ul>
+    <li>無属性は相性の影響を受けない（常に ×1.0）</li>
+    <li>複合属性の子孫は、いずれかが有利なら有利、無ければ不利を採用</li>
+    <li>カードのダメージ表記に <strong>▲有利 / ▽不利</strong> を表示、敵パネルに敵の属性を表示</li>
+    <li>相性が乗るのは直接ダメージ（通常・貫通）。毒など固定ダメージには乗らない</li>
   </ul>
 
   <h2 id="deck">デッキ構成</h2>
@@ -418,7 +439,7 @@
   <ul class="mon-cmds"><li><span class="cmd-name">呪詛</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に11ダメージ</span></li><li><span class="cmd-name">死の宣告</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
 </div><div class="mon e-ice">
   <div class="mon-head"><span class="mon-name">アイススピリット</span><span class="mon-rarity">★</span></div>
-  <div class="mon-meta"><span class="tag">氷</span> ATK 10 / DEF 6 / 成長 1</div>
+  <div class="mon-meta"><span class="tag">水</span> ATK 10 / DEF 6 / 成長 1</div>
   <ul class="mon-cmds"><li><span class="cmd-name">氷礫</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に10ダメージ</span></li><li><span class="cmd-name">吹雪</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に16ダメージ</span></li></ul>
 </div><div class="mon e-none">
   <div class="mon-head"><span class="mon-name">スライム</span><span class="mon-rarity">★</span></div>
@@ -458,7 +479,7 @@
   <ul class="mon-cmds"><li><span class="cmd-name">火の翼</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に11ダメージ</span></li><li><span class="cmd-name">再生の焔</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
 </div><div class="mon e-ice">
   <div class="mon-head"><span class="mon-name">クラーケン</span><span class="mon-rarity">★</span></div>
-  <div class="mon-meta"><span class="tag">氷</span> ATK 17 / DEF 9 / 成長 0.8</div>
+  <div class="mon-meta"><span class="tag">水</span> ATK 17 / DEF 9 / 成長 0.8</div>
   <ul class="mon-cmds"><li><span class="cmd-name">触手</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に13ダメージ</span></li><li><span class="cmd-name">大渦</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">敵に26ダメージ</span></li></ul>
 </div><div class="mon e-earth">
   <div class="mon-head"><span class="mon-name">ミノタウロス</span><span class="mon-rarity">★</span></div>
@@ -478,7 +499,7 @@
   <ul class="mon-cmds"><li><span class="cmd-name">電撃</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">雷鳴</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に19ダメージ</span></li></ul>
 </div><div class="mon e-ice">
   <div class="mon-head"><span class="mon-name">マーメイド</span><span class="mon-rarity">★</span></div>
-  <div class="mon-meta"><span class="tag">氷</span> ATK 9 / DEF 7 / 成長 1.1</div>
+  <div class="mon-meta"><span class="tag">水</span> ATK 9 / DEF 7 / 成長 1.1</div>
   <ul class="mon-cmds"><li><span class="cmd-name">水鞭</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li><li><span class="cmd-name">癒やしの歌</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+6</span></li></ul>
 </div><div class="mon e-fire">
   <div class="mon-head"><span class="mon-name">デーモン</span><span class="mon-rarity">★</span></div>
@@ -522,7 +543,7 @@
   <ul class="mon-cmds"><li><span class="cmd-name">影縫い</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">貫通10ダメージ</span></li><li><span class="cmd-name">闇討ち</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に16ダメージ</span></li></ul>
 </div><div class="mon e-ice">
   <div class="mon-head"><span class="mon-name">氷壁の精</span><span class="mon-rarity">★</span></div>
-  <div class="mon-meta"><span class="tag">氷</span> ATK 6 / DEF 12 / 成長 0.9</div>
+  <div class="mon-meta"><span class="tag">水</span> ATK 6 / DEF 12 / 成長 0.9</div>
   <ul class="mon-cmds"><li><span class="cmd-name">氷の盾</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック10</span></li><li><span class="cmd-name">凍てつく息</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵攻撃力-6</span></li></ul>
 </div><div class="mon e-fire">
   <div class="mon-head"><span class="mon-name">バーサーカー</span><span class="mon-rarity">★</span></div>
@@ -554,7 +575,7 @@
   <ul class="mon-cmds"><li><span class="cmd-name">大地割り</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に20ダメージ</span></li><li><span class="cmd-name">巨壁</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック12</span></li></ul>
 </div><div class="mon e-ice">
   <div class="mon-head"><span class="mon-name">セイレーン</span><span class="mon-rarity">★</span></div>
-  <div class="mon-meta"><span class="tag">氷</span> ATK 10 / DEF 6 / 成長 1.1</div>
+  <div class="mon-meta"><span class="tag">水</span> ATK 10 / DEF 6 / 成長 1.1</div>
   <ul class="mon-cmds"><li><span class="cmd-name">惑わしの歌</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵攻撃力-5</span></li><li><span class="cmd-name">水流弾</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に15ダメージ</span></li></ul>
 </div><div class="mon e-none">
   <div class="mon-head"><span class="mon-name">グリモワール</span><span class="mon-rarity">★</span></div>
@@ -574,7 +595,7 @@
   <ul class="mon-cmds"><li><span class="cmd-name">発火</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">炎上2ターン</span></li><li><span class="cmd-name">火炎弾</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に15ダメージ</span></li></ul>
 </div><div class="mon e-ice">
   <div class="mon-head"><span class="mon-name">フロストゴーレム</span><span class="mon-rarity">★</span></div>
-  <div class="mon-meta"><span class="tag">氷</span> ATK 8 / DEF 13 / 成長 0.8</div>
+  <div class="mon-meta"><span class="tag">水</span> ATK 8 / DEF 13 / 成長 0.8</div>
   <ul class="mon-cmds"><li><span class="cmd-name">絶対零度</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">凍結1回</span></li><li><span class="cmd-name">氷塊</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li></ul>
 </div><div class="mon e-light">
   <div class="mon-head"><span class="mon-name">世界樹の苗</span><span class="mon-rarity">★</span></div>

@@ -86,6 +86,7 @@ func _battle_node(type: NodeType, enemy: Dictionary, reward_gold: int) -> Dictio
 		"name": enemy["name"],
 		"max_hp": roundi(int(enemy["max_hp"]) * scale),
 		"pattern": scaled_pattern,
+		"element": enemy.get("element", MonsterData.Element.NONE),
 		"gold": reward_gold,
 		"is_boss": enemy.get("is_boss", false),
 	}

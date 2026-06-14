@@ -12,8 +12,18 @@ extends Resource
 ## 子孫カードが生まれる（MonsterFactory.fuse 参照）。
 
 enum Stage { INFANT, YOUNG, ADULT, ELDER, DEAD }
-enum Element { NONE, FIRE, ICE, WIND, EARTH, LIGHT, DARK }
+enum Element { NONE, FIRE, WATER, WIND, EARTH, LIGHT, DARK }
 enum Rarity { COMMON, UNCOMMON, RARE, EPIC }
+
+## 属性相性の「勝つ」関係（4すくみ）：水>炎>風>土>水。
+const ELEMENT_BEATS := {
+	Element.WATER: Element.FIRE,
+	Element.FIRE: Element.WIND,
+	Element.WIND: Element.EARTH,
+	Element.EARTH: Element.WATER,
+}
+const AFFINITY_ADVANTAGE := 1.5
+const AFFINITY_DISADVANTAGE := 0.75
 
 ## 各段階に到達するのに必要な累計 EXP（この値以上で当該段階）。
 const STAGE_THRESHOLDS := {
@@ -53,7 +63,7 @@ const STAGE_LABEL := {
 const ELEMENT_LABEL := {
 	Element.NONE: "無",
 	Element.FIRE: "炎",
-	Element.ICE: "氷",
+	Element.WATER: "水",
 	Element.WIND: "風",
 	Element.EARTH: "土",
 	Element.LIGHT: "光",
@@ -109,12 +119,41 @@ func stage_label() -> String:
 func rarity_label() -> String:
 	return String(RARITY_LABEL[rarity])
 
-## 属性をまとめた表示文字列（例：「炎/氷」）。
+## 属性をまとめた表示文字列（例：「炎/水」）。
 func element_label() -> String:
 	var parts: Array[String] = []
 	for e in elements:
 		parts.append(String(ELEMENT_LABEL[e]))
 	return "/".join(parts)
+
+## 攻撃属性1つ vs 防御属性1つの相性倍率。
+static func element_pair_multiplier(atk: int, dfn: int) -> float:
+	if atk == Element.NONE or dfn == Element.NONE:
+		return 1.0
+	# 光⇔闇は相互弱点（双方が有利）。
+	if (atk == Element.LIGHT and dfn == Element.DARK) or (atk == Element.DARK and dfn == Element.LIGHT):
+		return AFFINITY_ADVANTAGE
+	if int(ELEMENT_BEATS.get(atk, -1)) == dfn:
+		return AFFINITY_ADVANTAGE
+	if int(ELEMENT_BEATS.get(dfn, -1)) == atk:
+		return AFFINITY_DISADVANTAGE
+	return 1.0
+
+## 攻撃側の全属性 vs 防御属性の相性倍率（有利優先、次に不利）。
+static func affinity(attacker_elements: Array, defender_element: int) -> float:
+	var advantage := false
+	var disadvantage := false
+	for e in attacker_elements:
+		var m := element_pair_multiplier(int(e), defender_element)
+		if m > 1.0:
+			advantage = true
+		elif m < 1.0:
+			disadvantage = true
+	if advantage:
+		return AFFINITY_ADVANTAGE
+	if disadvantage:
+		return AFFINITY_DISADVANTAGE
+	return 1.0
 
 # --- セーブ/ロード用シリアライズ -------------------------------------------
 

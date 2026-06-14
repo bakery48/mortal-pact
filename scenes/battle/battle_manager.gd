@@ -47,7 +47,8 @@ func _ready() -> void:
 	if Run.deck.is_empty():
 		Run.start_new_run()
 	if Run.current_encounter.is_empty():
-		Run.current_encounter = Run.map_nodes[0]
+		# 単体テスト用：マップ先頭の戦闘ノードを使う。
+		Run.current_encounter = Run.map_rows[0][0]
 
 	player_max_hp = Run.player_max_hp
 	player_hp = Run.player_hp

@@ -29,8 +29,9 @@ var player_hp := STARTING_HP
 var gold := STARTING_GOLD
 var current_floor := 1
 
-var map_nodes: Array = []      # ノード定義（Dictionary）の配列
-var current_index := 0         # 進行ポインタ（次に挑むノード）
+var map_rows: Array = []       # 行ごとのノード配列（分岐マップのグラフ）
+var current_row := -1          # 現在クリア済みノードの行（-1=未開始）
+var current_col := 0           # 現在クリア済みノードの列
 var current_encounter := {}    # 戦闘シーンへ渡す敵パラメータ
 var last_result := ""          # "clear" / "lose"
 var settings_return := SCENE_TITLE # 設定画面から戻る先
@@ -52,13 +53,15 @@ func start_new_run() -> void:
 	gold = STARTING_GOLD
 	deck.assign(DeckManager.load_monster_resources())
 	_build_map()
-	current_index = 0
+	current_row = -1
+	current_col = 0
 
 func next_floor() -> void:
 	current_floor += 1
 	player_hp = mini(player_max_hp, player_hp + 20) # フロア移動で少し回復
 	_build_map()
-	current_index = 0
+	current_row = -1
+	current_col = 0
 	get_tree().change_scene_to_file(SCENE_MAP)
 
 func restart_run() -> void:
@@ -76,15 +79,68 @@ func new_game() -> void:
 	delete_save()
 	restart_run()
 
+# 各行の構成：選べるノード種別の候補と、ノード数の範囲[min,max]。
+const _MAP_LAYOUT := [
+	{"types": ["zako"], "count": [2, 3]},
+	{"types": ["zako"], "count": [2, 3]},
+	{"types": ["zako", "rest"], "count": [3, 3]},
+	{"types": ["elite", "zako"], "count": [2, 3]},
+	{"types": ["rest"], "count": [2, 2]},
+	{"types": ["elite", "zako"], "count": [2, 3]},
+	{"types": ["boss"], "count": [1, 1]},
+]
+
+## 分岐マップ（行×ノードのグラフ）を生成する。
 func _build_map() -> void:
-	map_nodes = [
-		_battle_node(NodeType.BATTLE_ZAKO, EnemyDatabase.random_zako(), 25),
-		_battle_node(NodeType.BATTLE_ZAKO, EnemyDatabase.random_zako(), 25),
-		_rest_node(),
-		_battle_node(NodeType.BATTLE_ELITE, EnemyDatabase.random_elite(), 55),
-		_rest_node(),
-		_battle_node(NodeType.BATTLE_BOSS, EnemyDatabase.random_boss(), 120),
-	]
+	map_rows = []
+	for spec in _MAP_LAYOUT:
+		var count := randi_range(int(spec["count"][0]), int(spec["count"][1]))
+		var row: Array = []
+		for c in range(count):
+			row.append(_make_node(String((spec["types"] as Array).pick_random())))
+		map_rows.append(row)
+	_connect_rows()
+
+## 隣り合う行をエッジで接続する（next に次行の列インデックスを持たせる）。
+func _connect_rows() -> void:
+	for r in range(map_rows.size() - 1):
+		var cr: int = map_rows[r].size()
+		var cr1: int = map_rows[r + 1].size()
+		for c in range(cr):
+			var t := 0
+			if cr1 > 1:
+				t = roundi(float(c) * (cr1 - 1) / float(maxi(1, cr - 1))) if cr > 1 else int(cr1 / 2)
+			var nexts: Array = [t]
+			# 50%で隣のノードへも分岐。
+			if randf() < 0.5:
+				var nb := clampi(t + (1 if randf() < 0.5 else -1), 0, cr1 - 1)
+				if nb not in nexts:
+					nexts.append(nb)
+			map_rows[r][c]["next"] = nexts
+		# 次行の全ノードに入口があることを保証。
+		var incoming := {}
+		for c in range(cr):
+			for nc in map_rows[r][c]["next"]:
+				incoming[nc] = true
+		for j in range(cr1):
+			if not incoming.has(j):
+				var best := 0
+				if cr1 > 1:
+					best = roundi(float(j) * (cr - 1) / float(maxi(1, cr1 - 1))) if cr > 1 else 0
+				best = clampi(best, 0, cr - 1)
+				if j not in map_rows[r][best]["next"]:
+					map_rows[r][best]["next"].append(j)
+
+func _make_node(kind: String) -> Dictionary:
+	match kind:
+		"zako":
+			return _battle_node(NodeType.BATTLE_ZAKO, EnemyDatabase.random_zako(), 25)
+		"elite":
+			return _battle_node(NodeType.BATTLE_ELITE, EnemyDatabase.random_elite(), 55)
+		"boss":
+			return _battle_node(NodeType.BATTLE_BOSS, EnemyDatabase.random_boss(), 120)
+		_:
+			return _rest_node()
 
 ## EnemyDatabase の敵設定を、フロアに応じてスケールしたバトルノードに変換する。
 func _battle_node(type: NodeType, enemy: Dictionary, reward_gold: int) -> Dictionary:
@@ -103,38 +159,64 @@ func _battle_node(type: NodeType, enemy: Dictionary, reward_gold: int) -> Dictio
 		"element": enemy.get("element", MonsterData.Element.NONE),
 		"gold": reward_gold,
 		"is_boss": enemy.get("is_boss", false),
+		"next": [],
 	}
 
 func _rest_node() -> Dictionary:
-	return {"type": NodeType.REST_SHOP, "name": "休憩 / ショップ"}
+	return {"type": NodeType.REST_SHOP, "name": "休憩 / ショップ", "next": []}
 
 # --- マップ進行 -------------------------------------------------------------
 
 func current_node() -> Dictionary:
-	if current_index < 0 or current_index >= map_nodes.size():
+	if current_row < 0 or current_row >= map_rows.size():
 		return {}
-	return map_nodes[current_index]
+	var row: Array = map_rows[current_row]
+	if current_col < 0 or current_col >= row.size():
+		return {}
+	return row[current_col]
+
+func node_at(row: int, col: int) -> Dictionary:
+	if row < 0 or row >= map_rows.size():
+		return {}
+	var r: Array = map_rows[row]
+	if col < 0 or col >= r.size():
+		return {}
+	return r[col]
+
+## 次に進入できる行インデックス（-1始まりなので 0、以降は現在行+1）。
+func next_row_index() -> int:
+	return current_row + 1
+
+## 次に進入できる列インデックス一覧（int）。
+func reachable_cols() -> Array:
+	var cols: Array = []
+	if current_row < 0:
+		var first: Array = map_rows[0] if not map_rows.is_empty() else []
+		for i in range(first.size()):
+			cols.append(i)
+	else:
+		for nc in current_node().get("next", []):
+			cols.append(int(nc))
+	return cols
 
 func is_run_complete() -> bool:
-	return current_index >= map_nodes.size()
+	return current_row >= map_rows.size() - 1 and current_row >= 0 and bool(current_node().get("is_boss", false))
 
-func advance() -> void:
-	current_index += 1
-
-## マップから現在ノードに進入する。ノード種別に応じてシーンを切り替える。
-func begin_node() -> void:
-	var node := current_node()
-	if node.is_empty():
+## マップで選んだノードに進入する。
+func choose_node(row: int, col: int) -> void:
+	if row != next_row_index() or col not in reachable_cols():
 		return
+	current_row = row
+	current_col = col
+	var node := current_node()
 	if int(node["type"]) == NodeType.REST_SHOP:
 		get_tree().change_scene_to_file(SCENE_SHOP)
 	else:
 		current_encounter = node
 		get_tree().change_scene_to_file(SCENE_BATTLE)
 
-## ノード完了後の遷移：進行を進め、ラン完了ならクリア、そうでなければマップへ。
+## ノード完了後の遷移：ボスならクリア、そうでなければマップへ。
 func go_after_node() -> void:
-	advance()
 	if is_run_complete():
 		last_result = "clear"
 		get_tree().change_scene_to_file(SCENE_RESULT)
@@ -188,8 +270,9 @@ func save_game() -> void:
 		"player_hp": player_hp,
 		"gold": gold,
 		"current_floor": current_floor,
-		"current_index": current_index,
-		"map_nodes": map_nodes,
+		"current_row": current_row,
+		"current_col": current_col,
+		"map_rows": map_rows,
 		"deck": deck_data,
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -215,19 +298,20 @@ func load_game() -> bool:
 	player_hp = int(data.get("player_hp", STARTING_HP))
 	gold = int(data.get("gold", STARTING_GOLD))
 	current_floor = int(data.get("current_floor", 1))
-	current_index = int(data.get("current_index", 0))
+	current_row = int(data.get("current_row", -1))
+	current_col = int(data.get("current_col", 0))
 
 	var loaded: Array[MonsterData] = []
 	for md in data.get("deck", []):
 		loaded.append(MonsterData.from_dict(md))
 	deck.assign(loaded)
 
-	# マップは保存された配列をそのまま使う（数値は利用側で int() 変換済み）。
-	map_nodes = data.get("map_nodes", [])
-	if map_nodes.is_empty():
+	# マップグラフは保存された配列をそのまま使う（数値は利用側で int() 変換済み）。
+	map_rows = data.get("map_rows", [])
+	if map_rows.is_empty():
 		_build_map()
-	# 念のため進行ポインタを範囲内に収める。
-	current_index = clampi(current_index, 0, map_nodes.size())
+		current_row = -1
+		current_col = 0
 	return true
 
 func delete_save() -> void:

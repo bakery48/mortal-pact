@@ -153,6 +153,7 @@ func _spawn_enemy() -> void:
 	var hp := int(enc["max_hp"])
 	enemy = EnemyScene.instantiate() as EnemyUI
 	enemy.enemy_name = ("【ボス】" if enc.get("is_boss", false) else "") + String(enc["name"])
+	enemy.sprite_name = String(enc["name"]) # スプライト探索用（接頭辞なし）
 	enemy.element = int(enc.get("element", MonsterData.Element.NONE))
 	enemy.max_hp = hp
 	enemy.hp = hp

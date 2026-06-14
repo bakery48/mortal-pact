@@ -16,6 +16,7 @@ const INTENT_ICON := {
 }
 
 var enemy_name: String = "敵"
+var sprite_name: String = "" # スプライト探索用の生の敵名（【ボス】等の接頭辞なし）
 var element: int = MonsterData.Element.NONE
 var max_hp: int = 60
 var hp: int = 60
@@ -49,6 +50,9 @@ func _ready() -> void:
 	vbox.add_theme_constant_override("separation", 6)
 	margin.add_child(vbox)
 
+	# スプライト（あれば）／無ければ属性色の図形プレースホルダ。
+	vbox.add_child(_make_visual())
+
 	_name_label = Label.new()
 	_name_label.text = "%s 〈%s〉" % [enemy_name, String(MonsterData.ELEMENT_LABEL[element])]
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -75,6 +79,28 @@ func _ready() -> void:
 	vbox.add_child(_status_label)
 
 	_update()
+
+## スプライト or プレースホルダのビジュアルを作る。
+func _make_visual() -> Control:
+	var tex := SpriteLoader.enemy(sprite_name)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.custom_minimum_size = Vector2(0, 120)
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		return tr
+	var box := ColorRect.new()
+	box.color = SpriteLoader.element_color(element)
+	box.custom_minimum_size = Vector2(0, 100)
+	var cc := CenterContainer.new()
+	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.add_child(cc)
+	var l := Label.new()
+	l.text = String(MonsterData.ELEMENT_LABEL[element])
+	l.add_theme_font_size_override("font_size", 40)
+	cc.add_child(l)
+	return box
 
 func set_pattern(p: Array) -> void:
 	pattern = p

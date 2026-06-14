@@ -24,7 +24,7 @@ var _select_button: Button
 var _selected := false
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(190, 250)
+	custom_minimum_size = Vector2(190, 300)
 	if monster != null and command != null:
 		_build()
 
@@ -44,6 +44,9 @@ func _build() -> void:
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_title)
+
+	# スプライト（あれば）／無ければ属性色の図形プレースホルダ。
+	vbox.add_child(_make_visual())
 
 	_stats = Label.new()
 	_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -82,6 +85,28 @@ func _refresh_texts() -> void:
 	else:
 		_select_button.text = "合体は成体/老体のみ"
 		_select_button.disabled = true
+
+## スプライト or プレースホルダのビジュアルを作る。
+func _make_visual() -> Control:
+	var tex := SpriteLoader.monster(monster.monster_name)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.custom_minimum_size = Vector2(0, 72)
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST # ドット絵をくっきり
+		return tr
+	var box := ColorRect.new()
+	box.color = SpriteLoader.element_color(monster.elements[0] if not monster.elements.is_empty() else MonsterData.Element.NONE)
+	box.custom_minimum_size = Vector2(0, 72)
+	var cc := CenterContainer.new()
+	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.add_child(cc)
+	var l := Label.new()
+	l.text = monster.element_label()
+	l.add_theme_font_size_override("font_size", 28)
+	cc.add_child(l)
+	return box
 
 func _command_text() -> String:
 	var p := monster.effective_power(command)

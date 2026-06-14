@@ -123,6 +123,27 @@
   .pillar { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
   .pillar h4 { margin: 0 0 6px; color: var(--accent); font-size: 1rem; }
   .pillar p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .mon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin: 16px 0; }
+  .mon { background: var(--panel); border: 1px solid var(--border); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; }
+  .mon-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .mon-name { font-weight: 700; font-size: 1.05rem; }
+  .mon-rarity { color: #f0c860; font-size: 0.85rem; }
+  .mon-meta { color: var(--muted); font-size: 0.82rem; margin: 4px 0 8px; }
+  .mon-meta .tag { display:inline-block; background: var(--panel-2); border:1px solid var(--border); border-radius:6px; padding:0 7px; margin-right:4px; color: var(--ink); }
+  .mon-cmds { list-style: none; padding-left: 0; margin: 0; }
+  .mon-cmds li { padding: 5px 0; border-top: 1px dashed var(--border); font-size: 0.85rem; }
+  .mon-cmds li:first-child { border-top: none; }
+  .cmd-name { color: var(--accent); font-weight: 600; }
+  .cmd-cost { color: var(--muted); font-size: 0.75rem; }
+  .cmd-eff { color: var(--ink); }
+  .mon.e-fire { border-left-color: #e0654a; }
+  .mon.e-ice { border-left-color: #5ab6e0; }
+  .mon.e-wind { border-left-color: #7ad6a0; }
+  .mon.e-earth { border-left-color: #c79a5a; }
+  .mon.e-light { border-left-color: #f0d860; }
+  .mon.e-dark { border-left-color: #a06ad0; }
+  .mon.e-none { border-left-color: #8a8398; }
 </style>
 </head>
 <body>
@@ -146,6 +167,7 @@
       <li><a href="#run">ランの構造</a></li>
       <li><a href="#mvp">MVP（開発マイルストーン）</a></li>
       <li><a href="#tech">技術メモ（Godot 4.x）</a></li>
+      <li><a href="#monsters">魔物図鑑</a></li>
       <li><a href="#ref">参考タイトル</a></li>
     </ol>
   </nav>
@@ -351,6 +373,193 @@
     <li>ライフサイクルの状態は各カードインスタンスが保持</li>
     <li>セーブデータは <code>JSON</code> 形式でユーザーディレクトリに保存</li>
   </ul>
+
+  <h2 id="monsters">魔物図鑑 <span class="badge">初期 5種 + 図鑑 40種</span></h2>
+<p>初期デッキの5体と、報酬・ショップで仲間にできる40体。すべて幼体から育ち、合体で特性を継承できる。</p>
+<h3>初期デッキ</h3>
+<div class="mon-grid"><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">フェンリル</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 12 / DEF 6 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">噛みつき</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">遠吠え</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+4</span></li><li><span class="cmd-name">狂化</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">サラマンダー</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 14 / DEF 4 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">火炎の牙</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li><li><span class="cmd-name">業火</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に18ダメージ</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">ゴーレム</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 8 / DEF 12 / 成長 0.8</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">岩石投げ</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に7ダメージ</span></li><li><span class="cmd-name">地響き</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に14ダメージ</span></li><li><span class="cmd-name">防御態勢</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック9</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">ウィスプ</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 6 / DEF 3 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">導きの光</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">与ダメージ+3</span></li><li><span class="cmd-name">呪いの炎</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に11ダメージ</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">インプ</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 10 / DEF 5 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">引っかき</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に8ダメージ</span></li><li><span class="cmd-name">挑発</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">与ダメージ+2</span></li></ul>
+</div></div>
+<h3>図鑑（報酬・ショップ）</h3>
+<div class="mon-grid"><div class="mon e-wind">
+  <div class="mon-head"><span class="mon-name">ハーピー</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">風</span> ATK 11 / DEF 4 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">旋風爪</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に10ダメージ</span></li><li><span class="cmd-name">追い風</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+5</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">ケルベロス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 16 / DEF 7 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">三連牙</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に13ダメージ</span></li><li><span class="cmd-name">獄炎</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">敵に24ダメージ</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">ユニコーン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 9 / DEF 8 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">聖なる角</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li><li><span class="cmd-name">加護</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+6</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">リッチ</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 13 / DEF 3 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">呪詛</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に11ダメージ</span></li><li><span class="cmd-name">死の宣告</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
+</div><div class="mon e-ice">
+  <div class="mon-head"><span class="mon-name">アイススピリット</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">氷</span> ATK 10 / DEF 6 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">氷礫</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に10ダメージ</span></li><li><span class="cmd-name">吹雪</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に16ダメージ</span></li></ul>
+</div><div class="mon e-none">
+  <div class="mon-head"><span class="mon-name">スライム</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">無</span> ATK 7 / DEF 7 / 成長 1.3</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">体当たり</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に8ダメージ</span></li><li><span class="cmd-name">分裂の構え</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">与ダメージ+3</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">ドライアド</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 8 / DEF 9 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">蔦縛り</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に8ダメージ</span></li><li><span class="cmd-name">生命の歌</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+5</span></li></ul>
+</div><div class="mon e-wind">
+  <div class="mon-head"><span class="mon-name">ワイバーン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">風</span> ATK 15 / DEF 5 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">急降下</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">竜巻</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に19ダメージ</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">バンシー</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 12 / DEF 3 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">怨嗟の叫び</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に11ダメージ</span></li><li><span class="cmd-name">絶望</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に17ダメージ</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">ゴーストファイア</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 11 / DEF 2 / 成長 1.3</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">鬼火</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に10ダメージ</span></li><li><span class="cmd-name">焼尽</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">トレント</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 6 / DEF 14 / 成長 0.8</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">枝打ち</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に7ダメージ</span></li><li><span class="cmd-name">大地の怒り</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に15ダメージ</span></li></ul>
+</div><div class="mon e-wind">
+  <div class="mon-head"><span class="mon-name">グリフォン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">風</span> ATK 14 / DEF 8 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">鉤爪</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">天翔ける</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+6</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">サキュバス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 11 / DEF 5 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">魅了</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">与ダメージ+5</span></li><li><span class="cmd-name">精気吸収</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に14ダメージ</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">フェニックス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 13 / DEF 6 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">火の翼</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に11ダメージ</span></li><li><span class="cmd-name">再生の焔</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
+</div><div class="mon e-ice">
+  <div class="mon-head"><span class="mon-name">クラーケン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">氷</span> ATK 17 / DEF 9 / 成長 0.8</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">触手</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に13ダメージ</span></li><li><span class="cmd-name">大渦</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">敵に26ダメージ</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">ミノタウロス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 16 / DEF 7 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">突進</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に13ダメージ</span></li><li><span class="cmd-name">斧叩き</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に20ダメージ</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">ピクシー</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 5 / DEF 4 / 成長 1.4</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">妖精の粉</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">与ダメージ+4</span></li><li><span class="cmd-name">光の矢</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に8ダメージ</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">ヴァンパイア</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 14 / DEF 6 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">牙</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">血の宴</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に18ダメージ</span></li></ul>
+</div><div class="mon e-wind">
+  <div class="mon-head"><span class="mon-name">サンダーバード</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">風</span> ATK 15 / DEF 4 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">電撃</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">雷鳴</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に19ダメージ</span></li></ul>
+</div><div class="mon e-ice">
+  <div class="mon-head"><span class="mon-name">マーメイド</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">氷</span> ATK 9 / DEF 7 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">水鞭</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li><li><span class="cmd-name">癒やしの歌</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+6</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">デーモン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 18 / DEF 5 / 成長 0.8</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">地獄爪</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に14ダメージ</span></li><li><span class="cmd-name">業炎弾</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">敵に28ダメージ</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">ホーリーナイト</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 12 / DEF 11 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">聖剣</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に11ダメージ</span></li><li><span class="cmd-name">聖騎士の誓い</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+7</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">ヒーラースライム</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 6 / DEF 6 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">癒やしの粘液</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">HP8回復</span></li><li><span class="cmd-name">体当たり</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に7ダメージ</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">守護騎士</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 9 / DEF 13 / 成長 0.8</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">盾構え</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック9</span></li><li><span class="cmd-name">シールドバッシュ</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に13ダメージ</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">アサシン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 15 / DEF 3 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">背後刺し</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">貫通11ダメージ</span></li><li><span class="cmd-name">毒刃</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">貫通17ダメージ</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">妖術師</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 10 / DEF 5 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">呪いの目</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵攻撃力-5</span></li><li><span class="cmd-name">闇の波動</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に14ダメージ</span></li></ul>
+</div><div class="mon e-none">
+  <div class="mon-head"><span class="mon-name">マナイーター</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">無</span> ATK 8 / DEF 4 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">魔力吸収</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">エネルギー+2</span></li><li><span class="cmd-name">噛みつき</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に8ダメージ</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">プリーステス</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 7 / DEF 7 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">祈り</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">HP10回復</span></li><li><span class="cmd-name">聖なる加護</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">与ダメージ+6</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">ストーンガード</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 5 / DEF 16 / 成長 0.7</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">岩の壁</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック11</span></li><li><span class="cmd-name">圧殺</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に12ダメージ</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">シャドウ</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 13 / DEF 4 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">影縫い</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">貫通10ダメージ</span></li><li><span class="cmd-name">闇討ち</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に16ダメージ</span></li></ul>
+</div><div class="mon e-ice">
+  <div class="mon-head"><span class="mon-name">氷壁の精</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">氷</span> ATK 6 / DEF 12 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">氷の盾</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック10</span></li><li><span class="cmd-name">凍てつく息</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵攻撃力-6</span></li></ul>
+</div><div class="mon e-fire">
+  <div class="mon-head"><span class="mon-name">バーサーカー</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">炎</span> ATK 17 / DEF 4 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">乱打</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">戦いの咆哮</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">エネルギー+2</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">ドルイド</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 9 / DEF 8 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">自然の恵み</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">HP9回復</span></li><li><span class="cmd-name">茨の鞭</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に14ダメージ</span></li></ul>
+</div><div class="mon e-wind">
+  <div class="mon-head"><span class="mon-name">雷神</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">風</span> ATK 16 / DEF 5 / 成長 0.9</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">裁きの雷</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">貫通12ダメージ</span></li><li><span class="cmd-name">雷鳴</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に18ダメージ</span></li></ul>
+</div><div class="mon e-light">
+  <div class="mon-head"><span class="mon-name">ヴァルキリー</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">光</span> ATK 13 / DEF 9 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">聖槍</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に12ダメージ</span></li><li><span class="cmd-name">天盾</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック8</span></li></ul>
+</div><div class="mon e-dark">
+  <div class="mon-head"><span class="mon-name">呪術師</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">闇</span> ATK 8 / DEF 6 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">衰弱の呪い</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵攻撃力-6</span></li><li><span class="cmd-name">骨の槍</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵に9ダメージ</span></li></ul>
+</div><div class="mon e-none">
+  <div class="mon-head"><span class="mon-name">錬金術師</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">無</span> ATK 7 / DEF 6 / 成長 1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">触媒生成</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">エネルギー+2</span></li><li><span class="cmd-name">治癒薬</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">HP12回復</span></li></ul>
+</div><div class="mon e-earth">
+  <div class="mon-head"><span class="mon-name">タイタン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">土</span> ATK 14 / DEF 14 / 成長 0.7</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">大地割り</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に20ダメージ</span></li><li><span class="cmd-name">巨壁</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">ブロック12</span></li></ul>
+</div><div class="mon e-ice">
+  <div class="mon-head"><span class="mon-name">セイレーン</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">氷</span> ATK 10 / DEF 6 / 成長 1.1</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">惑わしの歌</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">敵攻撃力-5</span></li><li><span class="cmd-name">水流弾</span> <span class="cmd-cost">コスト2</span><br><span class="cmd-eff">敵に15ダメージ</span></li></ul>
+</div><div class="mon e-none">
+  <div class="mon-head"><span class="mon-name">グリモワール</span><span class="mon-rarity">★</span></div>
+  <div class="mon-meta"><span class="tag">無</span> ATK 6 / DEF 5 / 成長 1.2</div>
+  <ul class="mon-cmds"><li><span class="cmd-name">詠唱</span> <span class="cmd-cost">コスト1</span><br><span class="cmd-eff">エネルギー+2</span></li><li><span class="cmd-name">禁呪</span> <span class="cmd-cost">コスト3</span><br><span class="cmd-eff">次のダメージ2倍</span></li></ul>
+</div></div>
 
   <h2 id="ref">参考タイトル</h2>
   <table>

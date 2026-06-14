@@ -57,24 +57,30 @@ func restart_run() -> void:
 
 func _build_map() -> void:
 	map_nodes = [
-		_battle_node(NodeType.BATTLE_ZAKO, "ゴブリン", 45, 6, 10, 25),
-		_battle_node(NodeType.BATTLE_ZAKO, "スケルトン", 50, 7, 11, 25),
+		_battle_node(NodeType.BATTLE_ZAKO, EnemyDatabase.random_zako(), 25),
+		_battle_node(NodeType.BATTLE_ZAKO, EnemyDatabase.random_zako(), 25),
 		_rest_node(),
-		_battle_node(NodeType.BATTLE_ELITE, "オーガ", 85, 11, 16, 50),
+		_battle_node(NodeType.BATTLE_ELITE, EnemyDatabase.random_elite(), 55),
 		_rest_node(),
-		_battle_node(NodeType.BATTLE_BOSS, "死の騎士", 150, 14, 22, 120),
+		_battle_node(NodeType.BATTLE_BOSS, EnemyDatabase.random_boss(), 120),
 	]
 
-func _battle_node(type: NodeType, enemy_name: String, hp: int, imin: int, imax: int, reward_gold: int) -> Dictionary:
+## EnemyDatabase の敵設定を、フロアに応じてスケールしたバトルノードに変換する。
+func _battle_node(type: NodeType, enemy: Dictionary, reward_gold: int) -> Dictionary:
 	var scale := 1.0 + 0.25 * float(current_floor - 1) # フロアが進むほど敵が強化される
+	var scaled_pattern: Array = []
+	for move in enemy["pattern"]:
+		scaled_pattern.append({
+			"type": move["type"],
+			"value": maxi(1, roundi(int(move["value"]) * scale)),
+		})
 	return {
 		"type": type,
-		"name": enemy_name,
-		"max_hp": roundi(hp * scale),
-		"intent_min": roundi(imin * scale),
-		"intent_max": roundi(imax * scale),
+		"name": enemy["name"],
+		"max_hp": roundi(int(enemy["max_hp"]) * scale),
+		"pattern": scaled_pattern,
 		"gold": reward_gold,
-		"is_boss": type == NodeType.BATTLE_BOSS,
+		"is_boss": enemy.get("is_boss", false),
 	}
 
 func _rest_node() -> Dictionary:

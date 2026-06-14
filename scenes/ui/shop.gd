@@ -109,6 +109,7 @@ func _on_rest() -> void:
 func _on_buy(monster: MonsterData, panel: PanelContainer) -> void:
 	if Run.gold < Run.SHOP_CARD_COST or not Run.can_add_card():
 		return
+	Audio.play_se("coin")
 	Run.gold -= Run.SHOP_CARD_COST
 	Run.add_card(monster)
 	panel.queue_free()

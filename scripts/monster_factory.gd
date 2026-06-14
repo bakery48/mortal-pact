@@ -88,6 +88,70 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 		_cmd("分裂の構え", 1, CommandData.Effect.BUFF_ATK, 3, "このターンの与ダメージ+3"),
 	]))
+	list.append(_monster("ドライアド", 8, 9, MonsterData.Element.EARTH, 1.0, [
+		_cmd("蔦縛り", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+		_cmd("生命の歌", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	]))
+	list.append(_monster("ワイバーン", 15, 5, MonsterData.Element.WIND, 1.0, [
+		_cmd("急降下", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+		_cmd("竜巻", 2, CommandData.Effect.DAMAGE, 19, "敵に19ダメージ"),
+	]))
+	list.append(_monster("バンシー", 12, 3, MonsterData.Element.DARK, 1.2, [
+		_cmd("怨嗟の叫び", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
+		_cmd("絶望", 2, CommandData.Effect.DAMAGE, 17, "敵に17ダメージ"),
+	]))
+	list.append(_monster("ゴーストファイア", 11, 2, MonsterData.Element.FIRE, 1.3, [
+		_cmd("鬼火", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
+		_cmd("焼尽", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
+	]))
+	list.append(_monster("トレント", 6, 14, MonsterData.Element.EARTH, 0.8, [
+		_cmd("枝打ち", 1, CommandData.Effect.DAMAGE, 7, "敵に7ダメージ"),
+		_cmd("大地の怒り", 2, CommandData.Effect.DAMAGE, 15, "敵に15ダメージ"),
+	]))
+	list.append(_monster("グリフォン", 14, 8, MonsterData.Element.WIND, 0.9, [
+		_cmd("鉤爪", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+		_cmd("天翔ける", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
+	]))
+	list.append(_monster("サキュバス", 11, 5, MonsterData.Element.DARK, 1.1, [
+		_cmd("魅了", 1, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+		_cmd("精気吸収", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+	]))
+	list.append(_monster("フェニックス", 13, 6, MonsterData.Element.FIRE, 1.0, [
+		_cmd("火の翼", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
+		_cmd("再生の焔", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
+	]))
+	list.append(_monster("クラーケン", 17, 9, MonsterData.Element.ICE, 0.8, [
+		_cmd("触手", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
+		_cmd("大渦", 3, CommandData.Effect.DAMAGE, 26, "敵に26ダメージ"),
+	]))
+	list.append(_monster("ミノタウロス", 16, 7, MonsterData.Element.EARTH, 0.9, [
+		_cmd("突進", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
+		_cmd("斧叩き", 2, CommandData.Effect.DAMAGE, 20, "敵に20ダメージ"),
+	]))
+	list.append(_monster("ピクシー", 5, 4, MonsterData.Element.LIGHT, 1.4, [
+		_cmd("妖精の粉", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
+		_cmd("光の矢", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+	]))
+	list.append(_monster("ヴァンパイア", 14, 6, MonsterData.Element.DARK, 1.0, [
+		_cmd("牙", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+		_cmd("血の宴", 2, CommandData.Effect.DAMAGE, 18, "敵に18ダメージ"),
+	]))
+	list.append(_monster("サンダーバード", 15, 4, MonsterData.Element.WIND, 1.1, [
+		_cmd("電撃", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+		_cmd("雷鳴", 2, CommandData.Effect.DAMAGE, 19, "敵に19ダメージ"),
+	]))
+	list.append(_monster("マーメイド", 9, 7, MonsterData.Element.ICE, 1.1, [
+		_cmd("水鞭", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("癒やしの歌", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
+	]))
+	list.append(_monster("デーモン", 18, 5, MonsterData.Element.FIRE, 0.8, [
+		_cmd("地獄爪", 1, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+		_cmd("業炎弾", 3, CommandData.Effect.DAMAGE, 28, "敵に28ダメージ"),
+	]))
+	list.append(_monster("ホーリーナイト", 12, 11, MonsterData.Element.LIGHT, 0.9, [
+		_cmd("聖剣", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
+		_cmd("聖騎士の誓い", 2, CommandData.Effect.BUFF_ATK, 7, "このターンの与ダメージ+7"),
+	]))
 
 	return list
 

@@ -5,6 +5,7 @@ extends Control
 
 func _ready() -> void:
 	_build_ui()
+	Audio.play_bgm("res://assets/audio/bgm_map.ogg")
 
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

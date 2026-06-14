@@ -52,6 +52,7 @@ func _ready() -> void:
 	deck.setup_from(Run.deck)
 	_spawn_enemy()
 	_start_player_turn()
+	Audio.play_bgm("res://assets/audio/bgm_battle.ogg")
 
 # --- UI 構築 ---------------------------------------------------------------
 
@@ -149,7 +150,9 @@ func _spawn_enemy() -> void:
 	enemy.enemy_name = ("【ボス】" if enc.get("is_boss", false) else "") + String(enc["name"])
 	enemy.max_hp = hp
 	enemy.hp = hp
+	enemy.set_pattern(enc.get("pattern", []))
 	_enemy_slot.add_child(enemy)
+	enemy.plan_next() # 最初の行動を予告
 
 func _start_player_turn() -> void:
 	if battle_over:
@@ -165,9 +168,7 @@ func _start_player_turn() -> void:
 			break
 		_add_card_to_hand(monster)
 
-	# 次の敵ターンの行動を予告。
-	var enc := Run.current_encounter
-	enemy.set_intent(randi_range(int(enc["intent_min"]), int(enc["intent_max"])))
+	# 敵の次の行動は敵ターン終了時に予告済み（plan_next）。
 	_refresh()
 
 func _add_card_to_hand(monster: MonsterData) -> void:
@@ -186,11 +187,13 @@ func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
 
 	energy -= cost
 	_apply_command(card.data, cmd)
+	Audio.play_se("attack" if cmd.effect == CommandData.Effect.DAMAGE else "select")
 
 	# 使用するたびに EXP（=成長速度分）を蓄積し、ライフサイクルを進める。
 	var monster_name := card.data.monster_name
 	var grew := card.data.gain_exp(card.data.growth_speed)
 	if grew and not card.data.is_dead():
+		Audio.play_se("grow")
 		_flash_message("%s は %s に成長した！" % [monster_name, card.data.stage_label()])
 
 	# 合体候補に選ばれていたカードなら選択を解除しておく。
@@ -229,14 +232,19 @@ func _on_end_turn_pressed() -> void:
 	_enemy_turn()
 
 func _enemy_turn() -> void:
-	# 敵が予告どおりに攻撃。
-	player_hp = max(0, player_hp - enemy.intent_damage)
+	# 自ターン開始でブロックをリセットし、予告した行動を実行。
+	enemy.reset_block()
+	var dmg := enemy.execute()
+	if dmg > 0:
+		player_hp = max(0, player_hp - dmg)
+		Audio.play_se("hit")
 	_refresh()
 	if player_hp <= 0:
 		_lose()
 		return
 
-	# 手札を片付けて次のプレイヤーターンへ。
+	# 次の行動を予告し、手札を片付けて次のプレイヤーターンへ。
+	enemy.plan_next()
 	deck.discard_hand()
 	_clear_hand_nodes()
 	_start_player_turn()
@@ -294,6 +302,7 @@ func _on_fuse_pressed() -> void:
 	deck.hand.append(child)
 	_add_card_to_hand(child)
 
+	Audio.play_se("fuse")
 	_flash_message("合体！ %s（%s %s）が誕生した" % [child.monster_name, child.rarity_label(), child.element_label()])
 	_update_fuse_button()
 	_refresh()
@@ -330,6 +339,7 @@ func _win() -> void:
 	_message_label.text = "勝利！"
 	_message_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
 	_end_battle_input()
+	Audio.play_se("win")
 	# 生き残ったデッキとHPをランへ書き戻し、報酬画面へ。
 	await get_tree().create_timer(1.0).timeout
 	Run.on_battle_won(deck.surviving_cards(), player_hp)
@@ -339,6 +349,7 @@ func _lose() -> void:
 	_message_label.text = "敗北..."
 	_message_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5))
 	_end_battle_input()
+	Audio.play_se("lose")
 	await get_tree().create_timer(1.0).timeout
 	Run.on_battle_lost()
 

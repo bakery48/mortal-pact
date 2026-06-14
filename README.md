@@ -43,8 +43,13 @@
 - [x] フロアを進むごとに敵が強化される周回構造
 - [x] デッキはカード実体を共有 → 成長・老化・子孫がラン全体で引き継がれる
 
-### ⬜ 今後（設計書のフェーズ5）
-- コンテンツ拡充（魔物20種以上 / 敵・ボスの多様化 / BGM・SE）
+### ✅ フェーズ5：コンテンツ拡充（実装済み）
+- [x] 魔物の種類（カタログ22種、報酬・ショップに登場）
+- [x] 敵の多様化（行動パターン：攻撃/防御/強化/回復、敵ブロック処理）
+- [x] ボスの実装（複数行動パターンを持つ強敵3種）
+- [x] BGM・SE（効果音は手続き生成で外部アセット無しでも再生）
+
+これで設計書の MVP（フェーズ1〜5）が一通り実装済みです。
 
 ---
 
@@ -97,14 +102,20 @@ res://
 │   ├── command_data.gd     # コマンド（技）リソース定義
 │   ├── monster_data.gd     # 魔物カードリソース＋ライフサイクル
 │   ├── deck_manager.gd     # 山札/手札/捨札の操作
-│   ├── monster_factory.gd  # 初期デッキ・報酬プール・合体ロジック
-│   └── run_state.gd        # ラン全体の状態管理（autoload "Run"）
+│   ├── monster_factory.gd  # 初期デッキ・魔物カタログ(22種)・合体ロジック
+│   ├── enemy_database.gd   # 敵・ボスのカタログ（行動パターン付き）
+│   ├── run_state.gd        # ラン全体の状態管理（autoload "Run"）
+│   └── audio_manager.gd    # BGM/SE 管理（autoload "Audio"、SEは手続き生成）
 ├── resources/
 │   └── monsters/           # 魔物データ（.tres カスタムリソース）
 └── assets/
-    ├── sprites/            # （未配置）
-    └── audio/              # （未配置）
+    ├── sprites/            # （ドット絵を配置予定）
+    └── audio/              # bgm_battle.ogg / bgm_map.ogg を置くとBGM再生
 ```
+
+### サウンド
+- 効果音(SE)は `audio_manager.gd` が起動時に波形を生成するため、アセット無しでも鳴る
+- BGMは `assets/audio/bgm_battle.ogg` `assets/audio/bgm_map.ogg` を置けば自動再生（無ければ無音）
 
 ### データ管理
 - 魔物・コマンドは `Resource` を継承したカスタムリソース（`MonsterData` / `CommandData`）

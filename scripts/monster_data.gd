@@ -110,8 +110,9 @@ func _update_stage() -> void:
 func is_dead() -> bool:
 	return stage == Stage.DEAD
 
-func is_adult() -> bool:
-	return stage == Stage.ADULT
+## 合体の親に選べる段階（成体・老体）。
+func can_fuse() -> bool:
+	return stage == Stage.ADULT or stage == Stage.ELDER
 
 func stage_label() -> String:
 	return String(STAGE_LABEL[stage])

@@ -68,10 +68,10 @@ func _build() -> void:
 	# 合体候補の選択ボタン（成体のみ有効）
 	_select_button = Button.new()
 	_select_button.toggle_mode = true
-	if data.is_adult():
+	if data.can_fuse():
 		_select_button.text = "合体候補にする"
 	else:
-		_select_button.text = "合体は成体のみ"
+		_select_button.text = "合体は成体/老体のみ"
 		_select_button.disabled = true
 	_select_button.pressed.connect(func() -> void: fusion_toggled.emit(self))
 	vbox.add_child(_select_button)

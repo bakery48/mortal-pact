@@ -69,8 +69,13 @@ func _to_db(v: float) -> float:
 func _apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, _to_db(master_volume)) # マスターバス(0)
 	_bgm_player.volume_db = _to_db(bgm_volume)
-	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-	DisplayServer.window_set_mode(mode)
+	_apply_window_mode()
+
+## ウィンドウのフルスクリーン/ウィンドウ表示を反映する。
+func _apply_window_mode() -> void:
+	var win := get_window()
+	if win != null:
+		win.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED
 
 func set_master_volume(v: float) -> void:
 	master_volume = clampf(v, 0.0, 1.0)
@@ -88,8 +93,7 @@ func set_se_volume(v: float) -> void:
 
 func set_fullscreen(value: bool) -> void:
 	fullscreen = value
-	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-	DisplayServer.window_set_mode(mode)
+	_apply_window_mode()
 	save_settings()
 
 func load_settings() -> void:

@@ -33,6 +33,10 @@ var _pile_label: Label
 var _message_label: Label
 var _event_label: Label
 var _end_turn_button: Button
+var _fuse_button: Button
+
+## 合体候補として選択中のカード（最大2枚）。
+var _fusion_selection: Array[CardUI] = []
 
 func _ready() -> void:
 	_build_ui()
@@ -98,6 +102,12 @@ func _build_ui() -> void:
 	_pile_label = Label.new()
 	status.add_child(_pile_label)
 
+	_fuse_button = Button.new()
+	_fuse_button.disabled = true
+	_fuse_button.pressed.connect(_on_fuse_pressed)
+	status.add_child(_fuse_button)
+	_update_fuse_button()
+
 	_end_turn_button = Button.new()
 	_end_turn_button.text = "ターン終了"
 	_end_turn_button.pressed.connect(_on_end_turn_pressed)
@@ -148,6 +158,7 @@ func _add_card_to_hand(monster: MonsterData) -> void:
 	card.data = monster
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
+	card.fusion_toggled.connect(_on_fusion_toggled)
 
 func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
 	if battle_over:
@@ -159,11 +170,14 @@ func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
 	energy -= cost
 	_apply_command(card.data, cmd)
 
-	# 使用するたびに EXP を蓄積し、ライフサイクルを進める。
+	# 使用するたびに EXP（=成長速度分）を蓄積し、ライフサイクルを進める。
 	var monster_name := card.data.monster_name
-	var grew := card.data.gain_exp(1)
+	var grew := card.data.gain_exp(card.data.growth_speed)
 	if grew and not card.data.is_dead():
 		_flash_message("%s は %s に成長した！" % [monster_name, card.data.stage_label()])
+
+	# 合体候補に選ばれていたカードなら選択を解除しておく。
+	_deselect_fusion(card)
 
 	if card.data.is_dead():
 		# 消滅：デッキから完全に除外し、捨札にも戻さない。
@@ -211,8 +225,61 @@ func _enemy_turn() -> void:
 	_start_player_turn()
 
 func _clear_hand_nodes() -> void:
+	# 合体候補の選択も解除（カードノードが破棄されるため）。
+	_fusion_selection.clear()
 	for child in _hand_container.get_children():
 		child.queue_free()
+	_update_fuse_button()
+
+# --- 合体（子孫生成） -------------------------------------------------------
+
+func _on_fusion_toggled(card: CardUI) -> void:
+	if battle_over:
+		return
+	if card in _fusion_selection:
+		_deselect_fusion(card)
+	elif _fusion_selection.size() < 2:
+		_fusion_selection.append(card)
+		card.set_fusion_selected(true)
+	else:
+		# すでに2枚選択済み。トグルを元に戻す。
+		card.set_fusion_selected(false)
+	_update_fuse_button()
+
+func _deselect_fusion(card: CardUI) -> void:
+	if card in _fusion_selection:
+		_fusion_selection.erase(card)
+		card.set_fusion_selected(false)
+		_update_fuse_button()
+
+func _update_fuse_button() -> void:
+	if _fuse_button == null:
+		return
+	_fuse_button.text = "合体 (%d/2)" % _fusion_selection.size()
+	_fuse_button.disabled = battle_over or _fusion_selection.size() != 2
+
+func _on_fuse_pressed() -> void:
+	if battle_over or _fusion_selection.size() != 2:
+		return
+	var card_a := _fusion_selection[0]
+	var card_b := _fusion_selection[1]
+
+	var child := MonsterFactory.fuse(card_a.data, card_b.data)
+
+	# 両親はデッキから消滅。
+	deck.remove_card(card_a.data)
+	deck.remove_card(card_b.data)
+	card_a.queue_free()
+	card_b.queue_free()
+	_fusion_selection.clear()
+
+	# 子孫カードがデッキ（手札）に加わる。
+	deck.hand.append(child)
+	_add_card_to_hand(child)
+
+	_flash_message("合体！ %s（%s %s）が誕生した" % [child.monster_name, child.rarity_label(), child.element_label()])
+	_update_fuse_button()
+	_refresh()
 
 # --- 表示更新・終了処理 -----------------------------------------------------
 
@@ -255,6 +322,7 @@ func _lose() -> void:
 
 func _end_battle_input() -> void:
 	_end_turn_button.disabled = true
+	_fuse_button.disabled = true
 	for child in _hand_container.get_children():
 		if child is CardUI:
 			(child as CardUI).disable_all()

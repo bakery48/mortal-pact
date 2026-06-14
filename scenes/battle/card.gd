@@ -6,13 +6,17 @@ extends PanelContainer
 ## 表示は data の現在の成長段階に応じた実効値（effective_*）を反映する。
 
 signal command_selected(card: CardUI, command: CommandData)
+## 合体候補としての選択トグル（成体のみ選択可能）。
+signal fusion_toggled(card: CardUI)
 
 var data: MonsterData
 
 var _command_buttons: Array[Button] = []
+var _select_button: Button
+var _selected := false
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(190, 270)
+	custom_minimum_size = Vector2(190, 300)
 	if data != null:
 		_build()
 
@@ -29,12 +33,13 @@ func _build() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "%s %s" % [data.monster_name, data.stage_label()]
+	title.text = "%s %s %s" % [data.rarity_label(), data.monster_name, data.stage_label()]
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(title)
 
 	var stats := Label.new()
-	stats.text = "ATK:%d  DEF:%d" % [data.effective_attack(), data.effective_defense()]
+	stats.text = "属性:%s  ATK:%d DEF:%d" % [data.element_label(), data.effective_attack(), data.effective_defense()]
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(stats)
 
@@ -58,6 +63,17 @@ func _build() -> void:
 		vbox.add_child(btn)
 		_command_buttons.append(btn)
 
+	# 合体候補の選択ボタン（成体のみ有効）
+	_select_button = Button.new()
+	_select_button.toggle_mode = true
+	if data.is_adult():
+		_select_button.text = "合体候補にする"
+	else:
+		_select_button.text = "合体は成体のみ"
+		_select_button.disabled = true
+	_select_button.pressed.connect(func() -> void: fusion_toggled.emit(self))
+	vbox.add_child(_select_button)
+
 ## コマンドの効果説明を、現在の段階の実効威力で生成する。
 func _command_text(cmd: CommandData) -> String:
 	var p := data.effective_power(cmd)
@@ -75,7 +91,17 @@ func refresh(energy: int) -> void:
 	for btn in _command_buttons:
 		btn.disabled = int(btn.get_meta("cost")) > energy
 
+## 合体候補としての選択状態を反映する（battle_manager から呼ばれる）。
+func set_fusion_selected(value: bool) -> void:
+	_selected = value
+	if _select_button != null:
+		_select_button.button_pressed = value
+		_select_button.text = "✔ 合体候補" if value else "合体候補にする"
+	modulate = Color(1.0, 0.9, 0.4) if value else Color.WHITE
+
 ## 勝敗確定時など、入力を完全に止める。
 func disable_all() -> void:
 	for btn in _command_buttons:
 		btn.disabled = true
+	if _select_button != null:
+		_select_button.disabled = true

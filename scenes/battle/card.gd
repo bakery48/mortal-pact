@@ -76,12 +76,12 @@ func _build() -> void:
 	_select_button.pressed.connect(func() -> void: fusion_toggled.emit(self))
 	vbox.add_child(_select_button)
 
-## コマンドの効果説明を、現在の段階の実効威力で生成する。
+## コマンドの効果説明を、現在の段階の実効値（威力＋ステータス補正）で生成する。
 func _command_text(cmd: CommandData) -> String:
 	var p := data.effective_power(cmd)
 	match cmd.effect:
 		CommandData.Effect.DAMAGE:
-			return "敵に%dダメージ%s" % [p, _affinity_mark()]
+			return "敵に%dダメージ%s" % [data.command_value(cmd), _affinity_mark()]
 		CommandData.Effect.BUFF_ATK:
 			return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT:
@@ -89,9 +89,9 @@ func _command_text(cmd: CommandData) -> String:
 		CommandData.Effect.HEAL:
 			return "HPを%d回復" % p
 		CommandData.Effect.GUARD:
-			return "ブロック%dを得る" % p
+			return "ブロック%dを得る" % data.command_value(cmd)
 		CommandData.Effect.PIERCE:
-			return "防御無視で%dダメージ%s" % [p, _affinity_mark()]
+			return "防御無視で%dダメージ%s" % [data.command_value(cmd), _affinity_mark()]
 		CommandData.Effect.WEAKEN:
 			return "敵の攻撃力-%d" % p
 		CommandData.Effect.ENERGY:

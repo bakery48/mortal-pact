@@ -222,6 +222,26 @@ func effective_cost(cmd: CommandData) -> int:
 func effective_power(cmd: CommandData) -> int:
 	return max(0, roundi(cmd.power * _mult()))
 
+## ダメージ系コマンドに上乗せされる ATK 由来ボーナス（実効ATKの半分）。
+func damage_bonus() -> int:
+	return effective_attack() / 2
+
+## ガード系コマンドに上乗せされる DEF 由来ボーナス（実効DEFの半分）。
+func guard_bonus() -> int:
+	return effective_defense() / 2
+
+## コマンドの実効値（威力＋ステータス補正）を効果種別に応じて返す。
+func command_value(cmd: CommandData) -> int:
+	match cmd.effect:
+		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
+			return effective_power(cmd) + damage_bonus()
+		CommandData.Effect.GUARD:
+			return effective_power(cmd) + guard_bonus()
+		CommandData.Effect.ENERGY:
+			return cmd.power # エネルギーは段階・ステータス補正なし
+		_:
+			return effective_power(cmd)
+
 # --- EXP バー表示用 ---------------------------------------------------------
 
 func _next_stage() -> Stage:

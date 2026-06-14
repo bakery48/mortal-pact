@@ -237,7 +237,8 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 	var p := card_data.effective_power(cmd)
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			var base := p + atk_buff
+			# 威力＋ATK補正にバフ・2倍・属性相性を反映。
+			var base := card_data.command_value(cmd) + atk_buff
 			if double_next:
 				base *= 2
 				double_next = false
@@ -255,7 +256,7 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 		CommandData.Effect.HEAL:
 			player_hp = mini(player_max_hp, player_hp + p)
 		CommandData.Effect.GUARD:
-			player_block += p
+			player_block += card_data.command_value(cmd) # 威力＋DEF補正
 		CommandData.Effect.WEAKEN:
 			enemy.apply_weaken(p)
 		CommandData.Effect.ENERGY:

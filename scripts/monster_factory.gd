@@ -153,6 +153,80 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("聖騎士の誓い", 2, CommandData.Effect.BUFF_ATK, 7, "このターンの与ダメージ+7"),
 	]))
 
+	# --- 役割特化（新コマンド効果）---
+	list.append(_monster("ヒーラースライム", 6, 6, MonsterData.Element.LIGHT, 1.2, [
+		_cmd("癒やしの粘液", 1, CommandData.Effect.HEAL, 8, "HPを8回復"),
+		_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 7, "敵に7ダメージ"),
+	]))
+	list.append(_monster("守護騎士", 9, 13, MonsterData.Element.EARTH, 0.8, [
+		_cmd("盾構え", 1, CommandData.Effect.GUARD, 9, "ブロック9を得る"),
+		_cmd("シールドバッシュ", 2, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
+	]))
+	list.append(_monster("アサシン", 15, 3, MonsterData.Element.DARK, 1.1, [
+		_cmd("背後刺し", 1, CommandData.Effect.PIERCE, 11, "防御無視で11ダメージ"),
+		_cmd("毒刃", 2, CommandData.Effect.PIERCE, 17, "防御無視で17ダメージ"),
+	]))
+	list.append(_monster("妖術師", 10, 5, MonsterData.Element.DARK, 1.0, [
+		_cmd("呪いの目", 1, CommandData.Effect.WEAKEN, 5, "敵の攻撃力-5"),
+		_cmd("闇の波動", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+	]))
+	list.append(_monster("マナイーター", 8, 4, MonsterData.Element.NONE, 1.1, [
+		_cmd("魔力吸収", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
+		_cmd("噛みつき", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+	]))
+	list.append(_monster("プリーステス", 7, 7, MonsterData.Element.LIGHT, 1.0, [
+		_cmd("祈り", 1, CommandData.Effect.HEAL, 10, "HPを10回復"),
+		_cmd("聖なる加護", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
+	]))
+	list.append(_monster("ストーンガード", 5, 16, MonsterData.Element.EARTH, 0.7, [
+		_cmd("岩の壁", 1, CommandData.Effect.GUARD, 11, "ブロック11を得る"),
+		_cmd("圧殺", 2, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+	]))
+	list.append(_monster("シャドウ", 13, 4, MonsterData.Element.DARK, 1.2, [
+		_cmd("影縫い", 1, CommandData.Effect.PIERCE, 10, "防御無視で10ダメージ"),
+		_cmd("闇討ち", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
+	]))
+	list.append(_monster("氷壁の精", 6, 12, MonsterData.Element.ICE, 0.9, [
+		_cmd("氷の盾", 1, CommandData.Effect.GUARD, 10, "ブロック10を得る"),
+		_cmd("凍てつく息", 2, CommandData.Effect.WEAKEN, 6, "敵の攻撃力-6"),
+	]))
+	list.append(_monster("バーサーカー", 17, 4, MonsterData.Element.FIRE, 0.9, [
+		_cmd("乱打", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+		_cmd("戦いの咆哮", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
+	]))
+	list.append(_monster("ドルイド", 9, 8, MonsterData.Element.EARTH, 1.0, [
+		_cmd("自然の恵み", 1, CommandData.Effect.HEAL, 9, "HPを9回復"),
+		_cmd("茨の鞭", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+	]))
+	list.append(_monster("雷神", 16, 5, MonsterData.Element.WIND, 0.9, [
+		_cmd("裁きの雷", 1, CommandData.Effect.PIERCE, 12, "防御無視で12ダメージ"),
+		_cmd("雷鳴", 2, CommandData.Effect.DAMAGE, 18, "敵に18ダメージ"),
+	]))
+	list.append(_monster("ヴァルキリー", 13, 9, MonsterData.Element.LIGHT, 1.0, [
+		_cmd("聖槍", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
+		_cmd("天盾", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
+	]))
+	list.append(_monster("呪術師", 8, 6, MonsterData.Element.DARK, 1.1, [
+		_cmd("衰弱の呪い", 1, CommandData.Effect.WEAKEN, 6, "敵の攻撃力-6"),
+		_cmd("骨の槍", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+	]))
+	list.append(_monster("錬金術師", 7, 6, MonsterData.Element.NONE, 1.0, [
+		_cmd("触媒生成", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
+		_cmd("治癒薬", 2, CommandData.Effect.HEAL, 12, "HPを12回復"),
+	]))
+	list.append(_monster("タイタン", 14, 14, MonsterData.Element.EARTH, 0.7, [
+		_cmd("大地割り", 2, CommandData.Effect.DAMAGE, 20, "敵に20ダメージ"),
+		_cmd("巨壁", 1, CommandData.Effect.GUARD, 12, "ブロック12を得る"),
+	]))
+	list.append(_monster("セイレーン", 10, 6, MonsterData.Element.ICE, 1.1, [
+		_cmd("惑わしの歌", 1, CommandData.Effect.WEAKEN, 5, "敵の攻撃力-5"),
+		_cmd("水流弾", 2, CommandData.Effect.DAMAGE, 15, "敵に15ダメージ"),
+	]))
+	list.append(_monster("グリモワール", 6, 5, MonsterData.Element.NONE, 1.2, [
+		_cmd("詠唱", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
+		_cmd("禁呪", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
+	]))
+
 	return list
 
 ## プールからランダムに count 体を選んで返す。

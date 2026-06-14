@@ -87,8 +87,8 @@ func plan_next() -> void:
 		_pattern_index += 1
 		intent_type = int(move["type"]) as Intent
 		var base := int(move["value"])
-		# 攻撃は現在の攻撃力上昇分を上乗せして予告する。
-		intent_value = base + attack_bonus if intent_type == Intent.ATTACK else base
+		# 攻撃は現在の攻撃力補正を上乗せして予告する（弱体化で負にもなり得る）。
+		intent_value = maxi(0, base + attack_bonus) if intent_type == Intent.ATTACK else base
 	_update()
 
 ## 予告した行動を実行する。プレイヤーへ与えるダメージを返す（非攻撃なら0）。
@@ -119,6 +119,18 @@ func take_damage(amount: int) -> void:
 		block -= absorbed
 		remaining -= absorbed
 	hp = maxi(0, hp - remaining)
+	_update()
+
+## ブロックを無視してダメージを与える（貫通攻撃）。
+func take_damage_pierce(amount: int) -> void:
+	hp = maxi(0, hp - amount)
+	_update()
+
+## 攻撃力を下げる（弱体化）。予告中の攻撃にも即時反映する。
+func apply_weaken(amount: int) -> void:
+	attack_bonus -= amount
+	if intent_type == Intent.ATTACK:
+		intent_value = maxi(0, intent_value - amount)
 	_update()
 
 func is_dead() -> bool:

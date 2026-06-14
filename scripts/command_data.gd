@@ -8,6 +8,11 @@ enum Effect {
 	DAMAGE,      ## 敵に power ダメージ（atk_buff / 次2倍の影響を受ける）
 	BUFF_ATK,    ## このターンの与ダメージに +power の補正
 	DOUBLE_NEXT, ## 次に使うダメージコマンドを2倍にする
+	HEAL,        ## プレイヤーの HP を power 回復
+	GUARD,       ## プレイヤーがブロック power を得る（敵の攻撃を軽減）
+	PIERCE,      ## 敵のブロックを無視して power ダメージ
+	WEAKEN,      ## 敵の攻撃力を power 下げる
+	ENERGY,      ## このターンのエネルギーを power 回復
 }
 
 @export var command_name: String = "コマンド"

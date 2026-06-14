@@ -84,6 +84,16 @@ func _command_text(cmd: CommandData) -> String:
 			return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT:
 			return "次のダメージを2倍にする"
+		CommandData.Effect.HEAL:
+			return "HPを%d回復" % p
+		CommandData.Effect.GUARD:
+			return "ブロック%dを得る" % p
+		CommandData.Effect.PIERCE:
+			return "防御無視で%dダメージ" % p
+		CommandData.Effect.WEAKEN:
+			return "敵の攻撃力-%d" % p
+		CommandData.Effect.ENERGY:
+			return "エネルギー+%d" % cmd.power
 	return cmd.description
 
 ## 現在のエネルギーに応じて、払えないコマンドのボタンを無効化する。

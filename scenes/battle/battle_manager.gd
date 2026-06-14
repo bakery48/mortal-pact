@@ -20,6 +20,8 @@ var energy := MAX_ENERGY
 var atk_buff := 0
 ## 次のダメージコマンドを2倍にするフラグ（狂化）。
 var double_next := false
+## プレイヤーのブロック（敵の攻撃を軽減）。プレイヤーターン開始でリセット。
+var player_block := 0
 var battle_over := false
 
 var enemy: EnemyUI
@@ -160,6 +162,7 @@ func _start_player_turn() -> void:
 	energy = MAX_ENERGY
 	atk_buff = 0
 	double_next = false
+	player_block = 0
 
 	# 手札を HAND_SIZE まで補充。
 	for i in range(HAND_SIZE):
@@ -214,17 +217,29 @@ func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
 	_refresh()
 
 func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
+	var p := card_data.effective_power(cmd)
 	match cmd.effect:
-		CommandData.Effect.DAMAGE:
-			var dmg := card_data.effective_power(cmd) + atk_buff
+		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
+			var dmg := p + atk_buff
 			if double_next:
 				dmg *= 2
 				double_next = false
-			enemy.take_damage(dmg)
+			if cmd.effect == CommandData.Effect.PIERCE:
+				enemy.take_damage_pierce(dmg)
+			else:
+				enemy.take_damage(dmg)
 		CommandData.Effect.BUFF_ATK:
-			atk_buff += card_data.effective_power(cmd)
+			atk_buff += p
 		CommandData.Effect.DOUBLE_NEXT:
 			double_next = true
+		CommandData.Effect.HEAL:
+			player_hp = mini(player_max_hp, player_hp + p)
+		CommandData.Effect.GUARD:
+			player_block += p
+		CommandData.Effect.WEAKEN:
+			enemy.apply_weaken(p)
+		CommandData.Effect.ENERGY:
+			energy += cmd.power # エネルギーは段階補正なしの素の値
 
 func _on_end_turn_pressed() -> void:
 	if battle_over:
@@ -236,8 +251,12 @@ func _enemy_turn() -> void:
 	enemy.reset_block()
 	var dmg := enemy.execute()
 	if dmg > 0:
-		player_hp = max(0, player_hp - dmg)
-		Audio.play_se("hit")
+		# プレイヤーのブロックで軽減する。
+		var actual := max(0, dmg - player_block)
+		player_block = max(0, player_block - dmg)
+		if actual > 0:
+			player_hp = max(0, player_hp - actual)
+			Audio.play_se("hit")
 	_refresh()
 	if player_hp <= 0:
 		_lose()
@@ -318,7 +337,10 @@ func _flash_message(text: String) -> void:
 	tween.tween_property(_event_label, "modulate:a", 0.0, 0.8)
 
 func _refresh() -> void:
-	_hp_label.text = "プレイヤー HP: %d / %d" % [player_hp, player_max_hp]
+	var hp_text := "プレイヤー HP: %d / %d" % [player_hp, player_max_hp]
+	if player_block > 0:
+		hp_text += "  🛡%d" % player_block
+	_hp_label.text = hp_text
 	_energy_label.text = "⚡ エネルギー: %d / %d" % [energy, MAX_ENERGY]
 
 	var buff_text := ""

@@ -24,6 +24,6 @@ script = ExtResource("1_monster")
 monster_name = "インプ"
 attack = 10
 defense = 5
-stage = "成体"
+stage = 0
 exp = 0
 commands = [SubResource("cmd_scratch"), SubResource("cmd_taunt")]

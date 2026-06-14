@@ -31,6 +31,7 @@ var _energy_label: Label
 var _buff_label: Label
 var _pile_label: Label
 var _message_label: Label
+var _event_label: Label
 var _end_turn_button: Button
 
 func _ready() -> void:
@@ -102,6 +103,13 @@ func _build_ui() -> void:
 	_end_turn_button.pressed.connect(_on_end_turn_pressed)
 	status.add_child(_end_turn_button)
 
+	# 成長・消滅などのイベント通知（一定時間でフェードアウト）
+	_event_label = Label.new()
+	_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_event_label.add_theme_font_size_override("font_size", 20)
+	_event_label.modulate.a = 0.0
+	main.add_child(_event_label)
+
 	# 手札エリア（下部・中央寄せ）
 	_hand_container = HBoxContainer.new()
 	_hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -144,14 +152,26 @@ func _add_card_to_hand(monster: MonsterData) -> void:
 func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
 	if battle_over:
 		return
-	if energy < cmd.cost:
+	var cost := card.data.effective_cost(cmd)
+	if energy < cost:
 		return
 
-	energy -= cmd.cost
-	_apply_command(cmd)
+	energy -= cost
+	_apply_command(card.data, cmd)
 
-	# 使用したカードは捨札へ送り、手札から取り除く。
-	deck.discard_card(card.data)
+	# 使用するたびに EXP を蓄積し、ライフサイクルを進める。
+	var monster_name := card.data.monster_name
+	var grew := card.data.gain_exp(1)
+	if grew and not card.data.is_dead():
+		_flash_message("%s は %s に成長した！" % [monster_name, card.data.stage_label()])
+
+	if card.data.is_dead():
+		# 消滅：デッキから完全に除外し、捨札にも戻さない。
+		deck.remove_card(card.data)
+		_flash_message("%s は老いて消滅した…" % monster_name)
+	else:
+		# 通常使用：捨札へ送る。
+		deck.discard_card(card.data)
 	card.queue_free()
 
 	if enemy.is_dead():
@@ -159,16 +179,16 @@ func _on_command_selected(card: CardUI, cmd: CommandData) -> void:
 		return
 	_refresh()
 
-func _apply_command(cmd: CommandData) -> void:
+func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 	match cmd.effect:
 		CommandData.Effect.DAMAGE:
-			var dmg := cmd.power + atk_buff
+			var dmg := card_data.effective_power(cmd) + atk_buff
 			if double_next:
 				dmg *= 2
 				double_next = false
 			enemy.take_damage(dmg)
 		CommandData.Effect.BUFF_ATK:
-			atk_buff += cmd.power
+			atk_buff += card_data.effective_power(cmd)
 		CommandData.Effect.DOUBLE_NEXT:
 			double_next = true
 
@@ -195,6 +215,14 @@ func _clear_hand_nodes() -> void:
 		child.queue_free()
 
 # --- 表示更新・終了処理 -----------------------------------------------------
+
+## 画面中央下にイベント文を表示し、しばらくしてフェードアウトさせる。
+func _flash_message(text: String) -> void:
+	_event_label.text = text
+	_event_label.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_interval(1.2)
+	tween.tween_property(_event_label, "modulate:a", 0.0, 0.8)
 
 func _refresh() -> void:
 	_hp_label.text = "プレイヤー HP: %d / %d" % [player_hp, player_max_hp]

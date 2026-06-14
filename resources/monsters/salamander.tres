@@ -24,6 +24,6 @@ script = ExtResource("1_monster")
 monster_name = "サラマンダー"
 attack = 14
 defense = 4
-stage = "成体"
+stage = 0
 exp = 0
 commands = [SubResource("cmd_fang"), SubResource("cmd_blaze")]

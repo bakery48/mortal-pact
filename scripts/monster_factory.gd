@@ -20,7 +20,8 @@ static func _monster(name: String, atk: int, def: int, cmds: Array[CommandData])
 	m.monster_name = name
 	m.attack = atk
 	m.defense = def
-	m.stage = "成体"
+	m.stage = MonsterData.Stage.INFANT # 生まれたて（幼体）から育てる
+	m.exp = 0
 	m.commands = cmds
 	return m
 

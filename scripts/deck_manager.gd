@@ -56,6 +56,12 @@ func discard_card(card: MonsterData) -> void:
 	hand.erase(card)
 	discard_pile.append(card)
 
+## 消滅した魔物をデッキから完全に除外する（捨札にも戻さない）。
+func remove_card(card: MonsterData) -> void:
+	hand.erase(card)
+	draw_pile.erase(card)
+	discard_pile.erase(card)
+
 ## ターン終了時、手札に残ったカードをまとめて捨札へ。
 func discard_hand() -> void:
 	for card in hand:

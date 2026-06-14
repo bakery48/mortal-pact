@@ -141,24 +141,36 @@ func reset_block() -> void:
 	block = 0
 	_update()
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int) -> int:
 	var remaining := roundi(amount * status.damage_multiplier()) # 炎上中は被ダメ増加
 	if block > 0:
 		var absorbed := mini(block, remaining)
 		block -= absorbed
 		remaining -= absorbed
+	var before := hp
 	hp = maxi(0, hp - remaining)
 	_update()
+	return before - hp
 
 ## ブロックを無視してダメージを与える（貫通攻撃）。
-func take_damage_pierce(amount: int) -> void:
+func take_damage_pierce(amount: int) -> int:
+	var before := hp
 	hp = maxi(0, hp - roundi(amount * status.damage_multiplier()))
 	_update()
+	return before - hp
 
 ## 毒など、ブロック・炎上補正を無視する固定ダメージ。
-func take_fixed(amount: int) -> void:
+func take_fixed(amount: int) -> int:
+	var before := hp
 	hp = maxi(0, hp - amount)
 	_update()
+	return before - hp
+
+## 被弾時に赤く点滅する。
+func flash_hit() -> void:
+	modulate = Color(1.0, 0.45, 0.45)
+	var t := create_tween()
+	t.tween_property(self, "modulate", Color.WHITE, 0.25)
 
 func heal(amount: int) -> void:
 	hp = mini(max_hp, hp + amount)

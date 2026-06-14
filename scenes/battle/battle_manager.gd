@@ -42,6 +42,11 @@ var _fuse_button: Button
 ## 合体候補として選択中のモンスター（最大2体）。
 var _fusion_selection: Array[MonsterData] = []
 
+# 演出用
+var _shake_target: Control
+var _shake_base := Vector2.ZERO
+var _shake_tween: Tween
+
 func _ready() -> void:
 	# ランから直接バトルを起動した場合のフォールバック（単体テスト用）。
 	if Run.deck.is_empty():
@@ -76,6 +81,7 @@ func _build_ui() -> void:
 	root.add_theme_constant_override("margin_top", 16)
 	root.add_theme_constant_override("margin_bottom", 16)
 	add_child(root)
+	_shake_target = root # 画面シェイク対象
 
 	var main := VBoxContainer.new()
 	main.add_theme_constant_override("separation", 12)
@@ -169,9 +175,11 @@ func _start_player_turn() -> void:
 	var pt := player_status.tick_turn()
 	if pt.poison > 0:
 		player_hp = maxi(0, player_hp - int(pt.poison))
-		_flash_message("毒で %d ダメージ" % int(pt.poison))
+		_popup(str(int(pt.poison)), _player_anchor(), Color(0.7, 0.5, 1.0))
+		_flash_screen(Color(0.5, 0.1, 0.6), 0.2)
 	if pt.regen > 0:
 		player_hp = mini(player_max_hp, player_hp + int(pt.regen))
+		_popup("+%d" % int(pt.regen), _player_anchor(), Color(0.5, 1.0, 0.5))
 	if player_hp <= 0:
 		_refresh()
 		_lose()
@@ -257,16 +265,21 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 			# 属性相性を反映（有利×1.5 / 不利×0.75）。
 			var mult := MonsterData.affinity(card_data.elements, enemy.element)
 			var dmg := roundi(base * mult)
-			if cmd.effect == CommandData.Effect.PIERCE:
-				enemy.take_damage_pierce(dmg)
-			else:
-				enemy.take_damage(dmg)
+			var dealt := enemy.take_damage_pierce(dmg) if cmd.effect == CommandData.Effect.PIERCE else enemy.take_damage(dmg)
+			enemy.flash_hit()
+			var dmg_color := Color(1.0, 0.5, 0.3) if mult > 1.0 else Color(1.0, 0.9, 0.5)
+			_popup(str(dealt), _enemy_center(), dmg_color, 32 if mult > 1.0 else 26)
+			if dealt >= 18:
+				_screen_shake(5.0)
 		CommandData.Effect.BUFF_ATK:
 			atk_buff += p
 		CommandData.Effect.DOUBLE_NEXT:
 			double_next = true
 		CommandData.Effect.HEAL:
-			player_hp = mini(player_max_hp, player_hp + p)
+			var healed := mini(player_max_hp, player_hp + p) - player_hp
+			player_hp += healed
+			if healed > 0:
+				_popup("+%d" % healed, _player_anchor(), Color(0.5, 1.0, 0.5))
 		CommandData.Effect.GUARD:
 			player_block += card_data.command_value(cmd) # 威力＋DEF補正
 		CommandData.Effect.WEAKEN:
@@ -291,10 +304,12 @@ func _enemy_turn() -> void:
 	# 敵の状態異常を処理（毒ダメージ・再生回復）。
 	var et := enemy.status.tick_turn()
 	if et.poison > 0:
-		enemy.take_fixed(int(et.poison))
-		_flash_message("%s は毒で %d ダメージ" % [enemy.enemy_name, int(et.poison)])
+		var pd := enemy.take_fixed(int(et.poison))
+		enemy.flash_hit()
+		_popup(str(pd), _enemy_center(), Color(0.7, 0.5, 1.0))
 	if et.regen > 0:
 		enemy.heal(int(et.regen))
+		_popup("+%d" % int(et.regen), _enemy_center(), Color(0.5, 1.0, 0.5))
 	_refresh()
 	if enemy.is_dead():
 		_win()
@@ -309,7 +324,7 @@ func _enemy_turn() -> void:
 		var dmg := enemy.execute()
 		if enemy.intent_type == EnemyUI.Intent.POISON:
 			player_status.add(StatusSet.Status.POISON, enemy.intent_value)
-			_flash_message("毒 %d を受けた" % enemy.intent_value)
+			_popup("毒%d" % enemy.intent_value, _player_anchor(), Color(0.7, 0.5, 1.0))
 		elif dmg > 0:
 			# プレイヤーのブロックで軽減する。
 			var actual := maxi(0, dmg - player_block)
@@ -317,6 +332,9 @@ func _enemy_turn() -> void:
 			if actual > 0:
 				player_hp = maxi(0, player_hp - actual)
 				Audio.play_se("hit")
+				_popup(str(actual), _player_anchor(), Color(1.0, 0.45, 0.45), 30)
+				_flash_screen(Color(0.8, 0.1, 0.1))
+				_screen_shake(8.0)
 	_refresh()
 	if player_hp <= 0:
 		_lose()
@@ -496,6 +514,57 @@ func _commit_fusion(mon_a: MonsterData, mon_b: MonsterData, child: MonsterData) 
 	_refresh()
 
 # --- 表示更新・終了処理 -----------------------------------------------------
+
+# --- 演出（エフェクト）-----------------------------------------------------
+
+func _enemy_center() -> Vector2:
+	if enemy != null and is_instance_valid(enemy):
+		return enemy.get_global_rect().get_center()
+	return size * 0.5
+
+func _player_anchor() -> Vector2:
+	if _hp_label != null:
+		return _hp_label.get_global_rect().get_center() + Vector2(0, 28)
+	return Vector2(size.x * 0.3, size.y * 0.6)
+
+## ダメージ・回復などの数字をその場にポップさせる。
+func _popup(text: String, at: Vector2, color: Color, font_size := 26) -> void:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_color_override("font_color", color)
+	l.add_theme_font_size_override("font_size", font_size)
+	l.z_index = 100
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(l)
+	l.global_position = at - Vector2(12, 12)
+	var t := create_tween()
+	t.tween_property(l, "position", l.position + Vector2(randf_range(-10, 10), -46), 0.6).set_trans(Tween.TRANS_SINE)
+	t.parallel().tween_property(l, "modulate:a", 0.0, 0.6).set_delay(0.15)
+	t.tween_callback(l.queue_free)
+
+## 画面全体を一瞬その色で覆ってフェードさせる（被弾＝赤など）。
+func _flash_screen(color: Color, strength := 0.32) -> void:
+	var r := ColorRect.new()
+	r.color = Color(color.r, color.g, color.b, strength)
+	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.z_index = 90
+	add_child(r)
+	var t := create_tween()
+	t.tween_property(r, "color:a", 0.0, 0.4)
+	t.tween_callback(r.queue_free)
+
+func _screen_shake(intensity := 8.0) -> void:
+	if _shake_target == null:
+		return
+	if _shake_tween != null and _shake_tween.is_valid():
+		_shake_tween.kill()
+	_shake_target.position = _shake_base
+	_shake_tween = create_tween()
+	for i in range(5):
+		var off := Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
+		_shake_tween.tween_property(_shake_target, "position", _shake_base + off, 0.04)
+	_shake_tween.tween_property(_shake_target, "position", _shake_base, 0.05)
 
 ## 画面中央下にイベント文を表示し、しばらくしてフェードアウトさせる。
 func _flash_message(text: String) -> void:

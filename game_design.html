@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企画設計書：Mortal Pact</title>
+<style>
+  :root {
+    --bg: #14121a;
+    --panel: #1e1b27;
+    --panel-2: #262232;
+    --ink: #e9e4f0;
+    --muted: #a59cb8;
+    --accent: #b98bdd;
+    --accent-2: #7ad6c0;
+    --border: #3a3450;
+    --warn: #e0a05a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+    line-height: 1.8;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+  header.hero {
+    text-align: center;
+    padding: 40px 24px;
+    background: linear-gradient(160deg, #241d33, #15121d);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 40px;
+  }
+  header.hero h1 {
+    margin: 0;
+    font-size: 2.6rem;
+    letter-spacing: 0.08em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header.hero .sub { color: var(--muted); margin-top: 8px; letter-spacing: 0.2em; font-size: 0.85rem; }
+  h2 {
+    margin-top: 48px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+    font-size: 1.5rem;
+    color: var(--accent);
+  }
+  h3 { margin-top: 32px; font-size: 1.15rem; color: var(--accent-2); }
+  a { color: var(--accent-2); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: var(--panel);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--panel-2); color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  blockquote {
+    margin: 20px 0;
+    padding: 16px 22px;
+    border-left: 4px solid var(--accent);
+    background: var(--panel);
+    border-radius: 0 10px 10px 0;
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+  pre {
+    background: #100e16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    color: #cfc7e0;
+    font-family: "SFMono-Regular", "Consolas", "Menlo", monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  ul, ol { padding-left: 1.4em; }
+  li { margin: 4px 0; }
+  .card-art {
+    background: #100e16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    white-space: pre;
+    font-family: "SFMono-Regular", "Consolas", monospace;
+    color: #d7cfe8;
+    display: inline-block;
+  }
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li { padding: 6px 0; }
+  .done::before { content: "✅ "; }
+  .todo::before { content: "⬜ "; }
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(122, 214, 192, 0.15);
+    color: var(--accent-2);
+    border: 1px solid var(--accent-2);
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 26px;
+  }
+  .toc ol { margin: 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 64px; }
+  .pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .pillar { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .pillar h4 { margin: 0 0 6px; color: var(--accent); font-size: 1rem; }
+  .pillar p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Mortal Pact</h1>
+    <div class="sub">企画設計書 ── デッキ構築型ローグライト</div>
+  </header>
+
+  <nav class="toc">
+    <strong>目次</strong>
+    <ol>
+      <li><a href="#overview">概要</a></li>
+      <li><a href="#concept">コンセプト</a></li>
+      <li><a href="#diff">差別化ポイント</a></li>
+      <li><a href="#lifecycle">魔物のライフサイクル</a></li>
+      <li><a href="#fusion">合体システム（子孫生成）</a></li>
+      <li><a href="#battle">戦闘システム</a></li>
+      <li><a href="#deck">デッキ構成</a></li>
+      <li><a href="#run">ランの構造</a></li>
+      <li><a href="#mvp">MVP（開発マイルストーン）</a></li>
+      <li><a href="#tech">技術メモ（Godot 4.x）</a></li>
+      <li><a href="#ref">参考タイトル</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="overview">概要</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>タイトル</td><td><strong>Mortal Pact</strong></td></tr>
+    <tr><td>ジャンル</td><td>デッキ構築型ローグライト</td></tr>
+    <tr><td>プラットフォーム</td><td>PC（Steam）</td></tr>
+    <tr><td>エンジン</td><td>Godot 4.x</td></tr>
+    <tr><td>ビジュアル</td><td>ドット絵（ピクセルアート）</td></tr>
+    <tr><td>開発体制</td><td>ソロ開発</td></tr>
+    <tr><td>世界観</td><td>ダークファンタジー</td></tr>
+  </table>
+
+  <h2 id="concept">コンセプト</h2>
+  <blockquote>「育てた魔物はいつか老いる。だからこそ、命をつなげ。」</blockquote>
+  <p>プレイヤーは魔物使いとなり、カードから魔物を召喚して戦うデッキ構築ローグライト。
+  魔物には<strong>一生（ライフサイクル）</strong>があり、使い込むほど強くなるが、やがて老いて消滅する。
+  <strong>2体の魔物を合体させることで子孫カードを生み出し</strong>、親の特性を引き継がせることができる。</p>
+
+  <h2 id="diff">差別化ポイント</h2>
+  <p>既存のデッキ構築ゲーム（Slay the Spire等）との差別点：</p>
+  <div class="pillars">
+    <div class="pillar"><h4>カードに「一生」がある</h4><p>静的なカードではなく、使うたびに変化・成長・老化する。</p></div>
+    <div class="pillar"><h4>タイミングの戦略性</h4><p>「いつ合体させるか」「いつ使い捨てるか」の判断が生まれる。</p></div>
+    <div class="pillar"><h4>子孫による継承</h4><p>親の特性を引き継ぐ子孫カードが生まれ、ラン間をまたいだ育成感がある。</p></div>
+    <div class="pillar"><h4>感情移入</h4><p>育てた魔物が老いて消えていく喪失感と、子孫への継承という物語性。</p></div>
+  </div>
+
+  <h2 id="lifecycle">魔物のライフサイクル</h2>
+  <pre>幼体（弱い）→ 成体（強い・ピーク）→ 老体（弱体化）→ 消滅
+                    ↑
+              ここで合体すると
+              子孫カードが生まれる（推奨タイミング）</pre>
+
+  <h3>成長段階の詳細</h3>
+  <table>
+    <tr><th>段階</th><th>状態</th><th>戦闘力</th><th>備考</th></tr>
+    <tr><td>幼体</td><td>🥚 生まれたて</td><td>低</td><td>コスト安め</td></tr>
+    <tr><td>若体</td><td>🌱 成長中</td><td>中</td><td>使うほど成長</td></tr>
+    <tr><td>成体</td><td>⚔️ ピーク</td><td>最大</td><td>合体推奨タイミング</td></tr>
+    <tr><td>老体</td><td>🍂 衰退</td><td>低下</td><td>コスト増・効果減</td></tr>
+    <tr><td>消滅</td><td>💀 死</td><td>使用不可</td><td>デッキから除外</td></tr>
+  </table>
+
+  <h3>成長の仕組み</h3>
+  <ul>
+    <li>魔物カードを使用するたびに<strong>経験値（EXP）</strong>が蓄積</li>
+    <li>EXPが閾値を超えると段階が上昇</li>
+    <li>ピーク（成体）を過ぎると自動的に老化が始まる</li>
+    <li>老体になると毎ターン使用コストが上昇し、効果が低下</li>
+  </ul>
+
+  <h2 id="fusion">合体システム（子孫生成）</h2>
+  <h3>合体の方法</h3>
+  <ul>
+    <li>手札またはデッキ内の<strong>成体の魔物カード2枚を選択</strong>して合体コマンドを実行</li>
+    <li>両親のカードはデッキから消滅</li>
+    <li><strong>子孫カード1枚</strong>が新たにデッキに加わる</li>
+  </ul>
+  <h3>子孫への継承</h3>
+  <pre>親A（炎属性・攻撃特化）
+  ×                   →  子孫（炎+氷の複合属性・攻守バランス型）
+親B（氷属性・防御特化）</pre>
+  <ul>
+    <li>属性：親どちらかまたは混合</li>
+    <li>コマンド：両親のコマンドからランダムで引き継ぐ</li>
+    <li>成長速度：両親の平均値</li>
+    <li>レアリティ：確率で親より上のレアリティになる場合がある</li>
+  </ul>
+
+  <h2 id="battle">戦闘システム</h2>
+  <h3>ターン構造</h3>
+  <pre>【プレイヤーターン】
+1. エネルギーが3回復
+2. 手札からカード（魔物）を選択
+3. その魔物のコマンドを選択して実行
+4. エネルギーが続く限り繰り返し可能
+5. ターン終了を宣言
+
+【敵ターン】
+6. 敵が行動（事前にアイコンで予告される）
+
+【ターン終了処理】
+7. 状態異常・バフ・デバフを更新</pre>
+
+  <h3>カード（魔物）の構成</h3>
+  <div class="card-art">┌─────────────────────┐
+│  🐺 フェンリル       │
+│  [成体] EXP ████░  │
+│  ATK:12  DEF:6      │
+│                     │
+│ ▶ 噛みつき  コスト1 │
+│   物理12ダメージ     │
+│                     │
+│ ▶ 遠吠え   コスト2 │
+│   味方全体ATK+2(1T) │
+│                     │
+│ ▶ 狂化     コスト3 │
+│   次のコマンドが2倍  │
+└─────────────────────┘</div>
+
+  <h3>エネルギーシステム</h3>
+  <ul>
+    <li>毎ターン<strong>エネルギー3</strong>から開始</li>
+    <li>コマンドにはコスト1〜3がある</li>
+    <li>エネルギーは翌ターンに持ち越せない</li>
+  </ul>
+
+  <h2 id="deck">デッキ構成</h2>
+  <ul>
+    <li>初期デッキ：魔物カード<strong>5枚</strong></li>
+    <li>デッキ上限：<strong>15枚</strong>（拡張可能）</li>
+    <li>1バトルで手札に引けるカード数：<strong>5枚</strong>（使ったカードは山札の一番下へ）</li>
+  </ul>
+
+  <h2 id="run">ランの構造（MVP版）</h2>
+  <pre>スタート
+  │
+  ├─ バトル1（雑魚）
+  ├─ バトル2（雑魚）
+  ├─ ショップ or 休憩
+  ├─ バトル3（エリートモブ）
+  ├─ ショップ or 休憩
+  └─ ボスバトル
+        │
+       勝利 → 次のフロアへ
+       敗北 → ゲームオーバー</pre>
+
+  <h2 id="mvp">MVP（最初に作る最小構成）<span class="badge">フェーズ1〜5 実装済み</span></h2>
+  <p>Steamリリースに向けた最初のマイルストーン：</p>
+
+  <h3>フェーズ1：コア戦闘</h3>
+  <ul class="checklist">
+    <li class="done">戦闘画面の実装</li>
+    <li class="done">カード（魔物）の召喚・コマンド選択</li>
+    <li class="done">エネルギーシステム</li>
+    <li class="done">敵のHP・行動予告・攻撃</li>
+  </ul>
+
+  <h3>フェーズ2：ライフサイクル</h3>
+  <ul class="checklist">
+    <li class="done">魔物の成長段階（幼体〜消滅）</li>
+    <li class="done">EXP蓄積と段階移行</li>
+    <li class="done">老体の弱体化処理</li>
+  </ul>
+
+  <h3>フェーズ3：合体</h3>
+  <ul class="checklist">
+    <li class="done">合体コマンドの実装</li>
+    <li class="done">子孫カード生成ロジック（属性・コマンド継承）</li>
+  </ul>
+
+  <h3>フェーズ4：ラン構造</h3>
+  <ul class="checklist">
+    <li class="done">マップ（バトル→ショップ→ボス）</li>
+    <li class="done">報酬（新しい魔物カードの獲得）</li>
+    <li class="done">ゲームオーバー・クリア処理</li>
+  </ul>
+
+  <h3>フェーズ5：コンテンツ拡充</h3>
+  <ul class="checklist">
+    <li class="done">魔物の種類を増やす（カタログ22種）</li>
+    <li class="done">敵の種類を増やす</li>
+    <li class="done">ボスの実装</li>
+    <li class="done">BGM・SE</li>
+  </ul>
+
+  <h3>追加：セーブ・ロード</h3>
+  <ul class="checklist">
+    <li class="done">ラン状態を JSON でユーザーディレクトリに保存・自動再開</li>
+  </ul>
+
+  <h2 id="tech">技術メモ（Godot 4.x）</h2>
+  <h3>推奨シーン構成</h3>
+  <pre>res://
+├── scenes/
+│   ├── battle/
+│   │   ├── battle.tscn         # メイン戦闘シーン
+│   │   ├── card.tscn           # カードUI
+│   │   └── enemy.tscn          # 敵
+│   ├── map/
+│   │   └── map.tscn            # ランマップ
+│   └── ui/
+│       └── hud.tscn            # HUD
+├── scripts/
+│   ├── card.gd                 # カードデータ・ライフサイクル
+│   ├── player.gd               # プレイヤー状態管理
+│   ├── enemy.gd                # 敵AI
+│   ├── battle_manager.gd       # 戦闘進行管理
+│   └── deck_manager.gd         # デッキ操作
+├── resources/
+│   └── monsters/               # 魔物データ（Resourceファイル）
+└── assets/
+    ├── sprites/
+    └── audio/</pre>
+
+  <h3>データ管理方針</h3>
+  <ul>
+    <li>魔物データは <code>Resource</code> クラスを継承したカスタムリソースで管理</li>
+    <li>ライフサイクルの状態は各カードインスタンスが保持</li>
+    <li>セーブデータは <code>JSON</code> 形式でユーザーディレクトリに保存</li>
+  </ul>
+
+  <h2 id="ref">参考タイトル</h2>
+  <table>
+    <tr><th>タイトル</th><th>参考にする点</th></tr>
+    <tr><td>Slay the Spire</td><td>デッキ構築の基本設計・UI</td></tr>
+    <tr><td>Darkest Dungeon</td><td>ダークな世界観・パーティ管理</td></tr>
+    <tr><td>Monster Sanctuary</td><td>魔物育成×戦略バトル</td></tr>
+    <tr><td>Hades</td><td>ローグライトのラン構造・テンポ感</td></tr>
+  </table>
+
+  <footer>Mortal Pact — 企画設計書（game_design.md より生成）</footer>
+
+</div>
+</body>
+</html>

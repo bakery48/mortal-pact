@@ -15,6 +15,7 @@ const SCENE_BATTLE := "res://scenes/battle/battle.tscn"
 const SCENE_REWARD := "res://scenes/ui/reward.tscn"
 const SCENE_SHOP := "res://scenes/ui/shop.tscn"
 const SCENE_RESULT := "res://scenes/ui/result.tscn"
+const SCENE_SETTINGS := "res://scenes/ui/settings.tscn"
 
 const SAVE_PATH := "user://savegame.json"
 const SAVE_VERSION := 1

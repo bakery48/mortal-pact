@@ -46,10 +46,20 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 12)
+	vbox.add_child(buttons)
+
+	var settings := Button.new()
+	settings.text = "設定"
+	settings.pressed.connect(func(): get_tree().change_scene_to_file(Run.SCENE_SETTINGS))
+	buttons.add_child(settings)
+
 	var restart := Button.new()
 	restart.text = "最初からやり直す（進行を消去）"
 	restart.pressed.connect(_on_restart)
-	vbox.add_child(restart)
+	buttons.add_child(restart)
 
 func _on_restart() -> void:
 	Run.delete_save()

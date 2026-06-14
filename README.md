@@ -108,7 +108,8 @@ res://
 │   └── ui/
 │       ├── reward.tscn / reward.gd           # 戦闘報酬（カード獲得）
 │       ├── shop.tscn   / shop.gd             # 休憩・ショップ
-│       └── result.tscn / result.gd           # クリア / ゲームオーバー
+│       ├── result.tscn / result.gd           # クリア / ゲームオーバー
+│       └── settings.tscn / settings.gd       # 設定（音量・フルスクリーン）
 ├── scripts/
 │   ├── command_data.gd     # コマンド（技）リソース定義
 │   ├── monster_data.gd     # 魔物カードリソース＋ライフサイクル
@@ -124,9 +125,10 @@ res://
     └── audio/              # bgm_battle.ogg / bgm_map.ogg を置くとBGM再生
 ```
 
-### サウンド
+### サウンド・設定
 - 効果音(SE)は `audio_manager.gd` が起動時に波形を生成するため、アセット無しでも鳴る
 - BGMは `assets/audio/bgm_battle.ogg` `assets/audio/bgm_map.ogg` を置けば自動再生（無ければ無音）
+- マップの「設定」から音量（マスター/BGM/SE）とフルスクリーンを調整でき、`user://settings.json` に保存される
 
 ### セーブデータ
 - `run_state.gd` が `user://savegame.json` にラン状態を JSON 保存・復元する

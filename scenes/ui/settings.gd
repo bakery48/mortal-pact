@@ -90,4 +90,4 @@ func _on_fullscreen_toggled(on: bool) -> void:
 
 func _on_back() -> void:
 	Audio.play_se("select")
-	get_tree().change_scene_to_file(Run.SCENE_MAP)
+	get_tree().change_scene_to_file(Run.settings_return)

@@ -16,6 +16,7 @@ const SCENE_REWARD := "res://scenes/ui/reward.tscn"
 const SCENE_SHOP := "res://scenes/ui/shop.tscn"
 const SCENE_RESULT := "res://scenes/ui/result.tscn"
 const SCENE_SETTINGS := "res://scenes/ui/settings.tscn"
+const SCENE_TITLE := "res://scenes/ui/title.tscn"
 
 const SAVE_PATH := "user://savegame.json"
 const SAVE_VERSION := 1
@@ -32,6 +33,7 @@ var map_nodes: Array = []      # ノード定義（Dictionary）の配列
 var current_index := 0         # 進行ポインタ（次に挑むノード）
 var current_encounter := {}    # 戦闘シーンへ渡す敵パラメータ
 var last_result := ""          # "clear" / "lose"
+var settings_return := SCENE_TITLE # 設定画面から戻る先
 
 func _ready() -> void:
 	# セーブがあれば自動的に続きから、無ければ新しいランを開始。
@@ -62,6 +64,17 @@ func next_floor() -> void:
 func restart_run() -> void:
 	start_new_run()
 	get_tree().change_scene_to_file(SCENE_MAP)
+
+## タイトルの「つづきから」：セーブを読み込んでマップへ。
+func continue_game() -> void:
+	if has_save():
+		load_game()
+	get_tree().change_scene_to_file(SCENE_MAP)
+
+## タイトルの「はじめから」：セーブを消して新しいランを開始。
+func new_game() -> void:
+	delete_save()
+	restart_run()
 
 func _build_map() -> void:
 	map_nodes = [

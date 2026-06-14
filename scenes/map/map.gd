@@ -53,13 +53,17 @@ func _build_ui() -> void:
 
 	var settings := Button.new()
 	settings.text = "設定"
-	settings.pressed.connect(func(): get_tree().change_scene_to_file(Run.SCENE_SETTINGS))
+	settings.pressed.connect(_on_settings)
 	buttons.add_child(settings)
 
 	var restart := Button.new()
 	restart.text = "最初からやり直す（進行を消去）"
 	restart.pressed.connect(_on_restart)
 	buttons.add_child(restart)
+
+func _on_settings() -> void:
+	Run.settings_return = Run.SCENE_MAP
+	get_tree().change_scene_to_file(Run.SCENE_SETTINGS)
 
 func _on_restart() -> void:
 	Run.delete_save()

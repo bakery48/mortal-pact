@@ -68,9 +68,10 @@
 
 1. [Godot 4.3 以降](https://godotengine.org/) を用意する
 2. Godot のプロジェクトマネージャから本リポジトリの `project.godot` を読み込む
-3. ▶ 実行（メインシーンは `res://scenes/map/map.tscn`。ラン状態は autoload `Run` が管理）
+3. ▶ 実行（メインシーンは `res://scenes/ui/title.tscn`。ラン状態は autoload `Run` が管理）
 
 ### ランの流れ
+- タイトル画面から「はじめから」/「つづきから」で開始
 - マップ画面で「進む」を押すと、現在地のノード（バトル / 休憩・ショップ）に挑戦する
 - バトルに勝つと報酬で新しい魔物を獲得し、所持金を得る → マップへ戻る
 - 休憩/ショップではHP回復か魔物の購入ができる
@@ -97,7 +98,7 @@
 
 ```
 res://
-├── project.godot           # メインシーン=map.tscn、autoload に Run を登録
+├── project.godot           # メインシーン=title.tscn、autoload に Run / Audio を登録
 ├── scenes/
 │   ├── battle/
 │   │   ├── battle.tscn / battle_manager.gd   # 戦闘シーン・進行管理
@@ -109,7 +110,8 @@ res://
 │       ├── reward.tscn / reward.gd           # 戦闘報酬（カード獲得）
 │       ├── shop.tscn   / shop.gd             # 休憩・ショップ
 │       ├── result.tscn / result.gd           # クリア / ゲームオーバー
-│       └── settings.tscn / settings.gd       # 設定（音量・フルスクリーン）
+│       ├── settings.tscn / settings.gd       # 設定（音量・フルスクリーン）
+│       └── title.tscn  / title.gd            # タイトル（メインシーン）
 ├── scripts/
 │   ├── command_data.gd     # コマンド（技）リソース定義
 │   ├── monster_data.gd     # 魔物カードリソース＋ライフサイクル

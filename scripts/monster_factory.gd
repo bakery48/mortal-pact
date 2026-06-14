@@ -297,23 +297,36 @@ static func fuse(a: MonsterData, b: MonsterData) -> MonsterData:
 	child.exp = 0.0
 	return child
 
+## 属性継承：基本は両親いずれかの属性を引き継ぐが、
+## 15%の確率で両親とは異なる属性に突然変異する。
+const ELEMENT_MUTATION_CHANCE := 0.15
+
 static func _inherit_elements(a: MonsterData, b: MonsterData) -> Array[int]:
-	var result: Array[int] = []
-	if randf() < 0.5:
-		# 片親からそのまま継承。
-		var src := a if randf() < 0.5 else b
-		result.assign(src.elements)
-	else:
-		# 混合（重複排除・最大2属性）。
-		for e in a.elements:
-			if e not in result:
-				result.append(e)
-		for e in b.elements:
-			if e not in result and result.size() < 2:
-				result.append(e)
-	if result.is_empty():
-		result.append(MonsterData.Element.NONE)
-	return result
+	# 両親の属性集合（重複排除）。
+	var parent_elems: Array[int] = []
+	for e in a.elements:
+		if int(e) not in parent_elems:
+			parent_elems.append(int(e))
+	for e in b.elements:
+		if int(e) not in parent_elems:
+			parent_elems.append(int(e))
+
+	# 15%：両親のどちらとも異なる属性へ突然変異。
+	if randf() < ELEMENT_MUTATION_CHANCE:
+		var pool: Array[int] = []
+		for el in [MonsterData.Element.FIRE, MonsterData.Element.WATER, MonsterData.Element.WIND,
+				MonsterData.Element.EARTH, MonsterData.Element.LIGHT, MonsterData.Element.DARK]:
+			if el not in parent_elems:
+				pool.append(el)
+		if not pool.is_empty():
+			var mutated: int = pool.pick_random()
+			return [mutated]
+
+	# 通常：両親いずれかの属性を引き継ぐ。
+	if parent_elems.is_empty():
+		return [MonsterData.Element.NONE]
+	var inherited: int = parent_elems.pick_random()
+	return [inherited]
 
 static func _inherit_commands(a: MonsterData, b: MonsterData) -> Array[CommandData]:
 	var pool: Array[CommandData] = []

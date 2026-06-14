@@ -11,14 +11,26 @@ var discard_pile: Array[MonsterData] = []
 
 const MONSTER_DIR := "res://resources/monsters"
 
-func build_starter_deck() -> void:
+## ラン状態が保持する既存デッキ（同一インスタンス）から戦闘用の山札を初期化する。
+## カードの実体を共有するため、成長・老化はバトルをまたいで持続する。
+func setup_from(cards: Array[MonsterData]) -> void:
 	draw_pile.clear()
 	hand.clear()
 	discard_pile.clear()
-	draw_pile.assign(_load_monsters())
+	draw_pile.assign(cards)
 	draw_pile.shuffle()
 
-func _load_monsters() -> Array[MonsterData]:
+## バトル終了時、消滅していない全カード（山札＋手札＋捨札）を集めて返す。
+## これをラン状態のデッキに書き戻すことでデッキの継続性を保つ。
+func surviving_cards() -> Array[MonsterData]:
+	var result: Array[MonsterData] = []
+	result.append_array(draw_pile)
+	result.append_array(hand)
+	result.append_array(discard_pile)
+	return result
+
+## 初期デッキを生成する。resources/monsters/*.tres を優先し、無ければコード生成。
+static func load_monster_resources() -> Array[MonsterData]:
 	var result: Array[MonsterData] = []
 	var dir := DirAccess.open(MONSTER_DIR)
 	if dir != null:
@@ -28,7 +40,7 @@ func _load_monsters() -> Array[MonsterData]:
 			if clean.ends_with(".tres") or clean.ends_with(".res"):
 				var res := load(MONSTER_DIR + "/" + clean)
 				if res is MonsterData:
-					# 各カードは独立インスタンスにする（フェーズ2で個別に成長するため）。
+					# 各カードは独立インスタンスにする（個別に成長するため）。
 					result.append((res as MonsterData).duplicate(true))
 	if result.is_empty():
 		# リソースが無い場合はコードのファクトリにフォールバック。

@@ -58,6 +58,48 @@ static func starter_monsters() -> Array[MonsterData]:
 
 	return list
 
+# --- 報酬・ショップ用プール -------------------------------------------------
+
+## 戦闘報酬やショップで提示する魔物候補（毎回新しい幼体インスタンスを返す）。
+static func reward_pool() -> Array[MonsterData]:
+	var list: Array[MonsterData] = []
+
+	list.append(_monster("ハーピー", 11, 4, MonsterData.Element.WIND, 1.2, [
+		_cmd("旋風爪", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
+		_cmd("追い風", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	]))
+	list.append(_monster("ケルベロス", 16, 7, MonsterData.Element.DARK, 0.9, [
+		_cmd("三連牙", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
+		_cmd("獄炎", 3, CommandData.Effect.DAMAGE, 24, "敵に24ダメージ"),
+	]))
+	list.append(_monster("ユニコーン", 9, 8, MonsterData.Element.LIGHT, 1.0, [
+		_cmd("聖なる角", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("加護", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
+	]))
+	list.append(_monster("リッチ", 13, 3, MonsterData.Element.DARK, 1.1, [
+		_cmd("呪詛", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
+		_cmd("死の宣告", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
+	]))
+	list.append(_monster("アイススピリット", 10, 6, MonsterData.Element.ICE, 1.0, [
+		_cmd("氷礫", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
+		_cmd("吹雪", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
+	]))
+	list.append(_monster("スライム", 7, 7, MonsterData.Element.NONE, 1.3, [
+		_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+		_cmd("分裂の構え", 1, CommandData.Effect.BUFF_ATK, 3, "このターンの与ダメージ+3"),
+	]))
+
+	return list
+
+## プールからランダムに count 体を選んで返す。
+static func random_rewards(count: int) -> Array[MonsterData]:
+	var pool := reward_pool()
+	pool.shuffle()
+	var result: Array[MonsterData] = []
+	for i in range(mini(count, pool.size())):
+		result.append(pool[i])
+	return result
+
 # --- 合体（子孫生成） -------------------------------------------------------
 
 ## 成体2体から子孫カードを生成する。子孫は「生まれたて」の幼体になる。

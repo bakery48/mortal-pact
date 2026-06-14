@@ -116,6 +116,16 @@ func element_label() -> String:
 		parts.append(String(ELEMENT_LABEL[e]))
 	return "/".join(parts)
 
+## 報酬・ショップ画面用の概要テキスト（基礎ステータスを表示）。
+func summary() -> String:
+	var text := "%s %s %s\n属性:%s  ATK:%d DEF:%d  成長:%.1f" % [
+		rarity_label(), monster_name, stage_label(),
+		element_label(), attack, defense, growth_speed,
+	]
+	for c in commands:
+		text += "\n・%s (コスト%d)" % [c.command_name, c.cost]
+	return text
+
 # --- 段階補正を反映した実効値 ----------------------------------------------
 
 func _mult() -> float:

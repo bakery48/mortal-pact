@@ -39,8 +39,17 @@ var _fuse_button: Button
 var _fusion_selection: Array[CardUI] = []
 
 func _ready() -> void:
+	# ランから直接バトルを起動した場合のフォールバック（単体テスト用）。
+	if Run.deck.is_empty():
+		Run.start_new_run()
+	if Run.current_encounter.is_empty():
+		Run.current_encounter = Run.map_nodes[0]
+
+	player_max_hp = Run.player_max_hp
+	player_hp = Run.player_hp
+
 	_build_ui()
-	deck.build_starter_deck()
+	deck.setup_from(Run.deck)
 	_spawn_enemy()
 	_start_player_turn()
 
@@ -82,6 +91,11 @@ func _build_ui() -> void:
 	var status := HBoxContainer.new()
 	status.add_theme_constant_override("separation", 24)
 	main.add_child(status)
+
+	var floor_label := Label.new()
+	floor_label.add_theme_font_size_override("font_size", 18)
+	floor_label.text = "B%dF  💰%d" % [Run.current_floor, Run.gold]
+	status.add_child(floor_label)
 
 	_hp_label = Label.new()
 	_hp_label.add_theme_font_size_override("font_size", 18)
@@ -129,10 +143,12 @@ func _build_ui() -> void:
 # --- 戦闘フロー -------------------------------------------------------------
 
 func _spawn_enemy() -> void:
+	var enc := Run.current_encounter
+	var hp := int(enc["max_hp"])
 	enemy = EnemyScene.instantiate() as EnemyUI
-	enemy.enemy_name = "腐肉喰らい"
-	enemy.max_hp = 60
-	enemy.hp = 60
+	enemy.enemy_name = ("【ボス】" if enc.get("is_boss", false) else "") + String(enc["name"])
+	enemy.max_hp = hp
+	enemy.hp = hp
 	_enemy_slot.add_child(enemy)
 
 func _start_player_turn() -> void:
@@ -150,7 +166,8 @@ func _start_player_turn() -> void:
 		_add_card_to_hand(monster)
 
 	# 次の敵ターンの行動を予告。
-	enemy.set_intent(randi_range(8, 14))
+	var enc := Run.current_encounter
+	enemy.set_intent(randi_range(int(enc["intent_min"]), int(enc["intent_max"])))
 	_refresh()
 
 func _add_card_to_hand(monster: MonsterData) -> void:
@@ -313,12 +330,17 @@ func _win() -> void:
 	_message_label.text = "勝利！"
 	_message_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
 	_end_battle_input()
+	# 生き残ったデッキとHPをランへ書き戻し、報酬画面へ。
+	await get_tree().create_timer(1.0).timeout
+	Run.on_battle_won(deck.surviving_cards(), player_hp)
 
 func _lose() -> void:
 	battle_over = true
 	_message_label.text = "敗北..."
 	_message_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5))
 	_end_battle_input()
+	await get_tree().create_timer(1.0).timeout
+	Run.on_battle_lost()
 
 func _end_battle_input() -> void:
 	_end_turn_button.disabled = true

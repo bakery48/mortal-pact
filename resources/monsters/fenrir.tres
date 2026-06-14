@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MonsterData" load_steps=6 format=3 uid="uid://b0mortalpactfenrir"]
+[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3 uid="uid://b0mortalpactfenrir"]
 
 [ext_resource type="Script" path="res://scripts/monster_data.gd" id="1_monster"]
 [ext_resource type="Script" path="res://scripts/command_data.gd" id="2_command"]
@@ -10,14 +10,6 @@ cost = 1
 effect = 0
 power = 12
 description = "敵に12ダメージ"
-
-[sub_resource type="Resource" id="cmd_howl"]
-script = ExtResource("2_command")
-command_name = "遠吠え"
-cost = 2
-effect = 1
-power = 4
-description = "このターンの与ダメージ+4"
 
 [sub_resource type="Resource" id="cmd_rage"]
 script = ExtResource("2_command")
@@ -37,4 +29,4 @@ exp = 0.0
 growth_speed = 1.0
 elements = [6]
 rarity = 0
-commands = [SubResource("cmd_bite"), SubResource("cmd_howl"), SubResource("cmd_rage")]
+commands = [SubResource("cmd_bite"), SubResource("cmd_rage")]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MonsterData" load_steps=6 format=3 uid="uid://b0mortalpactgolem"]
+[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3 uid="uid://b0mortalpactgolem"]
 
 [ext_resource type="Script" path="res://scripts/monster_data.gd" id="1_monster"]
 [ext_resource type="Script" path="res://scripts/command_data.gd" id="2_command"]
@@ -19,14 +19,6 @@ effect = 0
 power = 14
 description = "敵に14ダメージ"
 
-[sub_resource type="Resource" id="cmd_guard"]
-script = ExtResource("2_command")
-command_name = "防御態勢"
-cost = 1
-effect = 4
-power = 9
-description = "ブロック9を得る"
-
 [resource]
 script = ExtResource("1_monster")
 monster_name = "ゴーレム"
@@ -37,4 +29,4 @@ exp = 0.0
 growth_speed = 0.8
 elements = [4]
 rarity = 0
-commands = [SubResource("cmd_throw"), SubResource("cmd_quake"), SubResource("cmd_guard")]
+commands = [SubResource("cmd_throw"), SubResource("cmd_quake")]

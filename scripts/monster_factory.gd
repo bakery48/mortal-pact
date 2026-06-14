@@ -33,7 +33,6 @@ static func starter_monsters() -> Array[MonsterData]:
 
 	list.append(_monster("フェンリル", 12, 6, MonsterData.Element.DARK, 1.0, [
 		_cmd("噛みつき", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
-		_cmd("遠吠え", 2, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
 		_cmd("狂化", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	]))
 
@@ -268,22 +267,24 @@ static func random_rewards(count: int) -> Array[MonsterData]:
 # --- 合体（子孫生成） -------------------------------------------------------
 
 ## 子孫の固有スキル数。属性に応じた基礎キット。
-const INNATE_COUNT := 3
+const INNATE_COUNT := 2
 ## 1体が持てるスキルの最大数。
 const MAX_SKILLS := 6
 ## 属性継承：基本は両親いずれか、15%で両親と異なる属性に突然変異。
 const ELEMENT_MUTATION_CHANCE := 0.15
 
 ## 継承可能なスキル数を返す。
-## 親のスキル合計 6→1 / 7→2 / 8→3。ただし1世代で増やせるのは+1まで（max(親)+1）。最大6。
+## 親のスキル合計 4→1 / 6→2 / 8→3 / 10→4。ただし1世代で増やせるのは+1まで（max(親)+1）。最大6。
 static func max_inheritable(a: MonsterData, b: MonsterData) -> int:
 	var combined := a.commands.size() + b.commands.size()
 	var by_combined := 0
-	if combined >= 8:
+	if combined >= 10:
+		by_combined = 4
+	elif combined >= 8:
 		by_combined = 3
-	elif combined >= 7:
-		by_combined = 2
 	elif combined >= 6:
+		by_combined = 2
+	elif combined >= 4:
 		by_combined = 1
 	# 1世代で +1 まで：子の総数 ≤ max(親の枚数)+1 → 継承数 ≤ max(親)+1-固有数
 	var gen_cap := maxi(a.commands.size(), b.commands.size()) + 1 - INNATE_COUNT
@@ -322,50 +323,43 @@ static func choose_child_element(a: MonsterData, b: MonsterData) -> int:
 		return MonsterData.Element.NONE
 	return parent_elems.pick_random()
 
-## 属性ごとの固有基礎キット（3スキル）。毎回新インスタンスを返す。
+## 属性ごとの固有基礎キット（2スキル）。毎回新インスタンスを返す。
 static func element_innate_kit(element: int) -> Array[CommandData]:
 	match element:
 		MonsterData.Element.FIRE:
 			return [
 				_cmd("火の弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("業火", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
 				_cmd("火だるま", 1, CommandData.Effect.BURN, 2, "敵を2ターン炎上"),
 			]
 		MonsterData.Element.WATER:
 			return [
 				_cmd("水弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("治癒の水", 1, CommandData.Effect.HEAL, 8, "HPを8回復"),
-				_cmd("大波", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
 			]
 		MonsterData.Element.WIND:
 			return [
 				_cmd("風刃", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("追い風", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
-				_cmd("疾風突き", 2, CommandData.Effect.PIERCE, 12, "防御無視で12ダメージ"),
 			]
 		MonsterData.Element.EARTH:
 			return [
 				_cmd("礫", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("守りの構え", 1, CommandData.Effect.GUARD, 9, "ブロック9を得る"),
-				_cmd("大地砕き", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
 			]
 		MonsterData.Element.LIGHT:
 			return [
 				_cmd("光弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("祝福", 1, CommandData.Effect.HEAL, 9, "HPを9回復"),
-				_cmd("浄化の光", 1, CommandData.Effect.REGEN, 4, "再生4を得る"),
 			]
 		MonsterData.Element.DARK:
 			return [
 				_cmd("闇撃ち", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("毒霧", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
-				_cmd("衰弱", 1, CommandData.Effect.WEAKEN, 5, "敵の攻撃力-5"),
 			]
 		_:
 			return [
 				_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("構え", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
-				_cmd("充填", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
 			]
 
 ## 子孫を生成する。element は choose_child_element の結果、

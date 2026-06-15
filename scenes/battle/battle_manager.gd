@@ -27,7 +27,8 @@ var player_status := StatusSet.new()
 var battle_over := false
 
 var enemies: Array[EnemyUI] = []
-var target: EnemyUI = null # 現在狙っている敵
+var _targeting := false        # 対象選択中フラグ
+var _pending_card: CardUI = null # 対象選択待ちのカード
 
 var _enemy_slot: HBoxContainer
 var _hand_container: HBoxContainer
@@ -172,38 +173,21 @@ func _spawn_enemies() -> void:
 		e.plan_next() # 最初の行動を予告
 		e.targeted.connect(_on_enemy_targeted)
 		enemies.append(e)
-	if not enemies.is_empty():
-		_set_target(enemies[0])
 
-## ターゲットを設定し、マーカーとカードの相性表示を更新する。
-func _set_target(e: EnemyUI) -> void:
-	target = e
-	for en in enemies:
-		en.set_targeted(en == target)
-	# カードの相性表示を現在のターゲット属性に合わせる。
-	if target != null:
-		for child in _hand_container.get_children():
-			if child is CardUI:
-				(child as CardUI).enemy_element = target.element
-	_refresh()
+## 敵が1体だけのときその属性を返す（カードの相性表示用）。複数なら無属性扱い。
+func _solo_enemy_element() -> int:
+	return enemies[0].element if enemies.size() == 1 else MonsterData.Element.NONE
 
+## 敵クリック：対象選択中のときだけ、保留中のカードをその敵に適用する。
 func _on_enemy_targeted(e: EnemyUI) -> void:
 	if battle_over or not is_instance_valid(e):
 		return
-	Audio.play_se("select")
-	_set_target(e)
+	if _targeting:
+		_resolve_targeting(e)
 
-## 敵を撃破・除去し、必要ならターゲットを移す。
+## 敵を撃破・除去する。
 func _remove_enemy(e: EnemyUI) -> void:
 	enemies.erase(e)
-	if e == target:
-		target = enemies[0] if not enemies.is_empty() else null
-		for en in enemies:
-			en.set_targeted(en == target)
-		if target != null:
-			for child in _hand_container.get_children():
-				if child is CardUI:
-					(child as CardUI).enemy_element = target.element
 	if is_instance_valid(e):
 		e.queue_free()
 
@@ -245,13 +229,64 @@ func _add_card_to_hand(sc: SkillCard) -> void:
 	card.monster = sc.monster
 	card.command = sc.command
 	card.source = sc
-	if target != null:
-		card.enemy_element = target.element # 相性表示は現在のターゲット属性
+	card.enemy_element = _solo_enemy_element() # 敵が1体なら相性を表示
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
 	card.fusion_toggled.connect(_on_fusion_toggled)
 
+## 敵に作用する（対象が要る）コマンドか。
+func _needs_target(cmd: CommandData) -> bool:
+	match cmd.effect:
+		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE, CommandData.Effect.WEAKEN, \
+		CommandData.Effect.POISON, CommandData.Effect.BURN, CommandData.Effect.FREEZE:
+			return true
+		_:
+			return false
+
+## カードを選択：対象が要り敵が複数なら対象選択へ、それ以外は即発動。
 func _on_command_selected(card: CardUI) -> void:
+	if battle_over or _targeting:
+		return
+	var cost := card.monster.effective_cost(card.command)
+	if energy < cost:
+		return
+	if _needs_target(card.command) and enemies.size() > 1:
+		_begin_targeting(card)
+	else:
+		var tgt: EnemyUI = enemies[0] if not enemies.is_empty() else null
+		_play_card(card, tgt)
+
+## 対象選択モードに入る。敵にマーカーを出してクリック待ち。
+func _begin_targeting(card: CardUI) -> void:
+	_targeting = true
+	_pending_card = card
+	for e in enemies:
+		e.set_targeted(true)
+	_flash_message("対象の敵をクリック（右クリック/Escで取消）")
+
+func _resolve_targeting(e: EnemyUI) -> void:
+	var card := _pending_card
+	_cancel_targeting()
+	if is_instance_valid(card):
+		_play_card(card, e)
+
+func _cancel_targeting() -> void:
+	_targeting = false
+	_pending_card = null
+	for e in enemies:
+		e.set_targeted(false)
+
+## 対象選択中は右クリック/Escで取消。
+func _unhandled_input(event: InputEvent) -> void:
+	if not _targeting:
+		return
+	if (event is InputEventMouseButton and event.pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT) \
+			or (event is InputEventKey and event.pressed and (event as InputEventKey).keycode == KEY_ESCAPE):
+		_cancel_targeting()
+		get_viewport().set_input_as_handled()
+
+## カードを実際に使う（対象 tgt に対して）。
+func _play_card(card: CardUI, tgt: EnemyUI) -> void:
 	if battle_over:
 		return
 	var monster := card.monster
@@ -261,7 +296,7 @@ func _on_command_selected(card: CardUI) -> void:
 		return
 
 	energy -= cost
-	_apply_command(monster, cmd)
+	_apply_command(monster, cmd, tgt)
 	Audio.play_se("attack" if cmd.effect == CommandData.Effect.DAMAGE else "select")
 
 	# 使用するたびに、そのモンスターが EXP（=成長速度分）を得て成長する。
@@ -294,9 +329,8 @@ func _kill_monster(monster: MonsterData) -> void:
 	_flash_message("%s は老いて消滅した…" % monster.monster_name)
 	_update_fuse_button()
 
-func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
+func _apply_command(card_data: MonsterData, cmd: CommandData, tgt: EnemyUI) -> void:
 	var p := card_data.effective_power(cmd)
-	var tgt := target # 狙っている敵
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
 			if tgt == null:
@@ -346,7 +380,7 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 			player_status.add(StatusSet.Status.REGEN, p)
 
 func _on_end_turn_pressed() -> void:
-	if battle_over:
+	if battle_over or _targeting:
 		return
 	_enemy_turn()
 
@@ -403,7 +437,8 @@ func _enemy_turn() -> void:
 	_start_player_turn()
 
 func _clear_hand_nodes() -> void:
-	# 合体候補の選択も解除（カードノードが破棄されるため）。
+	# 合体候補・対象選択を解除（カードノードが破棄されるため）。
+	_cancel_targeting()
 	_fusion_selection.clear()
 	for child in _hand_container.get_children():
 		child.queue_free()
@@ -412,7 +447,7 @@ func _clear_hand_nodes() -> void:
 # --- 合体（子孫生成） -------------------------------------------------------
 
 func _on_fusion_toggled(card: CardUI) -> void:
-	if battle_over:
+	if battle_over or _targeting:
 		return
 	var m := card.monster
 	if not m.can_fuse():
@@ -644,8 +679,10 @@ func _refresh() -> void:
 
 	_pile_label.text = "山札:%d  捨札:%d" % [deck.draw_pile.size(), deck.discard_pile.size()]
 
+	var solo := _solo_enemy_element()
 	for child in _hand_container.get_children():
 		if child is CardUI:
+			(child as CardUI).enemy_element = solo
 			(child as CardUI).refresh(energy)
 
 func _win() -> void:

@@ -331,11 +331,11 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 	title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(title)
 
-	var innate_names: Array[String] = []
+	var innate_lines: Array[String] = []
 	for c in innate:
-		innate_names.append(c.command_name)
+		innate_lines.append("・%s（コスト%d）%s" % [c.command_name, c.cost, _skill_effect_text(c)])
 	var innate_label := Label.new()
-	innate_label.text = "固有スキル: " + "／".join(innate_names) + "　＋ 継承 最大%d" % max_inherit
+	innate_label.text = "固有スキル（自動付与）:\n" + "\n".join(innate_lines) + "\n継承できる数: 最大%d" % max_inherit
 	innate_label.modulate = Color(0.8, 0.85, 0.95)
 	innate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(innate_label)
@@ -349,7 +349,7 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 		var btn := Button.new()
 		btn.toggle_mode = true
 		btn.disabled = max_inherit <= 0
-		btn.text = "%s（コスト%d）" % [cmd.command_name, cmd.cost]
+		btn.text = "%s（コスト%d）\n%s" % [cmd.command_name, cmd.cost, _skill_effect_text(cmd)]
 		btn.toggled.connect(_on_inherit_toggled.bind(cmd, btn, chosen, max_inherit, count_label))
 		vbox.add_child(btn)
 	if pool.is_empty():
@@ -376,6 +376,26 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 	buttons.add_child(confirm)
 
 	count_label.text = "継承 0 / %d" % max_inherit
+
+## スキルの効果説明テキスト。description があればそれ、無ければ効果から生成。
+func _skill_effect_text(cmd: CommandData) -> String:
+	if cmd.description != "":
+		return cmd.description
+	var p := cmd.power
+	match cmd.effect:
+		CommandData.Effect.DAMAGE: return "敵に%dダメージ" % p
+		CommandData.Effect.BUFF_ATK: return "このターンの与ダメージ+%d" % p
+		CommandData.Effect.DOUBLE_NEXT: return "次のダメージを2倍"
+		CommandData.Effect.HEAL: return "HPを%d回復" % p
+		CommandData.Effect.GUARD: return "ブロック%d" % p
+		CommandData.Effect.PIERCE: return "防御無視で%dダメージ" % p
+		CommandData.Effect.WEAKEN: return "敵の攻撃力-%d" % p
+		CommandData.Effect.ENERGY: return "エネルギー+%d" % p
+		CommandData.Effect.POISON: return "毒%dを付与" % p
+		CommandData.Effect.BURN: return "%dターン炎上" % p
+		CommandData.Effect.FREEZE: return "%d回凍結" % p
+		CommandData.Effect.REGEN: return "再生%d" % p
+	return ""
 
 func _on_inherit_toggled(pressed: bool, cmd: CommandData, btn: Button, chosen: Array, max_inherit: int, count_label: Label) -> void:
 	if pressed:

@@ -19,7 +19,7 @@ const SCENE_SETTINGS := "res://scenes/ui/settings.tscn"
 const SCENE_TITLE := "res://scenes/ui/title.tscn"
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2 # 複数敵対応でマップ構造が変わったため更新
 
 enum NodeType { BATTLE_ZAKO, BATTLE_ELITE, BATTLE_BOSS, REST_SHOP }
 
@@ -134,31 +134,58 @@ func _connect_rows() -> void:
 func _make_node(kind: String) -> Dictionary:
 	match kind:
 		"zako":
-			return _battle_node(NodeType.BATTLE_ZAKO, EnemyDatabase.random_zako(), 25)
+			return _battle_node(NodeType.BATTLE_ZAKO, _zako_group(), 25)
 		"elite":
-			return _battle_node(NodeType.BATTLE_ELITE, EnemyDatabase.random_elite(), 55)
+			return _battle_node(NodeType.BATTLE_ELITE, _elite_group(), 55)
 		"boss":
-			return _battle_node(NodeType.BATTLE_BOSS, EnemyDatabase.random_boss(), 120)
+			return _battle_node(NodeType.BATTLE_BOSS, [EnemyDatabase.random_boss()], 120)
 		_:
 			return _rest_node()
 
-## EnemyDatabase の敵設定を、フロアに応じてスケールしたバトルノードに変換する。
-func _battle_node(type: NodeType, enemy: Dictionary, reward_gold: int) -> Dictionary:
+## 雑魚ノードの敵編成（1〜3体）。
+func _zako_group() -> Array:
+	var group: Array = []
+	for i in range(randi_range(1, 3)):
+		group.append(EnemyDatabase.random_zako())
+	return group
+
+## エリートノードの敵編成（エリート1体、50%でお供の雑魚1体）。
+func _elite_group() -> Array:
+	var group: Array = [EnemyDatabase.random_elite()]
+	if randf() < 0.5:
+		group.append(EnemyDatabase.random_zako())
+	return group
+
+## 敵編成（複数体）を、フロアに応じてスケールしたバトルノードに変換する。
+func _battle_node(type: NodeType, enemies: Array, reward_gold: int) -> Dictionary:
 	var scale := 1.0 + 0.25 * float(current_floor - 1) # フロアが進むほど敵が強化される
-	var scaled_pattern: Array = []
-	for move in enemy["pattern"]:
-		scaled_pattern.append({
-			"type": move["type"],
-			"value": maxi(1, roundi(int(move["value"]) * scale)),
+	var scaled: Array = []
+	var is_boss := false
+	for enemy in enemies:
+		var scaled_pattern: Array = []
+		for move in enemy["pattern"]:
+			scaled_pattern.append({
+				"type": move["type"],
+				"value": maxi(1, roundi(int(move["value"]) * scale)),
+			})
+		scaled.append({
+			"name": enemy["name"],
+			"max_hp": roundi(int(enemy["max_hp"]) * scale),
+			"pattern": scaled_pattern,
+			"element": enemy.get("element", MonsterData.Element.NONE),
+			"is_boss": enemy.get("is_boss", false),
 		})
+		if enemy.get("is_boss", false):
+			is_boss = true
+	var label: String = scaled[0]["name"]
+	if scaled.size() > 1:
+		label += "他%d体" % (scaled.size() - 1)
 	return {
 		"type": type,
-		"name": enemy["name"],
-		"max_hp": roundi(int(enemy["max_hp"]) * scale),
-		"pattern": scaled_pattern,
-		"element": enemy.get("element", MonsterData.Element.NONE),
+		"name": label,
+		"enemies": scaled,
 		"gold": reward_gold,
-		"is_boss": enemy.get("is_boss", false),
+		"is_boss": is_boss,
 		"next": [],
 	}
 
@@ -301,6 +328,9 @@ func load_game() -> bool:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return false
 	var data: Dictionary = parsed
+	# 旧バージョンのセーブは構造が違うため破棄して新規開始させる。
+	if int(data.get("version", 1)) != SAVE_VERSION:
+		return false
 
 	player_max_hp = int(data.get("player_max_hp", STARTING_HP))
 	player_hp = int(data.get("player_hp", STARTING_HP))

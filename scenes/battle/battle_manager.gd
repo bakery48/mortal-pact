@@ -26,7 +26,8 @@ var player_block := 0
 var player_status := StatusSet.new()
 var battle_over := false
 
-var enemy: EnemyUI
+var enemies: Array[EnemyUI] = []
+var target: EnemyUI = null # 現在狙っている敵
 
 var _enemy_slot: HBoxContainer
 var _hand_container: HBoxContainer
@@ -60,7 +61,7 @@ func _ready() -> void:
 
 	_build_ui()
 	deck.setup_from(Run.deck)
-	_spawn_enemy()
+	_spawn_enemies()
 	_start_player_turn()
 	Audio.play_bgm("res://assets/audio/bgm_battle.ogg")
 
@@ -91,6 +92,7 @@ func _build_ui() -> void:
 	_enemy_slot = HBoxContainer.new()
 	_enemy_slot.alignment = BoxContainer.ALIGNMENT_CENTER
 	_enemy_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_enemy_slot.add_theme_constant_override("separation", 16)
 	main.add_child(_enemy_slot)
 
 	# 勝敗メッセージ（中央）
@@ -154,18 +156,56 @@ func _build_ui() -> void:
 
 # --- 戦闘フロー -------------------------------------------------------------
 
-func _spawn_enemy() -> void:
-	var enc := Run.current_encounter
-	var hp := int(enc["max_hp"])
-	enemy = EnemyScene.instantiate() as EnemyUI
-	enemy.enemy_name = ("【ボス】" if enc.get("is_boss", false) else "") + String(enc["name"])
-	enemy.sprite_name = String(enc["name"]) # スプライト探索用（接頭辞なし）
-	enemy.element = int(enc.get("element", MonsterData.Element.NONE))
-	enemy.max_hp = hp
-	enemy.hp = hp
-	enemy.set_pattern(enc.get("pattern", []))
-	_enemy_slot.add_child(enemy)
-	enemy.plan_next() # 最初の行動を予告
+func _spawn_enemies() -> void:
+	enemies.clear()
+	var list: Array = Run.current_encounter.get("enemies", [])
+	for enc in list:
+		var hp := int(enc["max_hp"])
+		var e := EnemyScene.instantiate() as EnemyUI
+		e.enemy_name = ("【ボス】" if enc.get("is_boss", false) else "") + String(enc["name"])
+		e.sprite_name = String(enc["name"]) # スプライト探索用（接頭辞なし）
+		e.element = int(enc.get("element", MonsterData.Element.NONE))
+		e.max_hp = hp
+		e.hp = hp
+		e.set_pattern(enc.get("pattern", []))
+		_enemy_slot.add_child(e)
+		e.plan_next() # 最初の行動を予告
+		e.targeted.connect(_on_enemy_targeted)
+		enemies.append(e)
+	if not enemies.is_empty():
+		_set_target(enemies[0])
+
+## ターゲットを設定し、マーカーとカードの相性表示を更新する。
+func _set_target(e: EnemyUI) -> void:
+	target = e
+	for en in enemies:
+		en.set_targeted(en == target)
+	# カードの相性表示を現在のターゲット属性に合わせる。
+	if target != null:
+		for child in _hand_container.get_children():
+			if child is CardUI:
+				(child as CardUI).enemy_element = target.element
+	_refresh()
+
+func _on_enemy_targeted(e: EnemyUI) -> void:
+	if battle_over or not is_instance_valid(e):
+		return
+	Audio.play_se("select")
+	_set_target(e)
+
+## 敵を撃破・除去し、必要ならターゲットを移す。
+func _remove_enemy(e: EnemyUI) -> void:
+	enemies.erase(e)
+	if e == target:
+		target = enemies[0] if not enemies.is_empty() else null
+		for en in enemies:
+			en.set_targeted(en == target)
+		if target != null:
+			for child in _hand_container.get_children():
+				if child is CardUI:
+					(child as CardUI).enemy_element = target.element
+	if is_instance_valid(e):
+		e.queue_free()
 
 func _start_player_turn() -> void:
 	if battle_over:
@@ -205,7 +245,8 @@ func _add_card_to_hand(sc: SkillCard) -> void:
 	card.monster = sc.monster
 	card.command = sc.command
 	card.source = sc
-	card.enemy_element = enemy.element # 相性表示のため敵の属性を渡す
+	if target != null:
+		card.enemy_element = target.element # 相性表示は現在のターゲット属性
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
 	card.fusion_toggled.connect(_on_fusion_toggled)
@@ -237,7 +278,7 @@ func _on_command_selected(card: CardUI) -> void:
 	if monster.is_dead():
 		_kill_monster(monster)
 
-	if enemy.is_dead():
+	if enemies.is_empty():
 		_win()
 		return
 	_refresh()
@@ -255,22 +296,27 @@ func _kill_monster(monster: MonsterData) -> void:
 
 func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 	var p := card_data.effective_power(cmd)
+	var tgt := target # 狙っている敵
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
+			if tgt == null:
+				return
 			# 威力＋ATK補正にバフ・2倍・属性相性を反映。
 			var base := card_data.command_value(cmd) + atk_buff
 			if double_next:
 				base *= 2
 				double_next = false
 			# 属性相性を反映（有利×1.5 / 不利×0.75）。
-			var mult := MonsterData.affinity(card_data.elements, enemy.element)
+			var mult := MonsterData.affinity(card_data.elements, tgt.element)
 			var dmg := roundi(base * mult)
-			var dealt := enemy.take_damage_pierce(dmg) if cmd.effect == CommandData.Effect.PIERCE else enemy.take_damage(dmg)
-			enemy.flash_hit()
+			var dealt := tgt.take_damage_pierce(dmg) if cmd.effect == CommandData.Effect.PIERCE else tgt.take_damage(dmg)
+			tgt.flash_hit()
 			var dmg_color := Color(1.0, 0.5, 0.3) if mult > 1.0 else Color(1.0, 0.9, 0.5)
-			_popup(str(dealt), _enemy_center(), dmg_color, 32 if mult > 1.0 else 26)
+			_popup(str(dealt), tgt.get_global_rect().get_center(), dmg_color, 32 if mult > 1.0 else 26)
 			if dealt >= 18:
 				_screen_shake(5.0)
+			if tgt.is_dead():
+				_remove_enemy(tgt)
 		CommandData.Effect.BUFF_ATK:
 			atk_buff += p
 		CommandData.Effect.DOUBLE_NEXT:
@@ -283,15 +329,19 @@ func _apply_command(card_data: MonsterData, cmd: CommandData) -> void:
 		CommandData.Effect.GUARD:
 			player_block += card_data.command_value(cmd) # 威力＋DEF補正
 		CommandData.Effect.WEAKEN:
-			enemy.apply_weaken(p)
+			if tgt != null:
+				tgt.apply_weaken(p)
 		CommandData.Effect.ENERGY:
 			energy += cmd.power # エネルギーは段階補正なしの素の値
 		CommandData.Effect.POISON:
-			enemy.add_status(StatusSet.Status.POISON, p)
+			if tgt != null:
+				tgt.add_status(StatusSet.Status.POISON, p)
 		CommandData.Effect.BURN:
-			enemy.add_status(StatusSet.Status.BURN, cmd.power) # 炎上は素のターン数
+			if tgt != null:
+				tgt.add_status(StatusSet.Status.BURN, cmd.power) # 炎上は素のターン数
 		CommandData.Effect.FREEZE:
-			enemy.add_status(StatusSet.Status.FREEZE, cmd.power) # 凍結は素の回数
+			if tgt != null:
+				tgt.add_status(StatusSet.Status.FREEZE, cmd.power) # 凍結は素の回数
 		CommandData.Effect.REGEN:
 			player_status.add(StatusSet.Status.REGEN, p)
 
@@ -301,47 +351,53 @@ func _on_end_turn_pressed() -> void:
 	_enemy_turn()
 
 func _enemy_turn() -> void:
-	# 敵の状態異常を処理（毒ダメージ・再生回復）。
-	var et := enemy.status.tick_turn()
-	if et.poison > 0:
-		var pd := enemy.take_fixed(int(et.poison))
-		enemy.flash_hit()
-		_popup(str(pd), _enemy_center(), Color(0.7, 0.5, 1.0))
-	if et.regen > 0:
-		enemy.heal(int(et.regen))
-		_popup("+%d" % int(et.regen), _enemy_center(), Color(0.5, 1.0, 0.5))
-	_refresh()
-	if enemy.is_dead():
+	# 各敵が順番に行動する。
+	for e in enemies.duplicate():
+		if not is_instance_valid(e) or e not in enemies:
+			continue
+		# 状態異常（毒ダメージ・再生回復）。
+		var et := e.status.tick_turn()
+		if et.poison > 0:
+			var pd := e.take_fixed(int(et.poison))
+			e.flash_hit()
+			_popup(str(pd), e.get_global_rect().get_center(), Color(0.7, 0.5, 1.0))
+		if et.regen > 0:
+			e.heal(int(et.regen))
+			_popup("+%d" % int(et.regen), e.get_global_rect().get_center(), Color(0.5, 1.0, 0.5))
+		if e.is_dead():
+			_remove_enemy(e)
+			continue
+
+		# 凍結中なら行動をスキップ。
+		if e.status.consume_freeze():
+			_flash_message("%s は凍結して動けない！" % e.enemy_name)
+		else:
+			e.reset_block()
+			var dmg := e.execute()
+			if e.intent_type == EnemyUI.Intent.POISON:
+				player_status.add(StatusSet.Status.POISON, e.intent_value)
+				_popup("毒%d" % e.intent_value, _player_anchor(), Color(0.7, 0.5, 1.0))
+			elif dmg > 0:
+				var actual := maxi(0, dmg - player_block)
+				player_block = maxi(0, player_block - dmg)
+				if actual > 0:
+					player_hp = maxi(0, player_hp - actual)
+					Audio.play_se("hit")
+					_popup(str(actual), _player_anchor(), Color(1.0, 0.45, 0.45), 30)
+					_flash_screen(Color(0.8, 0.1, 0.1))
+					_screen_shake(8.0)
+		_refresh()
+		if player_hp <= 0:
+			_lose()
+			return
+
+	if enemies.is_empty():
 		_win()
 		return
 
-	# 凍結中なら行動をスキップ。
-	if enemy.status.consume_freeze():
-		_flash_message("%s は凍結して動けない！" % enemy.enemy_name)
-	else:
-		# 自ターン開始でブロックをリセットし、予告した行動を実行。
-		enemy.reset_block()
-		var dmg := enemy.execute()
-		if enemy.intent_type == EnemyUI.Intent.POISON:
-			player_status.add(StatusSet.Status.POISON, enemy.intent_value)
-			_popup("毒%d" % enemy.intent_value, _player_anchor(), Color(0.7, 0.5, 1.0))
-		elif dmg > 0:
-			# プレイヤーのブロックで軽減する。
-			var actual := maxi(0, dmg - player_block)
-			player_block = maxi(0, player_block - dmg)
-			if actual > 0:
-				player_hp = maxi(0, player_hp - actual)
-				Audio.play_se("hit")
-				_popup(str(actual), _player_anchor(), Color(1.0, 0.45, 0.45), 30)
-				_flash_screen(Color(0.8, 0.1, 0.1))
-				_screen_shake(8.0)
-	_refresh()
-	if player_hp <= 0:
-		_lose()
-		return
-
-	# 次の行動を予告し、手札を片付けて次のプレイヤーターンへ。
-	enemy.plan_next()
+	# 生存している敵が次の行動を予告し、次のプレイヤーターンへ。
+	for e in enemies:
+		e.plan_next()
 	deck.discard_hand()
 	_clear_hand_nodes()
 	_start_player_turn()
@@ -516,11 +572,6 @@ func _commit_fusion(mon_a: MonsterData, mon_b: MonsterData, child: MonsterData) 
 # --- 表示更新・終了処理 -----------------------------------------------------
 
 # --- 演出（エフェクト）-----------------------------------------------------
-
-func _enemy_center() -> Vector2:
-	if enemy != null and is_instance_valid(enemy):
-		return enemy.get_global_rect().get_center()
-	return size * 0.5
 
 func _player_anchor() -> Vector2:
 	if _hp_label != null:

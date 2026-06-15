@@ -7,6 +7,9 @@ extends PanelContainer
 
 enum Intent { ATTACK, DEFEND, BUFF, HEAL, POISON }
 
+## クリックでターゲットに選ばれたときに発火。
+signal targeted(enemy: EnemyUI)
+
 const INTENT_ICON := {
 	Intent.ATTACK: "⚔",
 	Intent.DEFEND: "🛡",
@@ -36,9 +39,12 @@ var _intent_label: Label
 var _hp_bar: ProgressBar
 var _hp_label: Label
 var _status_label: Label
+var _target_marker: Label
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(320, 190)
+	custom_minimum_size = Vector2(280, 190)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	gui_input.connect(_on_gui_input)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
@@ -49,6 +55,13 @@ func _ready() -> void:
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 6)
 	margin.add_child(vbox)
+
+	_target_marker = Label.new()
+	_target_marker.text = "🎯 狙い"
+	_target_marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_target_marker.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	_target_marker.visible = false
+	vbox.add_child(_target_marker)
 
 	# スプライト（あれば）／無ければ属性色の図形プレースホルダ。
 	vbox.add_child(_make_visual())
@@ -165,6 +178,15 @@ func take_fixed(amount: int) -> int:
 	hp = maxi(0, hp - amount)
 	_update()
 	return before - hp
+
+func _on_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		targeted.emit(self)
+
+## ターゲット選択状態の表示。
+func set_targeted(value: bool) -> void:
+	if _target_marker != null:
+		_target_marker.visible = value
 
 ## 被弾時に赤く点滅する。
 func flash_hit() -> void:

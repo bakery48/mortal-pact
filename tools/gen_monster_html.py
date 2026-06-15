@@ -12,7 +12,16 @@ EFFECT_NAME = {0:"DAMAGE",1:"BUFF_ATK",2:"DOUBLE_NEXT",3:"HEAL",4:"GUARD",5:"PIE
                8:"POISON",9:"BURN",10:"FREEZE",11:"REGEN"}
 EFF_BY_NAME = {v:k for k,v in EFFECT_NAME.items()}
 
+# MonsterData.POWER_SCALE と合わせる（能力値のデフレ係数）。
+POWER_SCALE = 0.6
+# 能力値として係数を掛ける効果（コスト/エネルギー/継続ターン系は掛けない）。
+_SCALABLE = {0, 1, 3, 4, 5, 6, 8, 11}
+
+def _scaled(eff, p):
+    return round(p * POWER_SCALE) if eff in _SCALABLE else p
+
 def cmd_text(eff, p):
+    p = _scaled(eff, p)
     return {
         0:f"敵に{p}ダメージ", 1:f"与ダメージ+{p}", 2:"次のダメージ2倍",
         3:f"HP{p}回復", 4:f"ブロック{p}", 5:f"貫通{p}ダメージ",
@@ -79,7 +88,7 @@ def card_html(mon):
         cmds += f'<li><span class="cmd-name">{html.escape(c["name"])}</span> <span class="cmd-cost">コスト{c["cost"]}</span><br><span class="cmd-eff">{html.escape(cmd_text(c["effect"], c["power"]))}</span></li>'
     return f'''<div class="mon {eclass}">
   <div class="mon-head"><span class="mon-name">{html.escape(mon["name"])}</span><span class="mon-rarity">{RARITY[mon["rarity"]]}</span></div>
-  <div class="mon-meta"><span class="tag">{els}</span> ATK {mon["atk"]} / DEF {mon["dfn"]} / 成長 {mon["growth"]:g}</div>
+  <div class="mon-meta"><span class="tag">{els}</span> ATK {round(mon["atk"]*POWER_SCALE)} / DEF {round(mon["dfn"]*POWER_SCALE)} / 成長 {mon["growth"]:g}</div>
   <ul class="mon-cmds">{cmds}</ul>
 </div>'''
 
@@ -89,7 +98,7 @@ starters = [parse_tres(ROOT/f"resources/monsters/{n}.tres") for n in starter_fil
 catalog = parse_factory_pool("reward_pool")
 
 section = ['<h2 id="monsters">魔物図鑑 <span class="badge">初期 %d種 + 図鑑 %d種</span></h2>' % (len(starters), len(catalog))]
-section.append(f'<p>初期デッキの{len(starters)}体と、報酬・ショップで仲間にできる{len(catalog)}体。すべて幼体から育ち、合体で特性を継承できる。</p>')
+section.append(f'<p>初期デッキの{len(starters)}体と、報酬・ショップで仲間にできる{len(catalog)}体。すべて幼体から育ち、合体で特性を継承できる。<br><small>※数値は全体デフレ係数({POWER_SCALE})適用後・成体時の目安。実際は成長段階で増減します。</small></p>')
 section.append('<h3>初期デッキ</h3>')
 section.append('<div class="mon-grid">' + "".join(card_html(m) for m in starters) + '</div>')
 section.append('<h3>図鑑（報酬・ショップ）</h3>')

@@ -134,6 +134,11 @@ func _build_ui() -> void:
 	_pile_label = Label.new()
 	status.add_child(_pile_label)
 
+	var deck_btn := Button.new()
+	deck_btn.text = "デッキ"
+	deck_btn.pressed.connect(_open_deck_view)
+	status.add_child(deck_btn)
+
 	_fuse_button = Button.new()
 	_fuse_button.disabled = true
 	_fuse_button.pressed.connect(_on_fuse_pressed)
@@ -727,6 +732,97 @@ func _refresh() -> void:
 		if child is CardUI:
 			(child as CardUI).enemy_element = solo
 			(child as CardUI).refresh(energy)
+
+func _open_deck_view() -> void:
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(640, 420)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	vbox.add_child(header)
+
+	var title := Label.new()
+	title.text = "デッキ（%d体）" % Run.deck.size()
+	title.add_theme_font_size_override("font_size", 22)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+
+	var close := Button.new()
+	close.text = "✕ 閉じる"
+	close.pressed.connect(func() -> void: overlay.queue_free())
+	header.add_child(close)
+
+	vbox.add_child(HSeparator.new())
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+
+	for mon: MonsterData in Run.deck:
+		var row := PanelContainer.new()
+		list.add_child(row)
+
+		var rm := MarginContainer.new()
+		for side in ["left", "right", "top", "bottom"]:
+			rm.add_theme_constant_override("margin_" + side, 8)
+		row.add_child(rm)
+
+		var rv := VBoxContainer.new()
+		rv.add_theme_constant_override("separation", 3)
+		rm.add_child(rv)
+
+		# 名前行
+		var name_row := HBoxContainer.new()
+		rv.add_child(name_row)
+		var name_lbl := Label.new()
+		name_lbl.text = "%s %s %s" % [mon.rarity_label(), mon.monster_name, mon.stage_label()]
+		name_lbl.add_theme_font_size_override("font_size", 16)
+		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_row.add_child(name_lbl)
+		var elem_lbl := Label.new()
+		elem_lbl.text = mon.element_label()
+		elem_lbl.add_theme_color_override("font_color", Color(0.7, 0.8, 0.9))
+		name_row.add_child(elem_lbl)
+
+		# ステータス行
+		var stat_lbl := Label.new()
+		var exp_pct := int(mon.exp_progress() * 100)
+		stat_lbl.text = "ATK:%d  DEF:%d  EXP:%d%%" % [mon.effective_attack(), mon.effective_defense(), exp_pct]
+		stat_lbl.add_theme_font_size_override("font_size", 12)
+		stat_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.7))
+		rv.add_child(stat_lbl)
+
+		# スキル行
+		for cmd: CommandData in mon.commands:
+			var cmd_lbl := Label.new()
+			cmd_lbl.text = "  ▸ %s（コスト%d）" % [cmd.command_name, mon.effective_cost(cmd)]
+			cmd_lbl.add_theme_font_size_override("font_size", 12)
+			rv.add_child(cmd_lbl)
 
 func _win() -> void:
 	battle_over = true

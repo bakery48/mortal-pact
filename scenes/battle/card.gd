@@ -153,11 +153,11 @@ func _stat_breakdown() -> String:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
 			if monster.damage_bonus(command) <= 0:
 				return ""
-			return "(基礎%d + ATK%d×%.1f)" % [monster.effective_power(command), monster.effective_attack(), scale]
+			return "(基礎%d＋ATK×%.1f)" % [monster.effective_power(command), scale]
 		CommandData.Effect.GUARD:
 			if monster.guard_bonus(command) <= 0:
 				return ""
-			return "(基礎%d + DEF%d×%.1f)" % [monster.effective_power(command), monster.effective_defense(), scale]
+			return "(基礎%d＋DEF×%.1f)" % [monster.effective_power(command), scale]
 	return ""
 
 func _affinity_mark() -> String:

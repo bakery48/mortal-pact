@@ -227,6 +227,32 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("禁呪", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	]))
 
+	# --- 敵種族の仲間版（対称性のため） ---
+	list.append(_monster("ゴブリン", 9, 5, MonsterData.Element.EARTH, 1.2, [
+		_cmd("強奪", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("鬨の声", 1, CommandData.Effect.BUFF_ATK, 3, "このターンの与ダメージ+3"),
+	]))
+	list.append(_monster("スケルトン", 10, 3, MonsterData.Element.DARK, 1.0, [
+		_cmd("骨の槍", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
+		_cmd("死者の呪い", 2, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
+	]))
+	list.append(_monster("大コウモリ", 9, 3, MonsterData.Element.WIND, 1.3, [
+		_cmd("音波", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("血吸い", 2, CommandData.Effect.DAMAGE, 15, "敵に15ダメージ"),
+	]))
+	list.append(_monster("ホブゴブリン", 11, 6, MonsterData.Element.EARTH, 0.9, [
+		_cmd("鉄槌", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+		_cmd("集団突撃", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
+	]))
+	list.append(_monster("マッドスライム", 7, 9, MonsterData.Element.WATER, 1.1, [
+		_cmd("泥弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
+		_cmd("粘液の壁", 1, CommandData.Effect.GUARD, 10, "ブロック10を得る"),
+	]))
+	list.append(_monster("毒蛇", 8, 4, MonsterData.Element.DARK, 1.1, [
+		_cmd("毒牙", 1, CommandData.Effect.POISON, 4, "敵に毒4を付与"),
+		_cmd("蛇の一撃", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+	]))
+
 	# --- 状態異常特化 ---
 	list.append(_monster("バジリスク", 11, 5, MonsterData.Element.DARK, 1.0, [
 		_cmd("猛毒の牙", 1, CommandData.Effect.POISON, 4, "敵に毒4を付与"),

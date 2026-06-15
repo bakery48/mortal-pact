@@ -26,6 +26,11 @@ static func zako_pool() -> Array:
 		_enemy("マッドスライム", 60, [_move(D, 8), _move(A, 7)], E.WATER),
 		_enemy("インプの群れ", 46, [_move(A, 5), _move(A, 5), _move(A, 8)], E.FIRE),
 		_enemy("毒蛇", 42, [_move(P, 3), _move(A, 7), _move(A, 9)], E.DARK),
+		_enemy("サラマンダー", 50, [_move(A, 10), _move(A, 16)], E.FIRE),
+		_enemy("フェンリル", 46, [_move(A, 9), _move(B, 3), _move(A, 13)], E.DARK),
+		_enemy("ゴーレム", 62, [_move(D, 10), _move(A, 9)], E.EARTH),
+		_enemy("ウィスプ", 34, [_move(B, 3), _move(A, 9), _move(A, 7)], E.LIGHT),
+		_enemy("インプ", 42, [_move(A, 7), _move(A, 9)], E.FIRE),
 	]
 
 # --- エリート ---------------------------------------------------------------
@@ -43,6 +48,9 @@ static func elite_pool() -> Array:
 		_enemy("ガーゴイル", 95, [_move(D, 12), _move(A, 15), _move(A, 9)], E.EARTH),
 		_enemy("地獄の番犬", 84, [_move(A, 12), _move(A, 12), _move(B, 5)], E.FIRE),
 		_enemy("邪毒の妖蛆", 78, [_move(P, 5), _move(A, 11), _move(D, 10)], E.DARK),
+		_enemy("ケルベロス", 95, [_move(A, 14), _move(A, 22), _move(B, 5)], E.DARK),
+		_enemy("ミノタウロス", 100, [_move(A, 13), _move(B, 4), _move(A, 19)], E.EARTH),
+		_enemy("ヴァンパイア", 88, [_move(A, 12), _move(H, 12), _move(A, 18)], E.DARK),
 	]
 
 # --- ボス -------------------------------------------------------------------

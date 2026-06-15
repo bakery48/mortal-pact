@@ -37,7 +37,8 @@ var _hand_container: HBoxContainer
 var _hp_label: Label
 var _energy_label: Label
 var _buff_label: Label
-var _pile_label: Label
+var _draw_button: Button
+var _discard_button: Button
 var _message_label: Label
 var _event_label: Label
 var _end_turn_button: Button
@@ -131,8 +132,13 @@ func _build_ui() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status.add_child(spacer)
 
-	_pile_label = Label.new()
-	status.add_child(_pile_label)
+	_draw_button = Button.new()
+	_draw_button.pressed.connect(_open_draw_pile_view)
+	status.add_child(_draw_button)
+
+	_discard_button = Button.new()
+	_discard_button.pressed.connect(_open_discard_pile_view)
+	status.add_child(_discard_button)
 
 	var deck_btn := Button.new()
 	deck_btn.text = "デッキ"
@@ -725,13 +731,94 @@ func _refresh() -> void:
 		buff_text += "次のダメ2倍"
 	_buff_label.text = buff_text
 
-	_pile_label.text = "山札:%d  捨札:%d" % [deck.draw_pile.size(), deck.discard_pile.size()]
+	_draw_button.text = "山札:%d" % deck.draw_pile.size()
+	_discard_button.text = "捨札:%d" % deck.discard_pile.size()
 
 	var solo := _solo_enemy_element()
 	for child in _hand_container.get_children():
 		if child is CardUI:
 			(child as CardUI).enemy_element = solo
 			(child as CardUI).refresh(energy)
+
+func _open_draw_pile_view() -> void:
+	_open_pile_view("山札", deck.draw_pile, true)
+
+func _open_discard_pile_view() -> void:
+	_open_pile_view("捨札", deck.discard_pile, false)
+
+## スキルカードの山（山札/捨札）の中身を一覧表示する。
+## 山札は引く順が見えないよう名前順にソートして表示する。
+func _open_pile_view(title_text: String, pile: Array[SkillCard], sorted: bool) -> void:
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(560, 420)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	vbox.add_child(header)
+
+	var title := Label.new()
+	title.text = "%s（%d枚）" % [title_text, pile.size()]
+	title.add_theme_font_size_override("font_size", 22)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+
+	var close := Button.new()
+	close.text = "✕ 閉じる"
+	close.pressed.connect(func() -> void: overlay.queue_free())
+	header.add_child(close)
+
+	vbox.add_child(HSeparator.new())
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+
+	# 表示用に並べ替えたコピーを作る（実際の山札順は変えない）。
+	var cards := pile.duplicate()
+	if sorted:
+		cards.sort_custom(func(a: SkillCard, b: SkillCard) -> bool:
+			if a.monster.monster_name == b.monster.monster_name:
+				return a.command.command_name < b.command.command_name
+			return a.monster.monster_name < b.monster.monster_name)
+
+	if cards.is_empty():
+		var empty := Label.new()
+		empty.text = "（カードがありません）"
+		empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65))
+		list.add_child(empty)
+	for sc: SkillCard in cards:
+		var row := Label.new()
+		row.text = "%s %s ／ ▸ %s（コスト%d）" % [
+			sc.monster.monster_name, sc.monster.stage_label(),
+			sc.command.command_name, sc.monster.effective_cost(sc.command),
+		]
+		row.add_theme_font_size_override("font_size", 14)
+		list.add_child(row)
 
 func _open_deck_view() -> void:
 	var overlay := ColorRect.new()

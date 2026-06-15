@@ -24,7 +24,7 @@ var _select_button: Button
 var _selected := false
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(190, 300)
+	custom_minimum_size = Vector2(190, 0)
 	if monster != null and command != null:
 		_build()
 
@@ -92,13 +92,13 @@ func _make_visual() -> Control:
 	if tex != null:
 		var tr := TextureRect.new()
 		tr.texture = tex
-		tr.custom_minimum_size = Vector2(0, 72)
+		tr.custom_minimum_size = Vector2(0, 58)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST # ドット絵をくっきり
 		return tr
 	var box := ColorRect.new()
 	box.color = SpriteLoader.element_color(monster.elements[0] if not monster.elements.is_empty() else MonsterData.Element.NONE)
-	box.custom_minimum_size = Vector2(0, 72)
+	box.custom_minimum_size = Vector2(0, 58)
 	var cc := CenterContainer.new()
 	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_child(cc)

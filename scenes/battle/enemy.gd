@@ -99,13 +99,13 @@ func _make_visual() -> Control:
 	if tex != null:
 		var tr := TextureRect.new()
 		tr.texture = tex
-		tr.custom_minimum_size = Vector2(0, 120)
+		tr.custom_minimum_size = Vector2(0, 96)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		return tr
 	var box := ColorRect.new()
 	box.color = SpriteLoader.element_color(element)
-	box.custom_minimum_size = Vector2(0, 100)
+	box.custom_minimum_size = Vector2(0, 82)
 	var cc := CenterContainer.new()
 	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_child(cc)

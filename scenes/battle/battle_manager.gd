@@ -98,10 +98,11 @@ func _build_ui() -> void:
 	_enemy_slot.add_theme_constant_override("separation", 16)
 	main.add_child(_enemy_slot)
 
-	# 勝敗メッセージ（中央）
+	# 勝敗メッセージ（中央）：勝敗確定時のみ visible にする
 	_message_label = Label.new()
 	_message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message_label.add_theme_font_size_override("font_size", 36)
+	_message_label.visible = false
 	main.add_child(_message_label)
 
 	# ステータスバー
@@ -722,6 +723,7 @@ func _refresh() -> void:
 
 func _win() -> void:
 	battle_over = true
+	_message_label.visible = true
 	_message_label.text = "勝利！"
 	_message_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
 	_end_battle_input()
@@ -732,6 +734,7 @@ func _win() -> void:
 
 func _lose() -> void:
 	battle_over = true
+	_message_label.visible = true
 	_message_label.text = "敗北..."
 	_message_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5))
 	_end_battle_input()

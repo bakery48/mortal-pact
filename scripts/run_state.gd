@@ -27,6 +27,8 @@ const SAVE_VERSION := 3 # 全体デフレで数値が変わったため更新
 const UNLOCK_PATH := "user://unlocks.json"
 ## 引き継ぎ（死亡時に選んだ次ランの初期デッキ）。次ラン開始時に1度だけ消費。
 const CARRYOVER_PATH := "user://carryover.json"
+## チュートリアル既読フラグ。
+const TUTORIAL_PATH := "user://tutorial.done"
 ## ランの初期デッキ体数。
 const START_DECK_SIZE := 6
 
@@ -483,3 +485,14 @@ func _load_carryover() -> Array[MonsterData]:
 func _consume_carryover() -> void:
 	if FileAccess.file_exists(CARRYOVER_PATH):
 		DirAccess.remove_absolute(CARRYOVER_PATH)
+
+# --- チュートリアル ---------------------------------------------------------
+
+func tutorial_done() -> bool:
+	return FileAccess.file_exists(TUTORIAL_PATH)
+
+func mark_tutorial_done() -> void:
+	var file := FileAccess.open(TUTORIAL_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string("1")
+		file.close()

@@ -3,9 +3,14 @@ extends Control
 ## タイトル画面。ゲームのエントリーポイント。
 ## セーブがあれば「つづきから」、無ければ「はじめから」で開始する。
 
+const TutorialScene := preload("res://scenes/ui/tutorial.tscn")
+
 func _ready() -> void:
 	_build_ui()
 	Audio.play_bgm("res://assets/audio/bgm_title.ogg")
+	# 初回起動時はチュートリアルを自動表示。
+	if not Run.tutorial_done():
+		_open_tutorial()
 
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -51,6 +56,10 @@ func _build_ui() -> void:
 	new_btn.pressed.connect(_on_new_game)
 	vbox.add_child(new_btn)
 
+	var tutorial_btn := _make_button("遊び方")
+	tutorial_btn.pressed.connect(_open_tutorial)
+	vbox.add_child(tutorial_btn)
+
 	var codex_btn := _make_button("図鑑（%d種 発見）" % Run.unlocked_count())
 	codex_btn.pressed.connect(_on_codex)
 	vbox.add_child(codex_btn)
@@ -84,6 +93,10 @@ func _confirm_new_game() -> void:
 	dialog.confirmed.connect(Run.new_game)
 	add_child(dialog)
 	dialog.popup_centered()
+
+func _open_tutorial() -> void:
+	Audio.play_se("select")
+	add_child(TutorialScene.instantiate())
 
 func _on_codex() -> void:
 	Audio.play_se("select")

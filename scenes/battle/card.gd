@@ -66,7 +66,7 @@ func _build() -> void:
 	_refresh_texts()
 
 func _refresh_texts() -> void:
-	_title.text = "%s %s %s" % [monster.rarity_label(), monster.monster_name, monster.stage_label()]
+	_title.text = "%s %s %s" % [monster.rarity_label(), monster.display_name(), monster.stage_label()]
 	_stats.text = "属性:%s  ATK:%d DEF:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense()]
 	_exp_bar.value = monster.exp_progress()
 	_cmd_button.text = "▶ %s  (コスト%d)\n%s" % [command.command_name, monster.effective_cost(command), _command_text()]

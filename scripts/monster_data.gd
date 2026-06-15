@@ -94,6 +94,20 @@ const RARITY_LABEL := {
 @export var elements: Array[int] = [Element.NONE]
 @export var rarity: Rarity = Rarity.COMMON
 @export var commands: Array[CommandData] = []
+## 合体強化値（血統の「+N」）。奇数到達ごとにATK+1、偶数到達ごとにDEF+1。
+@export var plus: int = 0
+
+## 表示名。+N が付くなら付与する（例：フェンリル+2）。図鑑記録には monster_name を使う。
+func display_name() -> String:
+	return monster_name + ("+%d" % plus if plus > 0 else "")
+
+## +N によるATKボーナス（+が奇数に達するたびに+1 ＝ ⌈N/2⌉）。
+func plus_attack_bonus() -> int:
+	return (plus + 1) / 2
+
+## +N によるDEFボーナス（+が偶数に達するたびに+1 ＝ ⌊N/2⌋）。
+func plus_defense_bonus() -> int:
+	return plus / 2
 
 # --- ライフサイクル ---------------------------------------------------------
 
@@ -175,6 +189,7 @@ func to_dict() -> Dictionary:
 		"growth_speed": growth_speed,
 		"elements": elements.duplicate(),
 		"rarity": int(rarity),
+		"plus": plus,
 		"commands": cmds,
 	}
 
@@ -193,6 +208,7 @@ static func from_dict(d: Dictionary) -> MonsterData:
 		els.append(Element.NONE)
 	m.elements = els
 	m.rarity = int(d.get("rarity", 0)) as Rarity
+	m.plus = int(d.get("plus", 0))
 	var cmds: Array[CommandData] = []
 	for cd in d.get("commands", []):
 		cmds.append(CommandData.from_dict(cd))
@@ -202,7 +218,7 @@ static func from_dict(d: Dictionary) -> MonsterData:
 ## 報酬・ショップ画面用の概要テキスト（基礎ステータスを表示）。
 func summary() -> String:
 	var text := "%s %s %s\n属性:%s  ATK:%d DEF:%d  成長:%.1f" % [
-		rarity_label(), monster_name, stage_label(),
+		rarity_label(), display_name(), stage_label(),
 		element_label(), attack, defense, growth_speed,
 	]
 	for c in commands:
@@ -215,10 +231,10 @@ func _mult() -> float:
 	return float(STAGE_MULT[stage])
 
 func effective_attack() -> int:
-	return roundi(attack * _mult() * POWER_SCALE)
+	return roundi(attack * _mult() * POWER_SCALE) + plus_attack_bonus()
 
 func effective_defense() -> int:
-	return roundi(defense * _mult() * POWER_SCALE)
+	return roundi(defense * _mult() * POWER_SCALE) + plus_defense_bonus()
 
 func effective_cost(cmd: CommandData) -> int:
 	return clampi(cmd.cost + int(STAGE_COST_DELTA[stage]), 1, 99)

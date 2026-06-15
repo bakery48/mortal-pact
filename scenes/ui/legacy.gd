@@ -92,7 +92,7 @@ func _make_card(mon: MonsterData) -> Control:
 	margin.add_child(v)
 
 	var name_lbl := Label.new()
-	name_lbl.text = "%s %s %s" % [mon.rarity_label(), mon.monster_name, mon.stage_label()]
+	name_lbl.text = "%s %s %s" % [mon.rarity_label(), mon.display_name(), mon.stage_label()]
 	name_lbl.add_theme_font_size_override("font_size", 16)
 	v.add_child(name_lbl)
 

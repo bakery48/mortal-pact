@@ -155,11 +155,12 @@ func _refresh() -> void:
 	for r in _offer_rows:
 		(r["button"] as Button).disabled = not affordable
 
-# --- 合体（子孫生成） -------------------------------------------------------
+# --- 合体（血統強化） -------------------------------------------------------
 
-## 親2体を選ぶモーダルを開く。
+## 血統と相手を選ぶモーダルを開く。最初の選択＝血統、次＝相手。
 func _open_fusion_picker() -> void:
-	var selected: Array[MonsterData] = []
+	# 役割の保持（参照渡しのため Dictionary）。
+	var state := {"bloodline": null, "partner": null}
 
 	var overlay := ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.7)
@@ -172,7 +173,7 @@ func _open_fusion_picker() -> void:
 	overlay.add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(620, 460)
+	panel.custom_minimum_size = Vector2(640, 480)
 	center.add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -185,13 +186,21 @@ func _open_fusion_picker() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "合体：親にする2体を選ぶ"
-	title.add_theme_font_size_override("font_size", 22)
+	title.text = "合体：血統（残る側）と相手（消える側）を選ぶ"
+	title.add_theme_font_size_override("font_size", 20)
 	vbox.add_child(title)
 
-	var count_label := Label.new()
-	count_label.text = "選択 0 / 2"
-	vbox.add_child(count_label)
+	var hint := Label.new()
+	hint.text = "1体目のクリック＝血統 ／ 2体目＝相手。名前と属性は血統を引き継ぎ、+値が加算されます。"
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", Color(0.7, 0.72, 0.78))
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(hint)
+
+	var preview := Label.new()
+	preview.add_theme_font_size_override("font_size", 16)
+	preview.add_theme_color_override("font_color", Color(1.0, 0.88, 0.5))
+	vbox.add_child(preview)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -208,13 +217,9 @@ func _open_fusion_picker() -> void:
 	for mon: MonsterData in _fusable_monsters():
 		var btn := Button.new()
 		btn.toggle_mode = true
-		btn.custom_minimum_size = Vector2(280, 0)
-		btn.text = "%s %s %s\n属性:%s ATK:%d DEF:%d" % [
-			mon.rarity_label(), mon.monster_name, mon.stage_label(),
-			mon.element_label(), mon.effective_attack(), mon.effective_defense(),
-		]
+		btn.custom_minimum_size = Vector2(290, 0)
 		toggles.append({"button": btn, "monster": mon})
-		btn.pressed.connect(_on_fusion_parent_toggled.bind(mon, btn, selected, count_label, toggles))
+		btn.pressed.connect(_on_fusion_role_toggled.bind(mon, state, toggles, preview))
 		grid.add_child(btn)
 
 	vbox.add_child(HSeparator.new())
@@ -232,41 +237,68 @@ func _open_fusion_picker() -> void:
 	var next_btn := Button.new()
 	next_btn.text = "次へ（継承スキル選択）"
 	next_btn.disabled = true
-	next_btn.pressed.connect(_on_fusion_next.bind(selected, overlay))
+	next_btn.pressed.connect(_on_fusion_next.bind(state, overlay))
 	buttons.add_child(next_btn)
-	# next ボタンの有効/無効更新のため参照を保持。
-	count_label.set_meta("next_button", next_btn)
+	preview.set_meta("next_button", next_btn)
 
-func _on_fusion_next(selected: Array, overlay: Control) -> void:
-	if selected.size() != 2:
+	_refresh_fusion_picker(state, toggles, preview)
+
+func _on_fusion_role_toggled(mon: MonsterData, state: Dictionary, toggles: Array, preview: Label) -> void:
+	# 既に役割があるなら解除、無ければ 血統→相手 の順に割り当て。
+	if state["bloodline"] == mon:
+		state["bloodline"] = null
+	elif state["partner"] == mon:
+		state["partner"] = null
+	elif state["bloodline"] == null:
+		state["bloodline"] = mon
+	elif state["partner"] == null:
+		state["partner"] = mon
+	_refresh_fusion_picker(state, toggles, preview)
+
+func _refresh_fusion_picker(state: Dictionary, toggles: Array, preview: Label) -> void:
+	var bl: MonsterData = state["bloodline"]
+	var pt: MonsterData = state["partner"]
+	for t in toggles:
+		var mon: MonsterData = t["monster"]
+		var b := t["button"] as Button
+		var role := ""
+		if mon == bl:
+			role = "【血統】"
+			b.modulate = Color(1.0, 0.85, 0.4)
+		elif mon == pt:
+			role = "【相手】"
+			b.modulate = Color(0.6, 0.8, 1.0)
+		else:
+			b.modulate = Color.WHITE
+		b.button_pressed = role != ""
+		b.text = "%s%s %s\n属性:%s ATK:%d DEF:%d" % [
+			role, mon.display_name(), mon.stage_label(),
+			mon.element_label(), mon.effective_attack(), mon.effective_defense(),
+		]
+		# 両役割が埋まっているとき、未選択は押せないようにする。
+		b.disabled = (mon != bl and mon != pt) and bl != null and pt != null
+	if bl != null and pt != null:
+		preview.text = "→ %s+%d が誕生（幼体から再育成）" % [bl.monster_name, MonsterFactory.fused_plus(bl, pt)]
+	elif bl != null:
+		preview.text = "血統: %s（相手を選んでください）" % bl.display_name()
+	else:
+		preview.text = "血統を選んでください"
+	var next_btn := preview.get_meta("next_button") as Button
+	if next_btn != null:
+		next_btn.disabled = bl == null or pt == null
+
+func _on_fusion_next(state: Dictionary, overlay: Control) -> void:
+	var bl: MonsterData = state["bloodline"]
+	var pt: MonsterData = state["partner"]
+	if bl == null or pt == null:
 		return
 	overlay.queue_free()
-	_open_inherit_dialog(selected[0], selected[1])
+	_open_inherit_dialog(bl, pt)
 
-func _on_fusion_parent_toggled(mon: MonsterData, btn: Button, selected: Array, count_label: Label, toggles: Array) -> void:
-	if mon in selected:
-		selected.erase(mon)
-	elif selected.size() < 2:
-		selected.append(mon)
-	else:
-		btn.button_pressed = false
-		return
-	count_label.text = "選択 %d / 2" % selected.size()
-	var next_btn := count_label.get_meta("next_button") as Button
-	if next_btn != null:
-		next_btn.disabled = selected.size() != 2
-	# 2体選択済みなら未選択を無効化。
-	for t in toggles:
-		var b := t["button"] as Button
-		var m: MonsterData = t["monster"]
-		b.disabled = (m not in selected) and selected.size() >= 2
-
-## 継承スキルを選ぶモーダルを開く。
-func _open_inherit_dialog(mon_a: MonsterData, mon_b: MonsterData) -> void:
-	var element := MonsterFactory.choose_child_element(mon_a, mon_b)
-	var max_inherit := MonsterFactory.max_inheritable(mon_a, mon_b)
-	var pool := MonsterFactory.inheritable_pool(mon_a, mon_b)
-	var innate := MonsterFactory.element_innate_kit(element)
+## 相手スキルの継承を選ぶモーダルを開く。
+func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
+	var max_inherit := MonsterFactory.partner_inherit_cap(bloodline)
+	var pool := MonsterFactory.partner_pool(bloodline, partner)
 	var chosen: Array[CommandData] = []
 
 	var overlay := ColorRect.new()
@@ -293,21 +325,18 @@ func _open_inherit_dialog(mon_a: MonsterData, mon_b: MonsterData) -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "合体：継承するスキルを選択"
-	title.add_theme_font_size_override("font_size", 24)
+	title.text = "合体：%s+%d ／ 相手スキルの継承" % [bloodline.monster_name, MonsterFactory.fused_plus(bloodline, partner)]
+	title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(title)
 
-	var elem_label := Label.new()
-	elem_label.text = "子孫の属性: %s ／ 固有スキル2つ＋継承 最大%d" % [String(MonsterData.ELEMENT_LABEL[element]), max_inherit]
-	elem_label.modulate = Color(0.8, 0.85, 0.95)
-	vbox.add_child(elem_label)
-
-	var innate_label := Label.new()
-	var innate_names: Array[String] = []
-	for c in innate:
-		innate_names.append(c.command_name)
-	innate_label.text = "固有: " + "／".join(innate_names)
-	vbox.add_child(innate_label)
+	var keep_names: Array[String] = []
+	for c in bloodline.commands:
+		keep_names.append(c.command_name)
+	var keep_label := Label.new()
+	keep_label.text = "血統スキル（保持）: " + "／".join(keep_names)
+	keep_label.modulate = Color(0.8, 0.85, 0.95)
+	keep_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(keep_label)
 
 	vbox.add_child(HSeparator.new())
 
@@ -323,7 +352,7 @@ func _open_inherit_dialog(mon_a: MonsterData, mon_b: MonsterData) -> void:
 		vbox.add_child(btn)
 	if pool.is_empty():
 		var none_label := Label.new()
-		none_label.text = "継承できるスキルがありません（固有2つで誕生）"
+		none_label.text = "継承できる相手スキルがありません"
 		none_label.modulate = Color(0.7, 0.7, 0.7)
 		vbox.add_child(none_label)
 
@@ -341,7 +370,7 @@ func _open_inherit_dialog(mon_a: MonsterData, mon_b: MonsterData) -> void:
 
 	var confirm := Button.new()
 	confirm.text = "合体する"
-	confirm.pressed.connect(_on_fusion_confirm.bind(mon_a, mon_b, element, chosen, overlay))
+	confirm.pressed.connect(_on_fusion_confirm.bind(bloodline, partner, chosen, overlay))
 	buttons.add_child(confirm)
 
 	count_label.text = "継承 0 / %d" % max_inherit
@@ -356,10 +385,10 @@ func _on_inherit_toggled(pressed: bool, cmd: CommandData, btn: Button, chosen: A
 		chosen.erase(cmd)
 	count_label.text = "継承 %d / %d" % [chosen.size(), max_inherit]
 
-func _on_fusion_confirm(mon_a: MonsterData, mon_b: MonsterData, element: int, chosen: Array, overlay: Control) -> void:
-	var child := MonsterFactory.make_child(mon_a, mon_b, element, chosen)
-	Run.deck.erase(mon_a)
-	Run.deck.erase(mon_b)
+func _on_fusion_confirm(bloodline: MonsterData, partner: MonsterData, chosen: Array, overlay: Control) -> void:
+	var child := MonsterFactory.make_child(bloodline, partner, chosen)
+	Run.deck.erase(bloodline)
+	Run.deck.erase(partner)
 	Run.deck.append(child)
 	Run.record_unlock(child.monster_name)
 	Audio.play_se("fuse")

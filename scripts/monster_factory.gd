@@ -295,130 +295,55 @@ static func random_rewards(count: int) -> Array[MonsterData]:
 		result.append(pool[i])
 	return result
 
-# --- 合体（子孫生成） -------------------------------------------------------
+# --- 合体（血統強化） -------------------------------------------------------
+#
+# 血統（残る側）と相手（消費される側）を選んで合体する。
+# ・名前・属性・基礎ステータス・成長速度・レアリティは血統を引き継ぐ
+# ・+値 = 血統の+ ＋ 相手の+ ＋ 1（奇数到達でATK+1／偶数到達でDEF+1）
+# ・スキルは血統のものを全保持し、相手のスキルから選んで継承（最大6）
+# ・合体後は幼体に戻って再び育つ
 
-## 子孫の固有スキル数。属性に応じた基礎キット。
-const INNATE_COUNT := 2
 ## 1体が持てるスキルの最大数。
 const MAX_SKILLS := 6
-## 属性継承：基本は両親いずれか、15%で両親と異なる属性に突然変異。
-const ELEMENT_MUTATION_CHANCE := 0.15
 
-## 継承可能なスキル数を返す。
-## 親のスキル合計 4→1 / 6→2 / 8→3 / 10→4。ただし1世代で増やせるのは+1まで（max(親)+1）。最大6。
-static func max_inheritable(a: MonsterData, b: MonsterData) -> int:
-	var combined := a.commands.size() + b.commands.size()
-	var by_combined := 0
-	if combined >= 10:
-		by_combined = 4
-	elif combined >= 8:
-		by_combined = 3
-	elif combined >= 6:
-		by_combined = 2
-	elif combined >= 4:
-		by_combined = 1
-	# 1世代で +1 まで：子の総数 ≤ max(親の枚数)+1 → 継承数 ≤ max(親)+1-固有数
-	var gen_cap := maxi(a.commands.size(), b.commands.size()) + 1 - INNATE_COUNT
-	return clampi(mini(by_combined, gen_cap), 0, MAX_SKILLS - INNATE_COUNT)
+## 相手から継承できる最大数（血統の空きスロット分）。
+static func partner_inherit_cap(bloodline: MonsterData) -> int:
+	return clampi(MAX_SKILLS - bloodline.commands.size(), 0, MAX_SKILLS)
 
-## 両親から継承候補にできるスキル一覧（技名で重複排除）。
-static func inheritable_pool(a: MonsterData, b: MonsterData) -> Array[CommandData]:
+## 相手から継承候補にできるスキル一覧（血統が既に持つ技名は除外）。
+static func partner_pool(bloodline: MonsterData, partner: MonsterData) -> Array[CommandData]:
 	var pool: Array[CommandData] = []
 	var seen := {}
-	for c in (a.commands + b.commands):
+	for c in bloodline.commands:
+		seen[c.command_name] = true
+	for c in partner.commands:
 		if not seen.has(c.command_name):
 			seen[c.command_name] = true
 			pool.append(c)
 	return pool
 
-## 子孫の属性を決める（両親いずれか／15%で両親と異なる属性に突然変異）。
-static func choose_child_element(a: MonsterData, b: MonsterData) -> int:
-	var parent_elems: Array[int] = []
-	for e in a.elements:
-		if int(e) not in parent_elems:
-			parent_elems.append(int(e))
-	for e in b.elements:
-		if int(e) not in parent_elems:
-			parent_elems.append(int(e))
+## 合体後の +値 を計算する。
+static func fused_plus(bloodline: MonsterData, partner: MonsterData) -> int:
+	return bloodline.plus + partner.plus + 1
 
-	if randf() < ELEMENT_MUTATION_CHANCE:
-		var pool: Array[int] = []
-		for el in [MonsterData.Element.FIRE, MonsterData.Element.WATER, MonsterData.Element.WIND,
-				MonsterData.Element.EARTH, MonsterData.Element.LIGHT, MonsterData.Element.DARK]:
-			if el not in parent_elems:
-				pool.append(el)
-		if not pool.is_empty():
-			return pool.pick_random()
-
-	if parent_elems.is_empty():
-		return MonsterData.Element.NONE
-	return parent_elems.pick_random()
-
-## 属性ごとの固有基礎キット（2スキル）。毎回新インスタンスを返す。
-static func element_innate_kit(element: int) -> Array[CommandData]:
-	match element:
-		MonsterData.Element.FIRE:
-			return [
-				_cmd("火の弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("火だるま", 1, CommandData.Effect.BURN, 2, "敵を2ターン炎上"),
-			]
-		MonsterData.Element.WATER:
-			return [
-				_cmd("水弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("治癒の水", 1, CommandData.Effect.HEAL, 8, "HPを8回復"),
-			]
-		MonsterData.Element.WIND:
-			return [
-				_cmd("風刃", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("追い風", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
-			]
-		MonsterData.Element.EARTH:
-			return [
-				_cmd("礫", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("守りの構え", 1, CommandData.Effect.GUARD, 9, "ブロック9を得る"),
-			]
-		MonsterData.Element.LIGHT:
-			return [
-				_cmd("光弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("祝福", 1, CommandData.Effect.HEAL, 9, "HPを9回復"),
-			]
-		MonsterData.Element.DARK:
-			return [
-				_cmd("闇撃ち", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("毒霧", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
-			]
-		_:
-			return [
-				_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("構え", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
-			]
-
-## 子孫を生成する。element は choose_child_element の結果、
-## inherited はプレイヤーが選んだ継承スキル（0個も可）。
-static func make_child(a: MonsterData, b: MonsterData, element: int, inherited: Array) -> MonsterData:
+## 合体結果を生成する。bloodline=血統、partner=相手、
+## inherited はプレイヤーが選んだ相手スキル（0個も可）。
+static func make_child(bloodline: MonsterData, partner: MonsterData, inherited: Array) -> MonsterData:
 	var child := MonsterData.new()
-	child.monster_name = a.monster_name.left(2) + b.monster_name.left(2) + "の子"
+	# 名前・属性・基礎ステ・成長・レアリティは血統を継ぐ。
+	child.monster_name = bloodline.monster_name
+	child.attack = bloodline.attack
+	child.defense = bloodline.defense
+	child.growth_speed = bloodline.growth_speed
+	child.elements = bloodline.elements.duplicate()
+	child.rarity = bloodline.rarity
+	child.plus = fused_plus(bloodline, partner)
 
-	# レアリティ：両親の高い方を基準に、確率で1段階上がる。
-	var base_rarity: int = maxi(a.rarity, b.rarity)
-	var child_rarity: int = base_rarity
-	if randf() < 0.3 and base_rarity < MonsterData.Rarity.EPIC:
-		child_rarity += 1
-	child.rarity = child_rarity
-
-	# ステータス：両親の平均＋レアリティボーナス。
-	var rarity_bonus := child_rarity * 2
-	child.attack = roundi((a.attack + b.attack) / 2.0) + rarity_bonus
-	child.defense = roundi((a.defense + b.defense) / 2.0) + rarity_bonus
-
-	# 成長速度：両親の平均。
-	child.growth_speed = (a.growth_speed + b.growth_speed) / 2.0
-	child.elements = [element]
-
-	# スキル：固有キット ＋ 継承（重複名は除外、最大6）。
-	var cmds: Array[CommandData] = element_innate_kit(element)
+	# スキル：血統のものを全保持 ＋ 選んだ相手スキルを継承（重複名は除外、最大6）。
+	var cmds: Array[CommandData] = []
 	var names := {}
-	for c in cmds:
+	for c in bloodline.commands:
+		cmds.append(c.duplicate(true))
 		names[c.command_name] = true
 	for c in inherited:
 		if cmds.size() >= MAX_SKILLS:
@@ -429,7 +354,7 @@ static func make_child(a: MonsterData, b: MonsterData, element: int, inherited: 
 			cmds.append(cmd.duplicate(true))
 	child.commands = cmds
 
-	# 生まれたて。
+	# 幼体に戻って再育成。
 	child.stage = MonsterData.Stage.INFANT
 	child.exp = 0.0
 	return child

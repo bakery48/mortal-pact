@@ -346,7 +346,7 @@ func _play_card(card: CardUI, tgt: EnemyUI) -> void:
 	var grew := monster.gain_exp(monster.growth_speed)
 	if grew and not monster.is_dead():
 		Audio.play_se("grow")
-		_flash_message("%s は %s に成長した！" % [monster.monster_name, monster.stage_label()])
+		_flash_message("%s は %s に成長した！" % [monster.display_name(), monster.stage_label()])
 
 	# 使ったスキルカードは捨札へ。
 	deck.discard_card(card.source)
@@ -379,7 +379,7 @@ func _kill_monster(monster: MonsterData) -> void:
 	for child in _hand_container.get_children():
 		if child is CardUI and (child as CardUI).monster == monster:
 			child.queue_free()
-	_flash_message("%s は老いて消滅した…" % monster.monster_name)
+	_flash_message("%s は老いて消滅した…" % monster.display_name())
 
 func _apply_command(card_data: MonsterData, cmd: CommandData, tgt: EnemyUI) -> void:
 	var p := card_data.effective_power(cmd)
@@ -647,7 +647,7 @@ func _open_pile_view(title_text: String, pile: Array[SkillCard], sorted: bool) -
 	for sc: SkillCard in cards:
 		var row := Label.new()
 		row.text = "%s %s ／ ▸ %s（コスト%d）" % [
-			sc.monster.monster_name, sc.monster.stage_label(),
+			sc.monster.display_name(), sc.monster.stage_label(),
 			sc.command.command_name, sc.monster.effective_cost(sc.command),
 		]
 		row.add_theme_font_size_override("font_size", 14)
@@ -719,7 +719,7 @@ func _open_deck_view() -> void:
 		var name_row := HBoxContainer.new()
 		rv.add_child(name_row)
 		var name_lbl := Label.new()
-		name_lbl.text = "%s %s %s" % [mon.rarity_label(), mon.monster_name, mon.stage_label()]
+		name_lbl.text = "%s %s %s" % [mon.rarity_label(), mon.display_name(), mon.stage_label()]
 		name_lbl.add_theme_font_size_override("font_size", 16)
 		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		name_row.add_child(name_lbl)

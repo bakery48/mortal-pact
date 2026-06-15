@@ -295,10 +295,12 @@ func _on_fusion_next(state: Dictionary, overlay: Control) -> void:
 	overlay.queue_free()
 	_open_inherit_dialog(bl, pt)
 
-## 相手スキルの継承を選ぶモーダルを開く。
+## 継承スキルを選ぶモーダルを開く（固有2＋両親から手動継承の従来ルール）。
 func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
-	var max_inherit := MonsterFactory.partner_inherit_cap(bloodline)
-	var pool := MonsterFactory.partner_pool(bloodline, partner)
+	var max_inherit := MonsterFactory.max_inheritable(bloodline, partner)
+	var pool := MonsterFactory.inheritable_pool(bloodline, partner)
+	var element: int = bloodline.elements[0] if not bloodline.elements.is_empty() else MonsterData.Element.NONE
+	var innate := MonsterFactory.element_innate_kit(element)
 	var chosen: Array[CommandData] = []
 
 	var overlay := ColorRect.new()
@@ -325,18 +327,18 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "合体：%s+%d ／ 相手スキルの継承" % [bloodline.monster_name, MonsterFactory.fused_plus(bloodline, partner)]
+	title.text = "合体：%s+%d ／ 継承スキルを選択" % [bloodline.monster_name, MonsterFactory.fused_plus(bloodline, partner)]
 	title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(title)
 
-	var keep_names: Array[String] = []
-	for c in bloodline.commands:
-		keep_names.append(c.command_name)
-	var keep_label := Label.new()
-	keep_label.text = "血統スキル（保持）: " + "／".join(keep_names)
-	keep_label.modulate = Color(0.8, 0.85, 0.95)
-	keep_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(keep_label)
+	var innate_names: Array[String] = []
+	for c in innate:
+		innate_names.append(c.command_name)
+	var innate_label := Label.new()
+	innate_label.text = "固有スキル: " + "／".join(innate_names) + "　＋ 継承 最大%d" % max_inherit
+	innate_label.modulate = Color(0.8, 0.85, 0.95)
+	innate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(innate_label)
 
 	vbox.add_child(HSeparator.new())
 
@@ -352,7 +354,7 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 		vbox.add_child(btn)
 	if pool.is_empty():
 		var none_label := Label.new()
-		none_label.text = "継承できる相手スキルがありません"
+		none_label.text = "継承できるスキルがありません（固有2つで誕生）"
 		none_label.modulate = Color(0.7, 0.7, 0.7)
 		vbox.add_child(none_label)
 

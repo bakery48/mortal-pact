@@ -187,11 +187,12 @@ func _make_node(kind: String) -> Dictionary:
 		_:
 			return _rest_node()
 
-## 雑魚ノードの敵編成。序盤フロアは数を抑える（floor1:1〜2体 / floor2以降:1〜3体）。
+## 雑魚ノードの敵編成。floor1 は固定10パターンから抽選、floor2以降は完全ランダム（1〜3体）。
 func _zako_group() -> Array:
-	var max_count := 2 if current_floor <= 1 else 3
+	if current_floor <= 1:
+		return EnemyDatabase.random_floor1_zako()
 	var group: Array = []
-	for i in range(randi_range(1, max_count)):
+	for i in range(randi_range(1, 3)):
 		group.append(EnemyDatabase.random_zako())
 	return group
 

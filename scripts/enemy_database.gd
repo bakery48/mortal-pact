@@ -67,6 +67,37 @@ static func boss_pool() -> Array:
 		_enemy("深淵の王", 200, [_move(P, 6), _move(A, 18), _move(H, 20), _move(A, 26)], E.DARK, true),
 	]
 
+# --- floor1 の固定エンカウント -----------------------------------------------
+
+## 名前から雑魚データを引く（見つからなければ先頭）。
+static func zako_by_name(n: String) -> Dictionary:
+	for e in zako_pool():
+		if e["name"] == n:
+			return e
+	return zako_pool()[0]
+
+## floor1 専用の敵セット（10パターン）。導入なので弱めの1〜2体に絞る。
+static func floor1_sets() -> Array:
+	return [
+		["ゴブリン"],                  # 1) 最弱の導入
+		["大コウモリ"],                # 2) 手数だが脆い
+		["スケルトン"],                # 3) 攻撃寄り
+		["ウィスプ"],                  # 4) 光・強化持ち
+		["マッドスライム"],            # 5) 防御寄りのタンク
+		["ゴブリン", "ゴブリン"],       # 6) 数で攻める
+		["インプ", "大コウモリ"],       # 7) 速攻ペア
+		["毒蛇", "ゴブリン"],           # 8) 毒に注意
+		["スケルトン", "大コウモリ"],   # 9) 攻撃ペア
+		["サラマンダー"],              # 10) 単体だが火力高め
+	]
+
+static func random_floor1_zako() -> Array:
+	var names: Array = floor1_sets().pick_random()
+	var group: Array = []
+	for n in names:
+		group.append(zako_by_name(String(n)))
+	return group
+
 # --- ランダム取得 -----------------------------------------------------------
 
 static func random_zako() -> Dictionary:

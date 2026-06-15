@@ -20,6 +20,7 @@ var _title: Label
 var _stats: Label
 var _exp_bar: ProgressBar
 var _cmd_button: Button
+var _stat_label: Label
 var _select_button: Button
 var _selected := false
 
@@ -62,9 +63,14 @@ func _build() -> void:
 
 	_cmd_button = Button.new()
 	_cmd_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_cmd_button.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_cmd_button.pressed.connect(func() -> void: command_selected.emit(self))
 	vbox.add_child(_cmd_button)
+
+	_stat_label = Label.new()
+	_stat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stat_label.add_theme_font_size_override("font_size", 11)
+	_stat_label.add_theme_color_override("font_color", Color(0.55, 0.6, 0.65))
+	vbox.add_child(_stat_label)
 
 	_select_button = Button.new()
 	_select_button.toggle_mode = true
@@ -79,6 +85,9 @@ func _refresh_texts() -> void:
 	_stats.text = "属性:%s  ATK:%d DEF:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense()]
 	_exp_bar.value = monster.exp_progress()
 	_cmd_button.text = "▶ %s  (コスト%d)\n%s" % [command.command_name, monster.effective_cost(command), _command_text()]
+	var breakdown := _stat_breakdown()
+	_stat_label.text = breakdown
+	_stat_label.visible = breakdown != ""
 	if monster.can_fuse():
 		if not _selected:
 			_select_button.text = "合体候補にする"
@@ -136,6 +145,21 @@ func _command_text() -> String:
 		CommandData.Effect.REGEN:
 			return "再生%dを得る(毎ターン回復)" % p
 	return command.description
+
+## ATK/DEF由来のボーナスが存在するとき、内訳を小さく表示するためのテキスト。
+func _stat_breakdown() -> String:
+	match command.effect:
+		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
+			var bonus := monster.damage_bonus(command)
+			if bonus <= 0:
+				return ""
+			return "(基礎%d + ATK%d)" % [monster.effective_power(command), bonus]
+		CommandData.Effect.GUARD:
+			var bonus := monster.guard_bonus(command)
+			if bonus <= 0:
+				return ""
+			return "(基礎%d + DEF%d)" % [monster.effective_power(command), bonus]
+	return ""
 
 func _affinity_mark() -> String:
 	var aff := MonsterData.affinity(monster.elements, enemy_element)

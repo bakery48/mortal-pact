@@ -19,7 +19,7 @@ const SCENE_SETTINGS := "res://scenes/ui/settings.tscn"
 const SCENE_TITLE := "res://scenes/ui/title.tscn"
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 2 # 複数敵対応でマップ構造が変わったため更新
+const SAVE_VERSION := 3 # 全体デフレで数値が変わったため更新
 
 enum NodeType { BATTLE_ZAKO, BATTLE_ELITE, BATTLE_BOSS, REST_SHOP }
 
@@ -48,8 +48,8 @@ func _ready() -> void:
 
 func start_new_run() -> void:
 	current_floor = 1
-	player_max_hp = STARTING_HP
-	player_hp = STARTING_HP
+	player_max_hp = roundi(STARTING_HP * MonsterData.POWER_SCALE)
+	player_hp = player_max_hp
 	gold = STARTING_GOLD
 	deck.assign(DeckManager.load_monster_resources())
 	_build_map()
@@ -58,7 +58,7 @@ func start_new_run() -> void:
 
 func next_floor() -> void:
 	current_floor += 1
-	player_hp = mini(player_max_hp, player_hp + 20) # フロア移動で少し回復
+	player_hp = mini(player_max_hp, player_hp + roundi(20 * MonsterData.POWER_SCALE)) # フロア移動で少し回復
 	_build_map()
 	current_row = -1
 	current_col = 0
@@ -158,7 +158,7 @@ func _elite_group() -> Array:
 
 ## 敵編成（複数体）を、フロアに応じてスケールしたバトルノードに変換する。
 func _battle_node(type: NodeType, enemies: Array, reward_gold: int) -> Dictionary:
-	var scale := 1.0 + 0.25 * float(current_floor - 1) # フロアが進むほど敵が強化される
+	var scale := (1.0 + 0.25 * float(current_floor - 1)) * MonsterData.POWER_SCALE # フロア強化＋全体デフレ
 	var scaled: Array = []
 	var is_boss := false
 	for enemy in enemies:

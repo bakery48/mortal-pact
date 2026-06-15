@@ -25,6 +25,10 @@ const ELEMENT_BEATS := {
 const AFFINITY_ADVANTAGE := 1.5
 const AFFINITY_DISADVANTAGE := 0.75
 
+## 全体デフレ係数：能力値（ダメージ/HP/ATK/DEF/回復/毒量など）を一律に縮める。
+## コスト・エネルギー・状態異常の継続ターン・EXP閾値には掛けない＝バランス比率は維持。
+const POWER_SCALE := 0.6
+
 ## 各段階に到達するのに必要な累計 EXP（この値以上で当該段階）。
 const STAGE_THRESHOLDS := {
 	Stage.INFANT: 0,
@@ -211,16 +215,16 @@ func _mult() -> float:
 	return float(STAGE_MULT[stage])
 
 func effective_attack() -> int:
-	return roundi(attack * _mult())
+	return roundi(attack * _mult() * POWER_SCALE)
 
 func effective_defense() -> int:
-	return roundi(defense * _mult())
+	return roundi(defense * _mult() * POWER_SCALE)
 
 func effective_cost(cmd: CommandData) -> int:
 	return clampi(cmd.cost + int(STAGE_COST_DELTA[stage]), 1, 99)
 
 func effective_power(cmd: CommandData) -> int:
-	return maxi(0, roundi(cmd.power * _mult()))
+	return maxi(0, roundi(cmd.power * _mult() * POWER_SCALE))
 
 ## コマンドのステータス依存係数。負なら自動（コストが高い技ほど依存大）。
 func _stat_scale(cmd: CommandData) -> float:

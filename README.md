@@ -151,6 +151,9 @@ res://
 - 初期デッキは `resources/monsters/*.tres` から読み込み、見つからない場合は `MonsterFactory` がコードから生成
 - 各カードはドロー時に複製され、独立したインスタンスになる。`exp` と `stage` を各カードが保持し、個別に成長・老化する
 
+### バランス調整
+- **全体デフレ係数 `MonsterData.POWER_SCALE`（現在0.6）** … ダメージ/HP/ATK/DEF/回復/毒量などの能力値を一律に縮める。コスト・エネルギー・状態異常の継続ターン・EXP閾値には掛からない＝バランス比率は維持。図鑑(`game_design.html`)の数値は素の基礎値で、実際のゲーム内はこの係数ぶん小さく表示される。
+
 ### ライフサイクルの調整
 段階の閾値・能力倍率・コスト補正は `scripts/monster_data.gd` の定数
 （`STAGE_THRESHOLDS` / `STAGE_MULT` / `STAGE_COST_DELTA`）で一括調整できる。

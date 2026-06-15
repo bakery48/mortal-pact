@@ -82,4 +82,5 @@ func _make_choice(monster: MonsterData) -> Control:
 func _on_pick(monster: MonsterData) -> void:
 	Audio.play_se("coin")
 	Run.add_card(monster)
+	Run.record_unlock(monster.monster_name) # 仲間にした魔物を図鑑に記録
 	Run.go_after_node()

@@ -17,9 +17,18 @@ const SCENE_SHOP := "res://scenes/ui/shop.tscn"
 const SCENE_RESULT := "res://scenes/ui/result.tscn"
 const SCENE_SETTINGS := "res://scenes/ui/settings.tscn"
 const SCENE_TITLE := "res://scenes/ui/title.tscn"
+const SCENE_LEGACY := "res://scenes/ui/legacy.tscn"
+const SCENE_CODEX := "res://scenes/ui/codex.tscn"
 
 const SAVE_PATH := "user://savegame.json"
 const SAVE_VERSION := 3 # 全体デフレで数値が変わったため更新
+
+## 図鑑（出会った魔物の記録）。ランをまたいで永続。
+const UNLOCK_PATH := "user://unlocks.json"
+## 引き継ぎ（死亡時に選んだ次ランの初期デッキ）。次ラン開始時に1度だけ消費。
+const CARRYOVER_PATH := "user://carryover.json"
+## ランの初期デッキ体数。
+const START_DECK_SIZE := 6
 
 enum NodeType { BATTLE_ZAKO, BATTLE_ELITE, BATTLE_BOSS, REST_SHOP }
 
@@ -36,7 +45,11 @@ var current_encounter := {}    # 戦闘シーンへ渡す敵パラメータ
 var last_result := ""          # "clear" / "lose"
 var settings_return := SCENE_TITLE # 設定画面から戻る先
 
+## 図鑑：出会った魔物名 → true。ランをまたいで永続。
+var unlocked: Dictionary = {}
+
 func _ready() -> void:
+	load_unlocks()
 	# セーブがあれば自動的に続きから、無ければ新しいランを開始。
 	if has_save():
 		if not load_game():
@@ -51,10 +64,32 @@ func start_new_run() -> void:
 	player_max_hp = roundi(STARTING_HP * MonsterData.POWER_SCALE)
 	player_hp = player_max_hp
 	gold = STARTING_GOLD
-	deck.assign(DeckManager.load_monster_resources())
+	deck.assign(_build_starting_deck())
+	# 初期デッキの魔物は図鑑に解放しておく。
+	for m in deck:
+		record_unlock(m.monster_name)
 	_build_map()
 	current_row = -1
 	current_col = 0
+
+## 初期デッキを組む。前ランからの引き継ぎがあればそれを使い（幼体リセット済み）、
+## START_DECK_SIZE 未満なら不足分をデフォルト初期種で補充する。引き継ぎは1度消費する。
+func _build_starting_deck() -> Array[MonsterData]:
+	var result: Array[MonsterData] = _load_carryover()
+	if result.is_empty():
+		return DeckManager.load_monster_resources()
+	if result.size() < START_DECK_SIZE:
+		var names := {}
+		for m in result:
+			names[m.monster_name] = true
+		for d in DeckManager.load_monster_resources():
+			if result.size() >= START_DECK_SIZE:
+				break
+			if not names.has(d.monster_name):
+				names[d.monster_name] = true
+				result.append(d)
+	_consume_carryover()
+	return result
 
 func next_floor() -> void:
 	current_floor += 1
@@ -262,7 +297,10 @@ func on_battle_won(hp: int) -> void:
 func on_battle_lost() -> void:
 	player_hp = 0
 	last_result = "lose"
-	get_tree().change_scene_to_file(SCENE_RESULT)
+	# 死亡＝ラン終了。次ランへ引き継ぐ魔物を選ぶ「継承」画面へ。
+	# 進行セーブは消す（ランは終わったので「つづきから」対象外）。
+	delete_save()
+	get_tree().change_scene_to_file(SCENE_LEGACY)
 
 # --- デッキ操作（報酬・ショップ用） -----------------------------------------
 
@@ -355,3 +393,79 @@ func load_game() -> bool:
 func delete_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(SAVE_PATH)
+
+# --- 図鑑（unlocks）---------------------------------------------------------
+
+## 魔物を図鑑に記録する（既知なら何もしない）。敵撃破・仲間獲得・初期デッキで呼ぶ。
+func record_unlock(monster_name: String) -> void:
+	if monster_name == "" or unlocked.has(monster_name):
+		return
+	unlocked[monster_name] = true
+	save_unlocks()
+
+func is_unlocked(monster_name: String) -> bool:
+	return unlocked.has(monster_name)
+
+func unlocked_count() -> int:
+	return unlocked.size()
+
+func load_unlocks() -> void:
+	unlocked = {}
+	if not FileAccess.file_exists(UNLOCK_PATH):
+		return
+	var file := FileAccess.open(UNLOCK_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) == TYPE_DICTIONARY:
+		unlocked = parsed
+
+func save_unlocks() -> void:
+	var file := FileAccess.open(UNLOCK_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(unlocked, "\t"))
+		file.close()
+
+# --- 引き継ぎ（carryover）---------------------------------------------------
+
+## 死亡時に選んだ魔物を、次ランの初期デッキとして保存する（幼体にリセット）。
+func set_carryover(monsters: Array) -> void:
+	var data: Array = []
+	for m: MonsterData in monsters:
+		if data.size() >= START_DECK_SIZE:
+			break
+		var copy := MonsterData.from_dict(m.to_dict())
+		copy.stage = MonsterData.Stage.INFANT # 幼体にリセット
+		copy.exp = 0.0
+		data.append(copy.to_dict())
+	var file := FileAccess.open(CARRYOVER_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "\t"))
+		file.close()
+
+func has_carryover() -> bool:
+	return FileAccess.file_exists(CARRYOVER_PATH)
+
+## 引き継ぎデッキを読み込む（無ければ空）。消費は _consume_carryover で別途行う。
+func _load_carryover() -> Array[MonsterData]:
+	var result: Array[MonsterData] = []
+	if not FileAccess.file_exists(CARRYOVER_PATH):
+		return result
+	var file := FileAccess.open(CARRYOVER_PATH, FileAccess.READ)
+	if file == null:
+		return result
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_ARRAY:
+		return result
+	for md in parsed:
+		var m := MonsterData.from_dict(md)
+		m.stage = MonsterData.Stage.INFANT # 念のため幼体に
+		m.exp = 0.0
+		result.append(m)
+	return result
+
+func _consume_carryover() -> void:
+	if FileAccess.file_exists(CARRYOVER_PATH):
+		DirAccess.remove_absolute(CARRYOVER_PATH)

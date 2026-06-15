@@ -51,6 +51,10 @@ func _build_ui() -> void:
 	new_btn.pressed.connect(_on_new_game)
 	vbox.add_child(new_btn)
 
+	var codex_btn := _make_button("図鑑（%d種 発見）" % Run.unlocked_count())
+	codex_btn.pressed.connect(_on_codex)
+	vbox.add_child(codex_btn)
+
 	var settings_btn := _make_button("設定")
 	settings_btn.pressed.connect(_on_settings)
 	vbox.add_child(settings_btn)
@@ -80,6 +84,10 @@ func _confirm_new_game() -> void:
 	dialog.confirmed.connect(Run.new_game)
 	add_child(dialog)
 	dialog.popup_centered()
+
+func _on_codex() -> void:
+	Audio.play_se("select")
+	get_tree().change_scene_to_file(Run.SCENE_CODEX)
 
 func _on_settings() -> void:
 	Audio.play_se("select")

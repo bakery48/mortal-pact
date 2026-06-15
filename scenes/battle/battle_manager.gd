@@ -224,6 +224,8 @@ func _on_enemy_targeted(e: EnemyUI) -> void:
 
 ## 敵を撃破・除去する。
 func _remove_enemy(e: EnemyUI) -> void:
+	if is_instance_valid(e):
+		Run.record_unlock(e.sprite_name) # 倒した敵を図鑑に記録
 	enemies.erase(e)
 	if is_instance_valid(e):
 		e.queue_free()

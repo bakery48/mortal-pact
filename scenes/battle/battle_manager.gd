@@ -298,7 +298,7 @@ func _begin_targeting(card: CardUI) -> void:
 	_pending_card = card
 	for e in enemies:
 		e.set_targeted(true)
-	_flash_message("対象の敵をクリック（右クリック/Escで取消）")
+	_flash_message("対象の敵をクリック（右クリック/Esc/空白クリックで取消）")
 
 func _resolve_targeting(e: EnemyUI) -> void:
 	var card := _pending_card
@@ -312,12 +312,19 @@ func _cancel_targeting() -> void:
 	for e in enemies:
 		e.set_targeted(false)
 
-## 対象選択中は右クリック/Escで取消。
+## 対象選択中は 右クリック/Esc、または敵以外の場所の左クリックで取消。
 func _unhandled_input(event: InputEvent) -> void:
 	if not _targeting:
 		return
-	if (event is InputEventMouseButton and event.pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT) \
-			or (event is InputEventKey and event.pressed and (event as InputEventKey).keycode == KEY_ESCAPE):
+	# 敵をクリックした場合はその敵の gui_input が先に処理する（ここには来ない）。
+	# ここに来る左クリック＝空白部分のクリックなので取消扱いにする。
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.pressed and (mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_LEFT):
+		_cancel_targeting()
+		get_viewport().set_input_as_handled()
+		return
+	var key := event as InputEventKey
+	if key != null and key.pressed and key.keycode == KEY_ESCAPE:
 		_cancel_targeting()
 		get_viewport().set_input_as_handled()
 

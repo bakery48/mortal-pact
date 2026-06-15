@@ -56,6 +56,11 @@ static func starter_monsters() -> Array[MonsterData]:
 		_cmd("挑発", 1, CommandData.Effect.BUFF_ATK, 2, "このターンの与ダメージ+2"),
 	]))
 
+	list.append(_monster("妖精", 4, 5, MonsterData.Element.LIGHT, 1.1, [
+		_cmd("癒やしの粉", 1, CommandData.Effect.HEAL, 4, "HPを1回復"),
+		_cmd("光の矢", 1, CommandData.Effect.DAMAGE, 9, "敵に5ダメージ"),
+	]))
+
 	return list
 
 # --- 報酬・ショップ用プール -------------------------------------------------

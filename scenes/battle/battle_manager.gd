@@ -361,6 +361,17 @@ func _play_card(card: CardUI, tgt: EnemyUI) -> void:
 		return
 	_refresh()
 
+	# エネルギーを使い切ったら自動でターン終了する。
+	if energy <= 0:
+		_auto_end_turn()
+
+## エネルギー切れ時、少し待ってから敵ターンへ移行する。
+func _auto_end_turn() -> void:
+	await get_tree().create_timer(0.5).timeout
+	if battle_over or _targeting or energy > 0:
+		return
+	_enemy_turn()
+
 ## モンスターを消滅させ、デッキ・手札からスキルカードを一掃する。
 func _kill_monster(monster: MonsterData) -> void:
 	deck.remove_monster(monster)

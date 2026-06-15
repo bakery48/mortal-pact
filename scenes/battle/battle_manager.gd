@@ -29,6 +29,8 @@ var battle_over := false
 var enemies: Array[EnemyUI] = []
 var _targeting := false        # 対象選択中フラグ
 var _pending_card: CardUI = null # 対象選択待ちのカード
+var _aim_line: Line2D          # 対象選択の矢印（軸）
+var _aim_head: Polygon2D       # 対象選択の矢印（先端）
 
 var _enemy_slot: HBoxContainer
 var _hand_container: HBoxContainer
@@ -155,7 +157,40 @@ func _build_ui() -> void:
 	_hand_container.add_theme_constant_override("separation", 12)
 	main.add_child(_hand_container)
 
+	# 対象選択の矢印（カード→カーソル）
+	_aim_line = Line2D.new()
+	_aim_line.width = 6.0
+	_aim_line.default_color = Color(1.0, 0.85, 0.3, 0.85)
+	_aim_line.z_index = 80
+	_aim_line.visible = false
+	add_child(_aim_line)
+	_aim_head = Polygon2D.new()
+	_aim_head.color = Color(1.0, 0.85, 0.3, 0.95)
+	_aim_head.z_index = 80
+	_aim_head.visible = false
+	add_child(_aim_head)
+
 # --- 戦闘フロー -------------------------------------------------------------
+
+## 対象選択中、カードからカーソルへ矢印を伸ばす。
+func _process(_delta: float) -> void:
+	if _targeting and is_instance_valid(_pending_card):
+		var from := _pending_card.get_global_rect().get_center()
+		var to := get_global_mouse_position()
+		_aim_line.points = PackedVector2Array([from, to])
+		_aim_line.visible = true
+		var dir := to - from
+		if dir.length() > 1.0:
+			dir = dir.normalized()
+			var perp := dir.orthogonal()
+			var s := 18.0
+			_aim_head.polygon = PackedVector2Array([
+				to, to - dir * s + perp * s * 0.6, to - dir * s - perp * s * 0.6,
+			])
+			_aim_head.visible = true
+	else:
+		_aim_line.visible = false
+		_aim_head.visible = false
 
 func _spawn_enemies() -> void:
 	enemies.clear()

@@ -93,7 +93,7 @@ def card_html(mon):
 </div>'''
 
 # データ収集
-starter_files = ["fenrir","salamander","golem","wisp","imp"]
+starter_files = ["fenrir","salamander","golem","wisp","imp","yousei"]
 starters = [parse_tres(ROOT/f"resources/monsters/{n}.tres") for n in starter_files]
 catalog = parse_factory_pool("reward_pool")
 

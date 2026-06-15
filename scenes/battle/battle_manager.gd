@@ -352,7 +352,7 @@ func _on_end_turn_pressed() -> void:
 
 func _enemy_turn() -> void:
 	# 各敵が順番に行動する。
-	for e in enemies.duplicate():
+	for e: EnemyUI in enemies.duplicate():
 		if not is_instance_valid(e) or e not in enemies:
 			continue
 		# 状態異常（毒ダメージ・再生回復）。

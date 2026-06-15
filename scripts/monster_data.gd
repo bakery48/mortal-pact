@@ -39,7 +39,7 @@ const STAGE_MULT := {
 	Stage.INFANT: 0.6,
 	Stage.YOUNG: 0.8,
 	Stage.ADULT: 1.0,
-	Stage.ELDER: 0.55,
+	Stage.ELDER: 0.8, # 老体の能力倍率は若体と同じ（弱体化はコスト増のみ）
 	Stage.DEAD: 0.0,
 }
 

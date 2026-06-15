@@ -146,17 +146,13 @@ func _command_text() -> String:
 			return "再生%dを得る(毎ターン回復)" % p
 	return command.description
 
-## ATK/DEF由来のボーナスが存在するとき、内訳を小さく表示するためのテキスト。
+## ダメージ・ガード系の計算式を小さく表示するためのテキスト。
 func _stat_breakdown() -> String:
 	var scale := monster.stat_scale_for(command)
 	match command.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			if monster.damage_bonus(command) <= 0:
-				return ""
 			return "(基礎%d＋ATK×%.1f)" % [monster.effective_power(command), scale]
 		CommandData.Effect.GUARD:
-			if monster.guard_bonus(command) <= 0:
-				return ""
 			return "(基礎%d＋DEF×%.1f)" % [monster.effective_power(command), scale]
 	return ""
 

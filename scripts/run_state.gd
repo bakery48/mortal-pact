@@ -6,7 +6,7 @@ extends Node
 
 const STARTING_HP := 50
 const STARTING_GOLD := 50
-const DECK_LIMIT := 15        # 設計書のデッキ上限
+const DECK_LIMIT := 40        # デッキ上限（スキルカード枚数）
 const SHOP_CARD_COST := 50
 const REST_HEAL_RATIO := 0.3  # 休憩で最大HPの30%回復
 

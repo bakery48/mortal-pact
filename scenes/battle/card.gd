@@ -2,18 +2,12 @@ class_name CardUI
 extends PanelContainer
 
 ## 手札に並ぶ1枚の「スキルカード」のUI。所属モンスター＋1スキルを表示する。
-## 同じモンスターの別スキルは別カードとして並ぶ。
-## battle_manager が monster / command をセットしてから add_child する。
 
 signal command_selected(card: CardUI)
-## 合体候補としての選択トグル（成体・老体のみ）。
-signal fusion_toggled(card: CardUI)
 
 var monster: MonsterData
 var command: CommandData
-## 山札側の対応エントリ（捨札へ送る際に使う）。
 var source: SkillCard
-## このバトルの敵の属性（相性表示用）。
 var enemy_element: int = MonsterData.Element.NONE
 
 var _title: Label
@@ -21,8 +15,6 @@ var _stats: Label
 var _exp_bar: ProgressBar
 var _cmd_button: Button
 var _stat_label: Label
-var _select_button: Button
-var _selected := false
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(190, 0)
@@ -46,7 +38,6 @@ func _build() -> void:
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_title)
 
-	# スプライト（あれば）／無ければ属性色の図形プレースホルダ。
 	vbox.add_child(_make_visual())
 
 	_stats = Label.new()
@@ -72,14 +63,8 @@ func _build() -> void:
 	_stat_label.add_theme_color_override("font_color", Color(0.55, 0.6, 0.65))
 	vbox.add_child(_stat_label)
 
-	_select_button = Button.new()
-	_select_button.toggle_mode = true
-	_select_button.pressed.connect(func() -> void: fusion_toggled.emit(self))
-	vbox.add_child(_select_button)
-
 	_refresh_texts()
 
-## モンスターの現在状態に合わせて表示を更新する。
 func _refresh_texts() -> void:
 	_title.text = "%s %s %s" % [monster.rarity_label(), monster.monster_name, monster.stage_label()]
 	_stats.text = "属性:%s  ATK:%d DEF:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense()]
@@ -88,14 +73,7 @@ func _refresh_texts() -> void:
 	var breakdown := _stat_breakdown()
 	_stat_label.text = breakdown
 	_stat_label.visible = breakdown != ""
-	if monster.can_fuse():
-		if not _selected:
-			_select_button.text = "合体候補にする"
-	else:
-		_select_button.text = "合体は成体/老体のみ"
-		_select_button.disabled = true
 
-## スプライト or プレースホルダのビジュアルを作る。
 func _make_visual() -> Control:
 	var tex := SpriteLoader.monster(monster.monster_name)
 	if tex != null:
@@ -103,7 +81,7 @@ func _make_visual() -> Control:
 		tr.texture = tex
 		tr.custom_minimum_size = Vector2(0, 58)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST # ドット絵をくっきり
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		return tr
 	var box := ColorRect.new()
 	box.color = SpriteLoader.element_color(monster.elements[0] if not monster.elements.is_empty() else MonsterData.Element.NONE)
@@ -146,7 +124,6 @@ func _command_text() -> String:
 			return "再生%dを得る(毎ターン回復)" % p
 	return command.description
 
-## ダメージ・ガード系の計算式を小さく表示するためのテキスト。
 func _stat_breakdown() -> String:
 	var scale := monster.stat_scale_for(command)
 	match command.effect:
@@ -164,22 +141,10 @@ func _affinity_mark() -> String:
 		return " ▽不利"
 	return ""
 
-## 現在のエネルギーに応じて表示と使用可否を更新する。
 func refresh(energy: int) -> void:
 	_refresh_texts()
 	_cmd_button.disabled = monster.effective_cost(command) > energy
 
-## 合体候補としての選択状態を反映する。
-func set_fusion_selected(value: bool) -> void:
-	_selected = value
-	if _select_button != null:
-		_select_button.button_pressed = value
-		if monster.can_fuse():
-			_select_button.text = "✔ 合体候補" if value else "合体候補にする"
-	modulate = Color(1.0, 0.9, 0.4) if value else Color.WHITE
-
 func disable_all() -> void:
 	if _cmd_button != null:
 		_cmd_button.disabled = true
-	if _select_button != null:
-		_select_button.disabled = true

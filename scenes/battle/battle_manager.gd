@@ -42,10 +42,6 @@ var _discard_button: Button
 var _message_label: Label
 var _event_label: Label
 var _end_turn_button: Button
-var _fuse_button: Button
-
-## 合体候補として選択中のモンスター（最大2体）。
-var _fusion_selection: Array[MonsterData] = []
 
 # 演出用
 var _shake_target: Control
@@ -144,12 +140,6 @@ func _build_ui() -> void:
 	deck_btn.text = "デッキ"
 	deck_btn.pressed.connect(_open_deck_view)
 	status.add_child(deck_btn)
-
-	_fuse_button = Button.new()
-	_fuse_button.disabled = true
-	_fuse_button.pressed.connect(_on_fuse_pressed)
-	status.add_child(_fuse_button)
-	_update_fuse_button()
 
 	_end_turn_button = Button.new()
 	_end_turn_button.text = "ターン終了"
@@ -279,7 +269,6 @@ func _add_card_to_hand(sc: SkillCard) -> void:
 	card.enemy_element = _solo_enemy_element() # 敵が1体なら相性を表示
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
-	card.fusion_toggled.connect(_on_fusion_toggled)
 
 ## 敵に作用する（対象が要る）コマンドか。
 func _needs_target(cmd: CommandData) -> bool:
@@ -327,8 +316,6 @@ func _cancel_targeting() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _targeting:
 		return
-	# 敵をクリックした場合はその敵の gui_input が先に処理する（ここには来ない）。
-	# ここに来る左クリック＝空白部分のクリックなので取消扱いにする。
 	var mb := event as InputEventMouseButton
 	if mb != null and mb.pressed and (mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_LEFT):
 		_cancel_targeting()
@@ -376,12 +363,10 @@ func _play_card(card: CardUI, tgt: EnemyUI) -> void:
 func _kill_monster(monster: MonsterData) -> void:
 	deck.remove_monster(monster)
 	Run.deck.erase(monster)
-	_fusion_selection.erase(monster)
 	for child in _hand_container.get_children():
 		if child is CardUI and (child as CardUI).monster == monster:
 			child.queue_free()
 	_flash_message("%s は老いて消滅した…" % monster.monster_name)
-	_update_fuse_button()
 
 func _apply_command(card_data: MonsterData, cmd: CommandData, tgt: EnemyUI) -> void:
 	var p := card_data.effective_power(cmd)
@@ -491,172 +476,9 @@ func _enemy_turn() -> void:
 	_start_player_turn()
 
 func _clear_hand_nodes() -> void:
-	# 合体候補・対象選択を解除（カードノードが破棄されるため）。
 	_cancel_targeting()
-	_fusion_selection.clear()
 	for child in _hand_container.get_children():
 		child.queue_free()
-	_update_fuse_button()
-
-# --- 合体（子孫生成） -------------------------------------------------------
-
-func _on_fusion_toggled(card: CardUI) -> void:
-	if battle_over or _targeting:
-		return
-	var m := card.monster
-	if not m.can_fuse():
-		return
-	if m in _fusion_selection:
-		_fusion_selection.erase(m)
-	elif _fusion_selection.size() < 2:
-		_fusion_selection.append(m)
-	# すでに2体選択済みで別モンスターなら無視（下で見た目を戻す）。
-	_update_fusion_visuals()
-	_update_fuse_button()
-
-## 各カードの選択ハイライトを、選択中モンスター集合に合わせて更新する。
-func _update_fusion_visuals() -> void:
-	for child in _hand_container.get_children():
-		if child is CardUI:
-			var c := child as CardUI
-			c.set_fusion_selected(c.monster in _fusion_selection)
-
-func _update_fuse_button() -> void:
-	if _fuse_button == null:
-		return
-	_fuse_button.text = "合体 (%d/2)" % _fusion_selection.size()
-	_fuse_button.disabled = battle_over or _fusion_selection.size() != 2
-
-func _on_fuse_pressed() -> void:
-	if battle_over or _fusion_selection.size() != 2:
-		return
-	_open_fusion_dialog(_fusion_selection[0], _fusion_selection[1])
-
-## 継承スキルを選ぶモーダルを開く。
-func _open_fusion_dialog(mon_a: MonsterData, mon_b: MonsterData) -> void:
-	var element := MonsterFactory.choose_child_element(mon_a, mon_b)
-	var max_inherit := MonsterFactory.max_inheritable(mon_a, mon_b)
-	var pool := MonsterFactory.inheritable_pool(mon_a, mon_b)
-	var innate := MonsterFactory.element_innate_kit(element)
-	var chosen: Array[CommandData] = []
-
-	# 暗幕
-	var overlay := ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.65)
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(overlay)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(560, 0)
-	center.add_child(panel)
-
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 18)
-	panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "合体：継承するスキルを選択"
-	title.add_theme_font_size_override("font_size", 24)
-	vbox.add_child(title)
-
-	var elem_label := Label.new()
-	elem_label.text = "子孫の属性: %s ／ 固有スキル2つ＋継承 最大%d" % [String(MonsterData.ELEMENT_LABEL[element]), max_inherit]
-	elem_label.modulate = Color(0.8, 0.85, 0.95)
-	vbox.add_child(elem_label)
-
-	var innate_label := Label.new()
-	var innate_names: Array[String] = []
-	for c in innate:
-		innate_names.append(c.command_name)
-	innate_label.text = "固有: " + "／".join(innate_names)
-	vbox.add_child(innate_label)
-
-	vbox.add_child(HSeparator.new())
-
-	var count_label := Label.new()
-	vbox.add_child(count_label)
-
-	# 継承候補トグル
-	for cmd in pool:
-		var btn := Button.new()
-		btn.toggle_mode = true
-		btn.disabled = max_inherit <= 0
-		btn.text = "%s（コスト%d）" % [cmd.command_name, cmd.cost]
-		btn.toggled.connect(_on_inherit_toggled.bind(cmd, btn, chosen, max_inherit, count_label))
-		vbox.add_child(btn)
-	if pool.is_empty():
-		var none_label := Label.new()
-		none_label.text = "継承できるスキルがありません（固有2つで誕生）"
-		none_label.modulate = Color(0.7, 0.7, 0.7)
-		vbox.add_child(none_label)
-
-	vbox.add_child(HSeparator.new())
-
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_END
-	buttons.add_theme_constant_override("separation", 10)
-	vbox.add_child(buttons)
-
-	var cancel := Button.new()
-	cancel.text = "キャンセル"
-	cancel.pressed.connect(func() -> void: overlay.queue_free())
-	buttons.add_child(cancel)
-
-	var confirm := Button.new()
-	confirm.text = "合体する"
-	confirm.pressed.connect(_on_fusion_confirm.bind(mon_a, mon_b, element, chosen, overlay))
-	buttons.add_child(confirm)
-
-	count_label.text = "継承 0 / %d" % max_inherit
-
-func _on_fusion_confirm(mon_a: MonsterData, mon_b: MonsterData, element: int, chosen: Array, overlay: Control) -> void:
-	var child := MonsterFactory.make_child(mon_a, mon_b, element, chosen)
-	overlay.queue_free()
-	_commit_fusion(mon_a, mon_b, child)
-
-func _on_inherit_toggled(pressed: bool, cmd: CommandData, btn: Button, chosen: Array, max_inherit: int, count_label: Label) -> void:
-	if pressed:
-		if chosen.size() >= max_inherit:
-			btn.button_pressed = false # 上限超過は取り消し
-			return
-		chosen.append(cmd)
-	else:
-		chosen.erase(cmd)
-	count_label.text = "継承 %d / %d" % [chosen.size(), max_inherit]
-
-## 合体を確定し、両親を消滅させ子孫を手札に加える。
-func _commit_fusion(mon_a: MonsterData, mon_b: MonsterData, child: MonsterData) -> void:
-	# 両親のスキルカードをデッキ・手札から除去。
-	deck.remove_monster(mon_a)
-	deck.remove_monster(mon_b)
-	Run.deck.erase(mon_a)
-	Run.deck.erase(mon_b)
-	for node in _hand_container.get_children():
-		if node is CardUI and (node as CardUI).monster in [mon_a, mon_b]:
-			node.queue_free()
-	_fusion_selection.clear()
-
-	# 子孫をデッキに加え、そのスキルカードを手札に出す。
-	Run.deck.append(child)
-	for sc in deck.add_monster_to_hand(child):
-		_add_card_to_hand(sc)
-
-	Audio.play_se("fuse")
-	_flash_message("合体！ %s（%s %s）が誕生した" % [child.monster_name, child.rarity_label(), child.element_label()])
-	_update_fusion_visuals()
-	_update_fuse_button()
-	_refresh()
-	_refresh()
 
 # --- 表示更新・終了処理 -----------------------------------------------------
 
@@ -747,7 +569,6 @@ func _open_discard_pile_view() -> void:
 	_open_pile_view("捨札", deck.discard_pile, false)
 
 ## スキルカードの山（山札/捨札）の中身を一覧表示する。
-## 山札は引く順が見えないよう名前順にソートして表示する。
 func _open_pile_view(title_text: String, pile: Array[SkillCard], sorted: bool) -> void:
 	var overlay := ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.7)
@@ -798,7 +619,6 @@ func _open_pile_view(title_text: String, pile: Array[SkillCard], sorted: bool) -
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 
-	# 表示用に並べ替えたコピーを作る（実際の山札順は変えない）。
 	var cards := pile.duplicate()
 	if sorted:
 		cards.sort_custom(func(a: SkillCard, b: SkillCard) -> bool:
@@ -883,7 +703,6 @@ func _open_deck_view() -> void:
 		rv.add_theme_constant_override("separation", 3)
 		rm.add_child(rv)
 
-		# 名前行
 		var name_row := HBoxContainer.new()
 		rv.add_child(name_row)
 		var name_lbl := Label.new()
@@ -896,7 +715,6 @@ func _open_deck_view() -> void:
 		elem_lbl.add_theme_color_override("font_color", Color(0.7, 0.8, 0.9))
 		name_row.add_child(elem_lbl)
 
-		# ステータス行
 		var stat_lbl := Label.new()
 		var exp_pct := int(mon.exp_progress() * 100)
 		stat_lbl.text = "ATK:%d  DEF:%d  EXP:%d%%" % [mon.effective_attack(), mon.effective_defense(), exp_pct]
@@ -904,7 +722,6 @@ func _open_deck_view() -> void:
 		stat_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.7))
 		rv.add_child(stat_lbl)
 
-		# スキル行
 		for cmd: CommandData in mon.commands:
 			var cmd_lbl := Label.new()
 			cmd_lbl.text = "  ▸ %s（コスト%d）" % [cmd.command_name, mon.effective_cost(cmd)]
@@ -916,9 +733,11 @@ func _win() -> void:
 	_message_label.visible = true
 	_message_label.text = "勝利！"
 	_message_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
-	_end_battle_input()
+	_end_turn_button.disabled = true
+	for child in _hand_container.get_children():
+		if child is CardUI:
+			(child as CardUI).disable_all()
 	Audio.play_se("win")
-	# HPをランへ書き戻し、報酬画面へ（デッキ＝モンスターは戦闘中に直接更新済み）。
 	await get_tree().create_timer(1.0).timeout
 	Run.on_battle_won(player_hp)
 
@@ -927,14 +746,10 @@ func _lose() -> void:
 	_message_label.visible = true
 	_message_label.text = "敗北..."
 	_message_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5))
-	_end_battle_input()
-	Audio.play_se("lose")
-	await get_tree().create_timer(1.0).timeout
-	Run.on_battle_lost()
-
-func _end_battle_input() -> void:
 	_end_turn_button.disabled = true
-	_fuse_button.disabled = true
 	for child in _hand_container.get_children():
 		if child is CardUI:
 			(child as CardUI).disable_all()
+	Audio.play_se("lose")
+	await get_tree().create_timer(1.0).timeout
+	Run.on_battle_lost()

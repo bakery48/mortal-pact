@@ -148,17 +148,16 @@ func _command_text() -> String:
 
 ## ATK/DEF由来のボーナスが存在するとき、内訳を小さく表示するためのテキスト。
 func _stat_breakdown() -> String:
+	var scale := monster.stat_scale_for(command)
 	match command.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			var bonus := monster.damage_bonus(command)
-			if bonus <= 0:
+			if monster.damage_bonus(command) <= 0:
 				return ""
-			return "(基礎%d + ATK+%d)" % [monster.effective_power(command), bonus]
+			return "(基礎%d + ATK%d×%.1f)" % [monster.effective_power(command), monster.effective_attack(), scale]
 		CommandData.Effect.GUARD:
-			var bonus := monster.guard_bonus(command)
-			if bonus <= 0:
+			if monster.guard_bonus(command) <= 0:
 				return ""
-			return "(基礎%d + DEF+%d)" % [monster.effective_power(command), bonus]
+			return "(基礎%d + DEF%d×%.1f)" % [monster.effective_power(command), monster.effective_defense(), scale]
 	return ""
 
 func _affinity_mark() -> String:

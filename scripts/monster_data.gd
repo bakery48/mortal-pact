@@ -232,6 +232,10 @@ func _stat_scale(cmd: CommandData) -> float:
 		return cmd.stat_scale
 	return clampf(0.4 + 0.3 * float(cmd.cost - 1), 0.4, 1.0)
 
+## カード表示用：ステータス依存係数を公開する。
+func stat_scale_for(cmd: CommandData) -> float:
+	return _stat_scale(cmd)
+
 ## ダメージ系コマンドに上乗せされる ATK 由来ボーナス。
 func damage_bonus(cmd: CommandData) -> int:
 	return roundi(effective_attack() * _stat_scale(cmd))

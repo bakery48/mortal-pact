@@ -24,13 +24,12 @@ static func zako_pool() -> Array:
 		_enemy("大コウモリ", 38, [_move(A, 6), _move(A, 6), _move(A, 9)], E.WIND),
 		_enemy("ホブゴブリン", 56, [_move(A, 9), _move(B, 3), _move(A, 11)], E.EARTH),
 		_enemy("マッドスライム", 60, [_move(D, 8), _move(A, 7)], E.WATER),
-		_enemy("インプの群れ", 46, [_move(A, 5), _move(A, 5), _move(A, 8)], E.FIRE),
+		_enemy("インプ", 46, [_move(A, 5), _move(A, 5), _move(A, 8)], E.FIRE),
 		_enemy("毒蛇", 42, [_move(P, 3), _move(A, 7), _move(A, 9)], E.DARK),
 		_enemy("サラマンダー", 50, [_move(A, 10), _move(A, 16)], E.FIRE),
 		_enemy("フェンリル", 46, [_move(A, 9), _move(B, 3), _move(A, 13)], E.DARK),
 		_enemy("ゴーレム", 62, [_move(D, 10), _move(A, 9)], E.EARTH),
 		_enemy("ウィスプ", 34, [_move(B, 3), _move(A, 9), _move(A, 7)], E.LIGHT),
-		_enemy("インプ", 42, [_move(A, 7), _move(A, 9)], E.FIRE),
 	]
 
 # --- エリート ---------------------------------------------------------------

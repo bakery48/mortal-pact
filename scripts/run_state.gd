@@ -4,7 +4,7 @@ extends Node
 ## デッキ・HP・所持金・マップ進行をシーンをまたいで管理する。
 ## デッキはカード実体を保持するため、成長・老化・子孫がバトル間で持続する。
 
-const STARTING_HP := 50
+const STARTING_HP := 65
 const STARTING_GOLD := 50
 const DECK_LIMIT := 40        # デッキ上限（スキルカード枚数）
 const SHOP_CARD_COST := 50
@@ -130,9 +130,19 @@ func _build_map() -> void:
 	map_rows = []
 	for spec in _MAP_LAYOUT:
 		var count := randi_range(int(spec["count"][0]), int(spec["count"][1]))
+		var types := spec["types"] as Array
 		var row: Array = []
 		for c in range(count):
-			row.append(_make_node(String((spec["types"] as Array).pick_random())))
+			row.append(_make_node(String(types.pick_random())))
+		# 「休憩」が選択肢にある行は、必ず1つは休憩ノードを保証する。
+		if "rest" in types:
+			var has_rest := false
+			for node in row:
+				if int(node["type"]) == NodeType.REST_SHOP:
+					has_rest = true
+					break
+			if not has_rest:
+				row[randi() % row.size()] = _make_node("rest")
 		map_rows.append(row)
 	_connect_rows()
 
@@ -177,10 +187,11 @@ func _make_node(kind: String) -> Dictionary:
 		_:
 			return _rest_node()
 
-## 雑魚ノードの敵編成（1〜3体）。
+## 雑魚ノードの敵編成。序盤フロアは数を抑える（floor1:1〜2体 / floor2以降:1〜3体）。
 func _zako_group() -> Array:
+	var max_count := 2 if current_floor <= 1 else 3
 	var group: Array = []
-	for i in range(randi_range(1, 3)):
+	for i in range(randi_range(1, max_count)):
 		group.append(EnemyDatabase.random_zako())
 	return group
 
@@ -290,6 +301,8 @@ func go_after_node() -> void:
 func on_battle_won(hp: int) -> void:
 	# デッキ（モンスター）の成長・消滅・合体は戦闘中に直接反映済み。HPと報酬のみ処理。
 	player_hp = hp
+	# 勝利ごとに少し回復（休憩まで遠い序盤の消耗を緩和）。
+	player_hp = mini(player_max_hp, player_hp + roundi(player_max_hp * 0.12))
 	if current_encounter.has("gold"):
 		gold += int(current_encounter["gold"])
 	get_tree().change_scene_to_file(SCENE_REWARD)

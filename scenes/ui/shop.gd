@@ -331,11 +331,20 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 	title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(title)
 
+	var blood_el := MonsterData.ELEMENT_LABEL[element]
+	var partner_el_i: int = partner.elements[0] if not partner.elements.is_empty() else MonsterData.Element.NONE
+	var partner_el := MonsterData.ELEMENT_LABEL[partner_el_i]
+	var element_note := Label.new()
+	element_note.text = "属性抽選: 血統%s 60%% / 相手%s 30%% / その他 10%%\n（固有スキルは決定属性に応じて変わる）" % [blood_el, partner_el]
+	element_note.modulate = Color(0.95, 0.85, 0.6)
+	element_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(element_note)
+
 	var innate_lines: Array[String] = []
 	for c in innate:
 		innate_lines.append("・%s（コスト%d）%s" % [c.command_name, c.cost, _skill_effect_text(c)])
 	var innate_label := Label.new()
-	innate_label.text = "固有スキル（自動付与）:\n" + "\n".join(innate_lines) + "\n継承できる数: 最大%d" % max_inherit
+	innate_label.text = "固有スキル例（%s属性の場合）:\n" % blood_el + "\n".join(innate_lines) + "\n継承できる数: 最大%d" % max_inherit
 	innate_label.modulate = Color(0.8, 0.85, 0.95)
 	innate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(innate_label)

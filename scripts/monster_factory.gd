@@ -592,21 +592,42 @@ static func element_innate_kit(element: int) -> Array[CommandData]:
 				_cmd("構え", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
 			]
 
+## 子の属性を抽選する。血統60% / 相手30% / 10%でそれ以外のランダム属性。
+static func roll_child_element(bloodline: MonsterData, partner: MonsterData) -> int:
+	var blood_el: int = bloodline.elements[0] if not bloodline.elements.is_empty() else MonsterData.Element.NONE
+	var partner_el: int = partner.elements[0] if not partner.elements.is_empty() else MonsterData.Element.NONE
+	var roll := randf()
+	if roll < 0.6:
+		return blood_el
+	if roll < 0.9:
+		return partner_el
+	# 残り10%：血統でも相手でもない属性からランダム（NONEは除外）。
+	var others: Array[int] = []
+	for e in [MonsterData.Element.FIRE, MonsterData.Element.WATER, MonsterData.Element.WIND,
+			MonsterData.Element.EARTH, MonsterData.Element.LIGHT, MonsterData.Element.DARK]:
+		if e != blood_el and e != partner_el:
+			others.append(e)
+	if others.is_empty():
+		return blood_el
+	return others.pick_random()
+
 ## 合体結果を生成する。bloodline=血統、partner=相手、
 ## inherited はプレイヤーが選んだ継承スキル（0個も可）。
 static func make_child(bloodline: MonsterData, partner: MonsterData, inherited: Array) -> MonsterData:
 	var child := MonsterData.new()
-	# 名前・属性・基礎ステ・成長・レアリティは血統を継ぐ。
+	# 名前・基礎ステ・成長・レアリティは血統を継ぐ。属性は抽選で決まる。
 	child.monster_name = bloodline.monster_name
 	child.attack = bloodline.attack
 	child.defense = bloodline.defense
 	child.growth_speed = bloodline.growth_speed
-	child.elements = bloodline.elements.duplicate()
 	child.rarity = bloodline.rarity
 	child.plus = fused_plus(bloodline, partner)
 
-	# スキル：血統の属性に応じた固有2 ＋ 継承（固有と同名は除外、継承スキル同士の重複は許可、最大6）。
-	var element: int = bloodline.elements[0] if not bloodline.elements.is_empty() else MonsterData.Element.NONE
+	# 属性抽選：血統60% / 相手30% / 10%で別属性。固有スキルは決定属性に従う。
+	var element := roll_child_element(bloodline, partner)
+	child.elements = [element]
+
+	# スキル：決定属性に応じた固有2 ＋ 継承（固有と同名は除外、継承スキル同士の重複は許可、最大6）。
 	var cmds: Array[CommandData] = element_innate_kit(element)
 	var innate_names := {}
 	for c in cmds:

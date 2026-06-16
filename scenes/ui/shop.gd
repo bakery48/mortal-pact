@@ -377,18 +377,23 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 
 	count_label.text = "継承 0 / %d" % max_inherit
 
-## スキルの効果説明テキスト。description があればそれ、無ければ効果から生成。
+## コマンドのステータス依存係数（モンスター非依存。負なら自動＝コスト依存）。
+func _cmd_scale(cmd: CommandData) -> float:
+	if cmd.stat_scale >= 0.0:
+		return cmd.stat_scale
+	return clampf(0.4 + 0.3 * float(cmd.cost - 1), 0.4, 1.0)
+
+## スキルの効果説明テキスト。育成前なので実数値ではなく「基礎N＋ATK×係数」の式表記で示す。
 func _skill_effect_text(cmd: CommandData) -> String:
-	if cmd.description != "":
-		return cmd.description
 	var p := cmd.power
+	var scale := _cmd_scale(cmd)
 	match cmd.effect:
-		CommandData.Effect.DAMAGE: return "敵に%dダメージ" % p
+		CommandData.Effect.DAMAGE: return "敵にダメージ（基礎%d＋ATK×%.1f）" % [p, scale]
+		CommandData.Effect.PIERCE: return "防御無視ダメージ（基礎%d＋ATK×%.1f）" % [p, scale]
+		CommandData.Effect.GUARD: return "ブロック（基礎%d＋DEF×%.1f）" % [p, scale]
 		CommandData.Effect.BUFF_ATK: return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT: return "次のダメージを2倍"
 		CommandData.Effect.HEAL: return "HPを%d回復" % p
-		CommandData.Effect.GUARD: return "ブロック%d" % p
-		CommandData.Effect.PIERCE: return "防御無視で%dダメージ" % p
 		CommandData.Effect.WEAKEN: return "敵の攻撃力-%d" % p
 		CommandData.Effect.ENERGY: return "エネルギー+%d" % p
 		CommandData.Effect.POISON: return "毒%dを付与" % p

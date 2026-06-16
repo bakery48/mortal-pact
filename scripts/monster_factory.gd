@@ -233,6 +233,20 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("禁呪", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	], 5))
 
+	# --- 補助特化（戦闘力は低いが INT が高く、両スキルとも補助） ---
+	list.append(_monster("大天使", 6, 7, MonsterData.Element.LIGHT, 0.9, [
+		_cmd("聖光の加護", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
+		_cmd("天恵", 2, CommandData.Effect.HEAL, 8, "HPを8回復"),
+	], 16))
+	list.append(_monster("大賢者", 5, 6, MonsterData.Element.NONE, 0.9, [
+		_cmd("鼓舞", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
+		_cmd("魔力供給", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
+	], 15))
+	list.append(_monster("豊穣の女神", 4, 8, MonsterData.Element.EARTH, 0.9, [
+		_cmd("再生の祝福", 2, CommandData.Effect.REGEN, 6, "再生6を得る"),
+		_cmd("大地の癒し", 2, CommandData.Effect.HEAL, 8, "HPを8回復"),
+	], 15))
+
 	# --- スターター種族（報酬でも再入手できるように） ---
 	list.append(_monster("ウンディーネ", 7, 7, MonsterData.Element.WATER, 1.1, [
 		_cmd("水弾", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),

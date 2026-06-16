@@ -67,7 +67,7 @@ func _build() -> void:
 
 func _refresh_texts() -> void:
 	_title.text = "%s %s %s" % [monster.rarity_label(), monster.display_name(), monster.stage_label()]
-	_stats.text = "属性:%s  ATK:%d DEF:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense()]
+	_stats.text = "属:%s A:%d D:%d I:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense(), monster.effective_int()]
 	_exp_bar.value = monster.exp_progress()
 	_cmd_button.text = "▶ %s  (コスト%d)\n%s" % [command.command_name, monster.effective_cost(command), _command_text()]
 	var breakdown := _stat_breakdown()
@@ -96,44 +96,48 @@ func _make_visual() -> Control:
 	return box
 
 func _command_text() -> String:
-	var p := monster.effective_power(command)
+	var v := monster.command_value(command)
 	# 敵対象の技は「敵単体／敵全体」を明記する。
 	var scope := command.target_label()
 	var tgt := "【%s】" % scope if scope != "" else ""
 	match command.effect:
 		CommandData.Effect.DAMAGE:
-			return "%s%dダメージ%s" % [tgt, monster.command_value(command), _affinity_mark()]
+			return "%s%dダメージ%s" % [tgt, v, _affinity_mark()]
 		CommandData.Effect.BUFF_ATK:
-			return "このターンの与ダメージ+%d" % p
+			return "このターンの与ダメージ+%d" % v
 		CommandData.Effect.DOUBLE_NEXT:
 			return "次のダメージを2倍にする"
 		CommandData.Effect.HEAL:
-			return "HPを%d回復" % p
+			return "HPを%d回復" % v
 		CommandData.Effect.GUARD:
-			return "ブロック%dを得る" % monster.command_value(command)
+			return "ブロック%dを得る" % v
 		CommandData.Effect.PIERCE:
-			return "%s防御無視で%dダメージ%s" % [tgt, monster.command_value(command), _affinity_mark()]
+			return "%s防御無視で%dダメージ%s" % [tgt, v, _affinity_mark()]
 		CommandData.Effect.WEAKEN:
-			return "%s攻撃力-%d" % [tgt, p]
+			return "%s攻撃力-%d" % [tgt, v]
 		CommandData.Effect.ENERGY:
 			return "エネルギー+%d" % command.power
 		CommandData.Effect.POISON:
-			return "%sに毒%dを付与" % [tgt, p]
+			return "%sに毒%dを付与" % [tgt, v]
 		CommandData.Effect.BURN:
 			return "%sを%dターン炎上(被ダメ1.5倍)" % [tgt, command.power]
 		CommandData.Effect.FREEZE:
 			return "%sを%d回凍結させる" % [tgt, command.power]
 		CommandData.Effect.REGEN:
-			return "再生%dを得る(毎ターン回復)" % p
+			return "再生%dを得る(毎ターン回復)" % v
 	return command.description
 
 func _stat_breakdown() -> String:
 	var scale := monster.stat_scale_for(command)
+	var ep := monster.effective_power(command)
 	match command.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			return "(基礎%d＋ATK×%.1f)" % [monster.effective_power(command), scale]
+			return "(基礎%d＋ATK×%.1f)" % [ep, scale]
 		CommandData.Effect.GUARD:
-			return "(基礎%d＋DEF×%.1f)" % [monster.effective_power(command), scale]
+			return "(基礎%d＋DEF×%.1f)" % [ep, scale]
+		CommandData.Effect.BUFF_ATK, CommandData.Effect.HEAL, CommandData.Effect.WEAKEN, \
+		CommandData.Effect.POISON, CommandData.Effect.REGEN:
+			return "(基礎%d＋INT×%.1f)" % [ep, scale]
 	return ""
 
 func _affinity_mark() -> String:

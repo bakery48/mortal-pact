@@ -82,9 +82,11 @@ const RARITY_LABEL := {
 }
 
 @export var monster_name: String = "魔物"
-## 基礎 ATK/DEF。実値は段階倍率を掛けた effective_* を使う。
+## 基礎ステータス。実値は段階倍率を掛けた effective_* を使う。
 @export var attack: int = 10
 @export var defense: int = 5
+## 知性：バフ・デバフ・回復系スキルのボーナス源。
+@export var int_power: int = 5
 @export var stage: Stage = Stage.INFANT
 ## 蓄積経験値。使用ごとに growth_speed 分だけ加算され、段階移行のトリガーになる。
 @export var exp: float = 0.0
@@ -101,13 +103,16 @@ const RARITY_LABEL := {
 func display_name() -> String:
 	return monster_name + ("+%d" % plus if plus > 0 else "")
 
-## +N によるATKボーナス（+が奇数に達するたびに+1 ＝ ⌈N/2⌉）。
+## +N ボーナスは ATK→DEF→INT の3サイクルで分配される。
+## +1,4,7…=ATK+1 / +2,5,8…=DEF+1 / +3,6,9…=INT+1
 func plus_attack_bonus() -> int:
-	return (plus + 1) / 2
+	return (plus + 2) / 3
 
-## +N によるDEFボーナス（+が偶数に達するたびに+1 ＝ ⌊N/2⌋）。
 func plus_defense_bonus() -> int:
-	return plus / 2
+	return (plus + 1) / 3
+
+func plus_int_bonus() -> int:
+	return plus / 3
 
 # --- ライフサイクル ---------------------------------------------------------
 
@@ -184,6 +189,7 @@ func to_dict() -> Dictionary:
 		"monster_name": monster_name,
 		"attack": attack,
 		"defense": defense,
+		"int_power": int_power,
 		"stage": int(stage),
 		"exp": exp,
 		"growth_speed": growth_speed,
@@ -198,6 +204,7 @@ static func from_dict(d: Dictionary) -> MonsterData:
 	m.monster_name = String(d.get("monster_name", "魔物"))
 	m.attack = int(d.get("attack", 10))
 	m.defense = int(d.get("defense", 5))
+	m.int_power = int(d.get("int_power", 5))
 	m.stage = int(d.get("stage", 0)) as Stage
 	m.exp = float(d.get("exp", 0.0))
 	m.growth_speed = float(d.get("growth_speed", 1.0))
@@ -217,9 +224,9 @@ static func from_dict(d: Dictionary) -> MonsterData:
 
 ## 報酬・ショップ画面用の概要テキスト（基礎ステータスを表示）。
 func summary() -> String:
-	var text := "%s %s %s\n属性:%s  ATK:%d DEF:%d  成長:%.1f" % [
+	var text := "%s %s %s\n属性:%s  ATK:%d DEF:%d INT:%d  成長:%.1f" % [
 		rarity_label(), display_name(), stage_label(),
-		element_label(), attack, defense, growth_speed,
+		element_label(), attack, defense, int_power, growth_speed,
 	]
 	for c in commands:
 		text += "\n・%s (コスト%d)" % [c.command_name, c.cost]
@@ -235,6 +242,9 @@ func effective_attack() -> int:
 
 func effective_defense() -> int:
 	return roundi(defense * _mult() * POWER_SCALE) + plus_defense_bonus()
+
+func effective_int() -> int:
+	return roundi(int_power * _mult() * POWER_SCALE) + plus_int_bonus()
 
 func effective_cost(cmd: CommandData) -> int:
 	return clampi(cmd.cost + int(STAGE_COST_DELTA[stage]), 1, 99)
@@ -260,6 +270,10 @@ func damage_bonus(cmd: CommandData) -> int:
 func guard_bonus(cmd: CommandData) -> int:
 	return roundi(effective_defense() * _stat_scale(cmd))
 
+## バフ・デバフ・回復系コマンドに上乗せされる INT 由来ボーナス。
+func int_bonus(cmd: CommandData) -> int:
+	return roundi(effective_int() * _stat_scale(cmd))
+
 ## コマンドの実効値（威力＋ステータス補正）を効果種別に応じて返す。
 func command_value(cmd: CommandData) -> int:
 	match cmd.effect:
@@ -267,6 +281,9 @@ func command_value(cmd: CommandData) -> int:
 			return effective_power(cmd) + damage_bonus(cmd)
 		CommandData.Effect.GUARD:
 			return effective_power(cmd) + guard_bonus(cmd)
+		CommandData.Effect.BUFF_ATK, CommandData.Effect.HEAL, CommandData.Effect.WEAKEN, \
+		CommandData.Effect.POISON, CommandData.Effect.REGEN:
+			return effective_power(cmd) + int_bonus(cmd)
 		CommandData.Effect.ENERGY:
 			return cmd.power # エネルギーは段階・ステータス補正なし
 		_:

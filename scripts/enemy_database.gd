@@ -16,6 +16,7 @@ static func zako_pool() -> Array:
 	var A := EnemyUI.Intent.ATTACK
 	var D := EnemyUI.Intent.DEFEND
 	var B := EnemyUI.Intent.BUFF
+	var H := EnemyUI.Intent.HEAL
 	var P := EnemyUI.Intent.POISON
 	var E := MonsterData.Element
 	return [
@@ -30,6 +31,8 @@ static func zako_pool() -> Array:
 		_enemy("フェンリル", 46, [_move(A, 9), _move(B, 3), _move(A, 13)], E.DARK),
 		_enemy("ゴーレム", 62, [_move(D, 10), _move(A, 9)], E.EARTH),
 		_enemy("ウィスプ", 34, [_move(B, 3), _move(A, 9), _move(A, 7)], E.LIGHT),
+		_enemy("ウンディーネ", 44, [_move(A, 7), _move(H, 8), _move(A, 10)], E.WATER),
+		_enemy("シルフ", 38, [_move(B, 4), _move(A, 8), _move(A, 8)], E.WIND),
 	]
 
 # --- エリート ---------------------------------------------------------------

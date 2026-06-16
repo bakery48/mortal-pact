@@ -51,14 +51,14 @@ static func starter_monsters() -> Array[MonsterData]:
 		_cmd("呪いの炎", 2, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 	]))
 
-	list.append(_monster("インプ", 10, 5, MonsterData.Element.FIRE, 1.0, [
-		_cmd("引っかき", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-		_cmd("挑発", 1, CommandData.Effect.BUFF_ATK, 2, "このターンの与ダメージ+2"),
+	list.append(_monster("ウンディーネ", 7, 7, MonsterData.Element.WATER, 1.1, [
+		_cmd("水弾", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("癒しの水", 1, CommandData.Effect.HEAL, 12, "HPを12回復"),
 	]))
 
-	list.append(_monster("妖精", 4, 5, MonsterData.Element.LIGHT, 1.1, [
-		_cmd("癒やしの粉", 1, CommandData.Effect.HEAL, 4, "HPを1回復"),
-		_cmd("光の矢", 1, CommandData.Effect.DAMAGE, 9, "敵に5ダメージ"),
+	list.append(_monster("シルフ", 8, 4, MonsterData.Element.WIND, 1.2, [
+		_cmd("風刃", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("追い風", 1, CommandData.Effect.BUFF_ATK, 8, "このターンの与ダメージ+8"),
 	]))
 
 	return list
@@ -230,6 +230,16 @@ static func reward_pool() -> Array[MonsterData]:
 	list.append(_monster("グリモワール", 6, 5, MonsterData.Element.NONE, 1.2, [
 		_cmd("詠唱", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
 		_cmd("禁呪", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
+	]))
+
+	# --- スターター種族（報酬でも再入手できるように） ---
+	list.append(_monster("ウンディーネ", 7, 7, MonsterData.Element.WATER, 1.1, [
+		_cmd("水弾", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("癒しの水", 1, CommandData.Effect.HEAL, 12, "HPを12回復"),
+	]))
+	list.append(_monster("シルフ", 8, 4, MonsterData.Element.WIND, 1.2, [
+		_cmd("風刃", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
+		_cmd("追い風", 1, CommandData.Effect.BUFF_ATK, 8, "このターンの与ダメージ+8"),
 	]))
 
 	# --- 敵種族の仲間版（対称性のため） ---

@@ -27,6 +27,22 @@ enum Effect {
 ## ステータス依存係数：ダメージ系はATK、ガード系はDEFにこの倍率を掛けて上乗せ。
 ## 負の値（既定）なら、コストに応じた自動係数を使う（重い技ほど依存が大きい）。
 @export var stat_scale: float = -1.0
+## 敵に作用する技で true なら全体対象（既定は単体）。
+@export var target_all: bool = false
+
+## 敵を対象に取る効果か（ダメージ・状態異常・弱体化）。
+func targets_enemy() -> bool:
+	match effect:
+		Effect.DAMAGE, Effect.PIERCE, Effect.WEAKEN, Effect.POISON, Effect.BURN, Effect.FREEZE:
+			return true
+		_:
+			return false
+
+## カード説明用の対象ラベル（敵対象でなければ空）。
+func target_label() -> String:
+	if not targets_enemy():
+		return ""
+	return "敵全体" if target_all else "敵単体"
 
 # --- セーブ/ロード用シリアライズ -------------------------------------------
 
@@ -38,6 +54,7 @@ func to_dict() -> Dictionary:
 		"power": power,
 		"description": description,
 		"stat_scale": stat_scale,
+		"target_all": target_all,
 	}
 
 static func from_dict(d: Dictionary) -> CommandData:
@@ -48,4 +65,5 @@ static func from_dict(d: Dictionary) -> CommandData:
 	c.power = int(d.get("power", 0))
 	c.description = String(d.get("description", ""))
 	c.stat_scale = float(d.get("stat_scale", -1.0))
+	c.target_all = bool(d.get("target_all", false))
 	return c

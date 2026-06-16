@@ -387,18 +387,20 @@ func _cmd_scale(cmd: CommandData) -> float:
 func _skill_effect_text(cmd: CommandData) -> String:
 	var p := cmd.power
 	var scale := _cmd_scale(cmd)
+	var scope := cmd.target_label()
+	var tgt := "【%s】" % scope if scope != "" else ""
 	match cmd.effect:
-		CommandData.Effect.DAMAGE: return "敵にダメージ（基礎%d＋ATK×%.1f）" % [p, scale]
-		CommandData.Effect.PIERCE: return "防御無視ダメージ（基礎%d＋ATK×%.1f）" % [p, scale]
+		CommandData.Effect.DAMAGE: return "%sダメージ（基礎%d＋ATK×%.1f）" % [tgt, p, scale]
+		CommandData.Effect.PIERCE: return "%s防御無視ダメージ（基礎%d＋ATK×%.1f）" % [tgt, p, scale]
 		CommandData.Effect.GUARD: return "ブロック（基礎%d＋DEF×%.1f）" % [p, scale]
 		CommandData.Effect.BUFF_ATK: return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT: return "次のダメージを2倍"
 		CommandData.Effect.HEAL: return "HPを%d回復" % p
-		CommandData.Effect.WEAKEN: return "敵の攻撃力-%d" % p
+		CommandData.Effect.WEAKEN: return "%s攻撃力-%d" % [tgt, p]
 		CommandData.Effect.ENERGY: return "エネルギー+%d" % p
-		CommandData.Effect.POISON: return "毒%dを付与" % p
-		CommandData.Effect.BURN: return "%dターン炎上" % p
-		CommandData.Effect.FREEZE: return "%d回凍結" % p
+		CommandData.Effect.POISON: return "%sに毒%dを付与" % [tgt, p]
+		CommandData.Effect.BURN: return "%sを%dターン炎上" % [tgt, p]
+		CommandData.Effect.FREEZE: return "%sを%d回凍結" % [tgt, p]
 		CommandData.Effect.REGEN: return "再生%d" % p
 	return ""
 

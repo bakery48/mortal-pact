@@ -97,9 +97,12 @@ func _make_visual() -> Control:
 
 func _command_text() -> String:
 	var p := monster.effective_power(command)
+	# 敵対象の技は「敵単体／敵全体」を明記する。
+	var scope := command.target_label()
+	var tgt := "【%s】" % scope if scope != "" else ""
 	match command.effect:
 		CommandData.Effect.DAMAGE:
-			return "敵に%dダメージ%s" % [monster.command_value(command), _affinity_mark()]
+			return "%s%dダメージ%s" % [tgt, monster.command_value(command), _affinity_mark()]
 		CommandData.Effect.BUFF_ATK:
 			return "このターンの与ダメージ+%d" % p
 		CommandData.Effect.DOUBLE_NEXT:
@@ -109,17 +112,17 @@ func _command_text() -> String:
 		CommandData.Effect.GUARD:
 			return "ブロック%dを得る" % monster.command_value(command)
 		CommandData.Effect.PIERCE:
-			return "防御無視で%dダメージ%s" % [monster.command_value(command), _affinity_mark()]
+			return "%s防御無視で%dダメージ%s" % [tgt, monster.command_value(command), _affinity_mark()]
 		CommandData.Effect.WEAKEN:
-			return "敵の攻撃力-%d" % p
+			return "%s攻撃力-%d" % [tgt, p]
 		CommandData.Effect.ENERGY:
 			return "エネルギー+%d" % command.power
 		CommandData.Effect.POISON:
-			return "敵に毒%dを付与" % p
+			return "%sに毒%dを付与" % [tgt, p]
 		CommandData.Effect.BURN:
-			return "敵を%dターン炎上(被ダメ1.5倍)" % command.power
+			return "%sを%dターン炎上(被ダメ1.5倍)" % [tgt, command.power]
 		CommandData.Effect.FREEZE:
-			return "敵を%d回凍結させる" % command.power
+			return "%sを%d回凍結させる" % [tgt, command.power]
 		CommandData.Effect.REGEN:
 			return "再生%dを得る(毎ターン回復)" % p
 	return command.description

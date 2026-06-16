@@ -272,14 +272,18 @@ func _add_card_to_hand(sc: SkillCard) -> void:
 	_hand_container.add_child(card)
 	card.command_selected.connect(_on_command_selected)
 
-## 敵に作用する（対象が要る）コマンドか。
+## 単体ターゲット選択が要るコマンドか（敵対象かつ全体技でない）。
 func _needs_target(cmd: CommandData) -> bool:
-	match cmd.effect:
-		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE, CommandData.Effect.WEAKEN, \
-		CommandData.Effect.POISON, CommandData.Effect.BURN, CommandData.Effect.FREEZE:
-			return true
-		_:
-			return false
+	return cmd.targets_enemy() and not cmd.target_all
+
+## このコマンドが作用する敵リスト（全体技なら全員、単体なら tgt のみ）。
+func _effect_targets(cmd: CommandData, tgt: EnemyUI) -> Array[EnemyUI]:
+	if cmd.target_all:
+		return enemies.duplicate()
+	var list: Array[EnemyUI] = []
+	if tgt != null:
+		list.append(tgt)
+	return list
 
 ## カードを選択：対象が要り敵が複数なら対象選択へ、それ以外は即発動。
 func _on_command_selected(card: CardUI) -> void:
@@ -385,24 +389,29 @@ func _apply_command(card_data: MonsterData, cmd: CommandData, tgt: EnemyUI) -> v
 	var p := card_data.effective_power(cmd)
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
-			if tgt == null:
+			var targets := _effect_targets(cmd, tgt)
+			if targets.is_empty():
 				return
-			# 威力＋ATK補正にバフ・2倍・属性相性を反映。
-			var base := card_data.command_value(cmd) + atk_buff
-			if double_next:
-				base *= 2
-				double_next = false
-			# 属性相性を反映（有利×1.5 / 不利×0.75）。
-			var mult := MonsterData.affinity(card_data.elements, tgt.element)
-			var dmg := roundi(base * mult)
-			var dealt := tgt.take_damage_pierce(dmg) if cmd.effect == CommandData.Effect.PIERCE else tgt.take_damage(dmg)
-			tgt.flash_hit()
-			var dmg_color := Color(1.0, 0.5, 0.3) if mult > 1.0 else Color(1.0, 0.9, 0.5)
-			_popup(str(dealt), tgt.get_global_rect().get_center(), dmg_color, 32 if mult > 1.0 else 26)
-			if dealt >= 18:
-				_screen_shake(5.0)
-			if tgt.is_dead():
-				_remove_enemy(tgt)
+			# 2倍は全体でも1回だけ消費する（攻撃前に判定）。
+			var use_double := double_next
+			double_next = false
+			for t: EnemyUI in targets:
+				if not is_instance_valid(t):
+					continue
+				# 威力＋ATK補正にバフ・2倍・属性相性を反映。
+				var base := card_data.command_value(cmd) + atk_buff
+				if use_double:
+					base *= 2
+				var mult := MonsterData.affinity(card_data.elements, t.element)
+				var dmg := roundi(base * mult)
+				var dealt := t.take_damage_pierce(dmg) if cmd.effect == CommandData.Effect.PIERCE else t.take_damage(dmg)
+				t.flash_hit()
+				var dmg_color := Color(1.0, 0.5, 0.3) if mult > 1.0 else Color(1.0, 0.9, 0.5)
+				_popup(str(dealt), t.get_global_rect().get_center(), dmg_color, 32 if mult > 1.0 else 26)
+				if dealt >= 18:
+					_screen_shake(5.0)
+				if t.is_dead():
+					_remove_enemy(t)
 		CommandData.Effect.BUFF_ATK:
 			atk_buff += p
 		CommandData.Effect.DOUBLE_NEXT:
@@ -415,19 +424,23 @@ func _apply_command(card_data: MonsterData, cmd: CommandData, tgt: EnemyUI) -> v
 		CommandData.Effect.GUARD:
 			player_block += card_data.command_value(cmd) # 威力＋DEF補正
 		CommandData.Effect.WEAKEN:
-			if tgt != null:
-				tgt.apply_weaken(p)
+			for t: EnemyUI in _effect_targets(cmd, tgt):
+				if is_instance_valid(t):
+					t.apply_weaken(p)
 		CommandData.Effect.ENERGY:
 			energy += cmd.power # エネルギーは段階補正なしの素の値
 		CommandData.Effect.POISON:
-			if tgt != null:
-				tgt.add_status(StatusSet.Status.POISON, p)
+			for t: EnemyUI in _effect_targets(cmd, tgt):
+				if is_instance_valid(t):
+					t.add_status(StatusSet.Status.POISON, p)
 		CommandData.Effect.BURN:
-			if tgt != null:
-				tgt.add_status(StatusSet.Status.BURN, cmd.power) # 炎上は素のターン数
+			for t: EnemyUI in _effect_targets(cmd, tgt):
+				if is_instance_valid(t):
+					t.add_status(StatusSet.Status.BURN, cmd.power) # 炎上は素のターン数
 		CommandData.Effect.FREEZE:
-			if tgt != null:
-				tgt.add_status(StatusSet.Status.FREEZE, cmd.power) # 凍結は素の回数
+			for t: EnemyUI in _effect_targets(cmd, tgt):
+				if is_instance_valid(t):
+					t.add_status(StatusSet.Status.FREEZE, cmd.power) # 凍結は素の回数
 		CommandData.Effect.REGEN:
 			player_status.add(StatusSet.Status.REGEN, p)
 

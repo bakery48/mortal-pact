@@ -319,40 +319,182 @@ static func reward_pool() -> Array[MonsterData]:
 ## 魔物名に対応する奥義を返す。未定義の種族は null。
 ## 奥義は6枠埋まった時に自動解放され、継承不可。
 static func ultimate_skill(monster_name: String) -> CommandData:
+	var c: CommandData
 	match monster_name:
+		# --- スターター ---
 		"フェンリル":
-			var c := _ult("極夜の咆哮", 3, CommandData.Effect.DAMAGE, 25, "全敵に25ダメージ")
+			c = _ult("極夜の咆哮", 3, CommandData.Effect.DAMAGE, 25, "全敵に25ダメージ")
 			c.target_all = true
-			return c
 		"サラマンダー":
-			var c := _ult("煉獄炎嵐", 3, CommandData.Effect.BURN, 4, "全敵を4ターン炎上")
+			c = _ult("煉獄炎嵐", 3, CommandData.Effect.BURN, 4, "全敵を4ターン炎上")
 			c.target_all = true
-			return c
 		"ゴーレム":
-			return _ult("不動の大地", 2, CommandData.Effect.GUARD, 22, "ブロック22を得る")
+			c = _ult("不動の大地", 2, CommandData.Effect.GUARD, 22, "ブロック22を得る")
 		"ウィスプ":
-			return _ult("極光の加護", 2, CommandData.Effect.BUFF_ATK, 15, "このターンの与ダメージ+15")
+			c = _ult("極光の加護", 2, CommandData.Effect.BUFF_ATK, 15, "このターンの与ダメージ+15")
 		"ウンディーネ":
-			return _ult("聖水の奇跡", 3, CommandData.Effect.HEAL, 25, "HPを25回復")
+			c = _ult("聖水の奇跡", 3, CommandData.Effect.HEAL, 25, "HPを25回復")
 		"シルフ":
-			var c := _ult("嵐の奔流", 3, CommandData.Effect.DAMAGE, 20, "全敵に20ダメージ")
+			c = _ult("嵐の奔流", 3, CommandData.Effect.DAMAGE, 20, "全敵に20ダメージ")
 			c.target_all = true
-			return c
+		# --- 報酬プール：攻撃特化 ---
+		"ハーピー":
+			c = _ult("旋風嵐", 3, CommandData.Effect.DAMAGE, 22, "全敵に22ダメージ")
+			c.target_all = true
 		"ケルベロス":
-			var c := _ult("冥界の三首", 3, CommandData.Effect.DAMAGE, 30, "全敵に30ダメージ")
+			c = _ult("冥界の三首", 3, CommandData.Effect.DAMAGE, 30, "全敵に30ダメージ")
 			c.target_all = true
-			return c
+		"ワイバーン":
+			c = _ult("龍爪乱舞", 3, CommandData.Effect.DAMAGE, 28, "全敵に28ダメージ")
+			c.target_all = true
+		"バンシー":
+			c = _ult("魂の絶叫", 3, CommandData.Effect.DAMAGE, 26, "全敵に26ダメージ")
+			c.target_all = true
+		"ゴーストファイア":
+			c = _ult("業火の海", 3, CommandData.Effect.BURN, 5, "全敵を5ターン炎上")
+			c.target_all = true
+		"グリフォン":
+			c = _ult("天空の裁き", 3, CommandData.Effect.PIERCE, 24, "全敵に防御無視24ダメージ")
+			c.target_all = true
+		"フェニックス":
+			c = _ult("不死の炎", 3, CommandData.Effect.DAMAGE, 25, "全敵に25ダメージ")
+			c.target_all = true
+		"クラーケン":
+			c = _ult("海淵の怒り", 3, CommandData.Effect.DAMAGE, 32, "全敵に32ダメージ")
+			c.target_all = true
+		"ミノタウロス":
+			c = _ult("大地砕き", 3, CommandData.Effect.PIERCE, 35, "防御無視で35ダメージ")
+		"ヴァンパイア":
+			c = _ult("永遠の呪い", 3, CommandData.Effect.DAMAGE, 28, "全敵に28ダメージ")
+			c.target_all = true
+		"サンダーバード":
+			c = _ult("雷帝降臨", 3, CommandData.Effect.DAMAGE, 30, "全敵に30ダメージ")
+			c.target_all = true
+		"デーモン":
+			c = _ult("地獄の業炎", 3, CommandData.Effect.DAMAGE, 35, "全敵に35ダメージ")
+			c.target_all = true
+		"ホーリーナイト":
+			c = _ult("聖剣の覚醒", 3, CommandData.Effect.PIERCE, 22, "全敵に防御無視22ダメージ")
+			c.target_all = true
+		"アサシン":
+			c = _ult("必殺の一閃", 2, CommandData.Effect.PIERCE, 40, "防御無視で40ダメージ")
+		"シャドウ":
+			c = _ult("暗黒の嵐", 3, CommandData.Effect.DAMAGE, 26, "全敵に26ダメージ")
+			c.target_all = true
+		"バーサーカー":
+			c = _ult("修羅の覚醒", 3, CommandData.Effect.DAMAGE, 38, "敵に38ダメージ")
+		"雷神":
+			c = _ult("神雷", 3, CommandData.Effect.PIERCE, 25, "全敵に防御無視25ダメージ")
+			c.target_all = true
+		"ヴァルキリー":
+			c = _ult("天の裁き", 3, CommandData.Effect.DAMAGE, 24, "全敵に24ダメージ")
+			c.target_all = true
+		"ホブゴブリン":
+			c = _ult("鬼神の一撃", 3, CommandData.Effect.DAMAGE, 30, "敵に30ダメージ")
+		"大コウモリ":
+			c = _ult("超音波爆撃", 3, CommandData.Effect.DAMAGE, 20, "全敵に20ダメージ")
+			c.target_all = true
+		# --- 報酬プール：状態異常特化 ---
+		"リッチ":
+			c = _ult("死の支配", 3, CommandData.Effect.POISON, 8, "全敵に毒8を付与")
+			c.target_all = true
+		"スケルトン":
+			c = _ult("死の行進", 3, CommandData.Effect.POISON, 6, "全敵に毒6を付与")
+			c.target_all = true
+		"毒蛇":
+			c = _ult("猛毒の霧", 3, CommandData.Effect.POISON, 8, "全敵に毒8を付与")
+			c.target_all = true
+		"バジリスク":
+			c = _ult("絶死の視線", 3, CommandData.Effect.POISON, 10, "全敵に毒10を付与")
+			c.target_all = true
+		"毒沼の主":
+			c = _ult("毒の大洪水", 3, CommandData.Effect.POISON, 8, "全敵に毒8を付与")
+			c.target_all = true
+		"コカトリス":
+			c = _ult("猛毒の嵐", 3, CommandData.Effect.POISON, 6, "全敵に毒6を付与")
+			c.target_all = true
+		"イグニス":
+			c = _ult("業火爆発", 3, CommandData.Effect.BURN, 5, "全敵を5ターン炎上")
+			c.target_all = true
+		"フロストゴーレム":
+			c = _ult("極寒の嵐", 3, CommandData.Effect.FREEZE, 2, "全敵を2回凍結")
+			c.target_all = true
+		"妖術師":
+			c = _ult("闇の呪縛", 3, CommandData.Effect.WEAKEN, 10, "全敵の攻撃力-10")
+			c.target_all = true
+		"呪術師":
+			c = _ult("死の呪詛", 3, CommandData.Effect.WEAKEN, 12, "全敵の攻撃力-12")
+			c.target_all = true
+		"セイレーン":
+			c = _ult("魂を縛る歌声", 3, CommandData.Effect.WEAKEN, 10, "全敵の攻撃力-10")
+			c.target_all = true
+		"氷壁の精":
+			c = _ult("永久凍土", 3, CommandData.Effect.FREEZE, 2, "全敵を2回凍結")
+			c.target_all = true
+		# --- 報酬プール：防御・回復特化 ---
+		"タイタン":
+			c = _ult("絶対防御", 3, CommandData.Effect.GUARD, 35, "ブロック35を得る")
+		"ストーンガード":
+			c = _ult("鉄壁", 3, CommandData.Effect.GUARD, 32, "ブロック32を得る")
+		"守護騎士":
+			c = _ult("難攻不落の砦", 3, CommandData.Effect.GUARD, 28, "ブロック28を得る")
+		"トレント":
+			c = _ult("大森林の加護", 3, CommandData.Effect.GUARD, 26, "ブロック26を得る")
+		"マッドスライム":
+			c = _ult("粘液要塞", 3, CommandData.Effect.GUARD, 26, "ブロック26を得る")
+		"ドライアド":
+			c = _ult("大樹の守護", 3, CommandData.Effect.GUARD, 22, "ブロック22を得る")
+		"ヒーラースライム":
+			c = _ult("大治癒", 3, CommandData.Effect.HEAL, 28, "HPを28回復")
+		"プリーステス":
+			c = _ult("聖なる奇跡", 3, CommandData.Effect.HEAL, 28, "HPを28回復")
+		"ドルイド":
+			c = _ult("大自然の恵み", 3, CommandData.Effect.HEAL, 26, "HPを26回復")
+		"錬金術師":
+			c = _ult("賢者の石", 3, CommandData.Effect.HEAL, 25, "HPを25回復")
+		"世界樹の苗":
+			c = _ult("世界樹の奇跡", 3, CommandData.Effect.REGEN, 15, "再生15を得る")
+		# --- 報酬プール：支援特化 ---
+		"ユニコーン":
+			c = _ult("浄化の奇跡", 2, CommandData.Effect.HEAL, 20, "HPを20回復")
+		"スライム":
+			c = _ult("大分裂", 2, CommandData.Effect.BUFF_ATK, 12, "このターンの与ダメージ+12")
+		"サキュバス":
+			c = _ult("魂の収奪", 3, CommandData.Effect.BUFF_ATK, 18, "このターンの与ダメージ+18")
+		"マーメイド":
+			c = _ult("海の女王", 3, CommandData.Effect.BUFF_ATK, 16, "このターンの与ダメージ+16")
+		"ピクシー":
+			c = _ult("妖精の奇跡", 2, CommandData.Effect.BUFF_ATK, 15, "このターンの与ダメージ+15")
+		"マナイーター":
+			c = _ult("魔力の暴食", 2, CommandData.Effect.ENERGY, 5, "エネルギー+5")
+		"グリモワール":
+			c = _ult("禁断の魔法書", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする（コスト不要）")
+		"アイススピリット":
+			c = _ult("永久凍土の嵐", 3, CommandData.Effect.DAMAGE, 24, "全敵に24ダメージ")
+			c.target_all = true
+		"ゴブリン":
+			c = _ult("群れの猛攻", 3, CommandData.Effect.DAMAGE, 18, "全敵に18ダメージ")
+			c.target_all = true
+		# --- 補助特化 ---
 		"大天使":
-			return _ult("神罰", 3, CommandData.Effect.BUFF_ATK, 25, "このターンの与ダメージ+25")
+			c = _ult("神罰", 3, CommandData.Effect.BUFF_ATK, 25, "このターンの与ダメージ+25")
 		"大賢者":
-			return _ult("禁断の知恵", 2, CommandData.Effect.BUFF_ATK, 20, "このターンの与ダメージ+20")
+			c = _ult("禁断の知恵", 2, CommandData.Effect.BUFF_ATK, 20, "このターンの与ダメージ+20")
 		"豊穣の女神":
-			return _ult("大地の慈雨", 3, CommandData.Effect.HEAL, 30, "HPを30回復")
-		"双頭の竜":
-			var c := _ult("世界の終焉", 3, CommandData.Effect.DAMAGE, 35, "全敵に35ダメージ")
+			c = _ult("大地の慈雨", 3, CommandData.Effect.HEAL, 30, "HPを30回復")
+		# --- ボス種族 ---
+		"死の騎士":
+			c = _ult("死の宣告", 3, CommandData.Effect.POISON, 12, "全敵に毒12を付与")
 			c.target_all = true
-			return c
-	return null
+		"双頭の竜":
+			c = _ult("世界の終焉", 3, CommandData.Effect.DAMAGE, 35, "全敵に35ダメージ")
+			c.target_all = true
+		"深淵の王":
+			c = _ult("奈落の扉", 3, CommandData.Effect.WEAKEN, 15, "全敵の攻撃力-15")
+			c.target_all = true
+		_:
+			return null
+	return c
 
 ## プールからランダムに count 体を選んで返す。
 static func random_rewards(count: int) -> Array[MonsterData]:

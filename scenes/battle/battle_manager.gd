@@ -304,6 +304,13 @@ func _begin_targeting(card: CardUI) -> void:
 	_pending_card = card
 	for e in enemies:
 		e.set_targeted(true)
+		var aff := MonsterData.affinity(card.monster.elements, e.element)
+		if aff > 1.0:
+			e.show_affinity("WEAK")
+		elif aff < 1.0:
+			e.show_affinity("HALF")
+		else:
+			e.hide_affinity()
 	_flash_message("対象の敵をクリック（右クリック/Esc/空白クリックで取消）")
 
 func _resolve_targeting(e: EnemyUI) -> void:
@@ -317,6 +324,7 @@ func _cancel_targeting() -> void:
 	_pending_card = null
 	for e in enemies:
 		e.set_targeted(false)
+		e.hide_affinity()
 
 ## 対象選択中は 右クリック/Esc、または敵以外の場所の左クリックで取消。
 func _unhandled_input(event: InputEvent) -> void:

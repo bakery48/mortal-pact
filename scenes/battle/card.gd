@@ -105,7 +105,7 @@ func _command_text() -> String:
 	var tgt := "【%s】" % scope if scope != "" else ""
 	match command.effect:
 		CommandData.Effect.DAMAGE:
-			return "%s%dダメージ%s" % [tgt, v, _affinity_mark()]
+			return "%s%dダメージ" % [tgt, v]
 		CommandData.Effect.BUFF_ATK:
 			return "このターンの与ダメージ+%d" % v
 		CommandData.Effect.DOUBLE_NEXT:
@@ -115,7 +115,7 @@ func _command_text() -> String:
 		CommandData.Effect.GUARD:
 			return "ブロック%dを得る" % v
 		CommandData.Effect.PIERCE:
-			return "%s防御無視で%dダメージ%s" % [tgt, v, _affinity_mark()]
+			return "%s防御無視で%dダメージ" % [tgt, v]
 		CommandData.Effect.WEAKEN:
 			return "%s攻撃力-%d" % [tgt, v]
 		CommandData.Effect.ENERGY:

@@ -40,6 +40,7 @@ var _hp_bar: ProgressBar
 var _hp_label: Label
 var _status_label: Label
 var _target_marker: Label
+var _affinity_label: Label
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(280, 190)
@@ -62,6 +63,12 @@ func _ready() -> void:
 	_target_marker.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	_target_marker.visible = false
 	vbox.add_child(_target_marker)
+
+	_affinity_label = Label.new()
+	_affinity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_affinity_label.add_theme_font_size_override("font_size", 20)
+	_affinity_label.visible = false
+	vbox.add_child(_affinity_label)
 
 	# スプライト（あれば）／無ければ属性色の図形プレースホルダ。
 	vbox.add_child(_make_visual())
@@ -211,6 +218,23 @@ func apply_weaken(amount: int) -> void:
 
 func is_dead() -> bool:
 	return hp <= 0
+
+func show_affinity(text: String) -> void:
+	if _affinity_label == null:
+		return
+	if text == "WEAK":
+		_affinity_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
+		_affinity_label.text = "▲ WEAK"
+	elif text == "HALF":
+		_affinity_label.add_theme_color_override("font_color", Color(0.5, 0.75, 1.0))
+		_affinity_label.text = "▽ HALF"
+	else:
+		_affinity_label.text = ""
+	_affinity_label.visible = text != ""
+
+func hide_affinity() -> void:
+	if _affinity_label != null:
+		_affinity_label.visible = false
 
 func _update() -> void:
 	if _hp_bar != null:

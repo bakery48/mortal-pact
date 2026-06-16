@@ -300,7 +300,9 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 	var max_inherit := MonsterFactory.max_inheritable(bloodline, partner)
 	var pool := MonsterFactory.inheritable_pool(bloodline, partner)
 	var element: int = bloodline.elements[0] if not bloodline.elements.is_empty() else MonsterData.Element.NONE
-	var innate := MonsterFactory.element_innate_kit(element)
+	var innate: Array[CommandData] = []
+	for i in range(mini(MonsterFactory.INNATE_COUNT, bloodline.commands.size())):
+		innate.append(bloodline.commands[i])
 	var chosen: Array[CommandData] = []
 
 	var overlay := ColorRect.new()
@@ -344,7 +346,7 @@ func _open_inherit_dialog(bloodline: MonsterData, partner: MonsterData) -> void:
 	for c in innate:
 		innate_lines.append("・%s（コスト%d）%s" % [c.command_name, c.cost, _skill_effect_text(c)])
 	var innate_label := Label.new()
-	innate_label.text = "固有スキル例（%s属性の場合）:\n" % blood_el + "\n".join(innate_lines) + "\n継承できる数: 最大%d" % max_inherit
+	innate_label.text = "固有スキル（引き継ぎ確定）:\n" + "\n".join(innate_lines) + "\n継承できる数: 最大%d" % max_inherit
 	innate_label.modulate = Color(0.8, 0.85, 0.95)
 	innate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(innate_label)

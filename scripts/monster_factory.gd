@@ -541,12 +541,11 @@ static func max_inheritable(a: MonsterData, b: MonsterData) -> int:
 
 ## 両親から継承候補にできるスキル一覧。
 ## 同名スキルを複数持つ場合はその分だけ表示し、重複継承を許可する。
-## ただし合体後の固有スキル（血統属性の innate kit）と同名のものは除外する。
+## ただし血統の固有スキル（先頭INNATE_COUNT枚）と奥義は除外する。
 static func inheritable_pool(a: MonsterData, b: MonsterData) -> Array[CommandData]:
-	var element := a.elements[0] if not a.elements.is_empty() else MonsterData.Element.NONE
 	var innate_names := {}
-	for c in element_innate_kit(element):
-		innate_names[c.command_name] = true
+	for i in range(mini(INNATE_COUNT, a.commands.size())):
+		innate_names[a.commands[i].command_name] = true
 	var pool: Array[CommandData] = []
 	for c in (a.commands + b.commands):
 		if not innate_names.has(c.command_name) and not c.is_ultimate:
@@ -623,12 +622,15 @@ static func make_child(bloodline: MonsterData, partner: MonsterData, inherited: 
 	child.rarity = bloodline.rarity
 	child.plus = fused_plus(bloodline, partner)
 
-	# 属性抽選：血統60% / 相手30% / 10%で別属性。固有スキルは決定属性に従う。
+	# 属性抽選：血統60% / 相手30% / 10%で別属性。属性は相性にのみ影響する。
 	var element := roll_child_element(bloodline, partner)
 	child.elements = [element]
 
-	# スキル：決定属性に応じた固有2 ＋ 継承（固有と同名は除外、継承スキル同士の重複は許可、最大6）。
-	var cmds: Array[CommandData] = element_innate_kit(element)
+	# 固有スキル：血統の先頭INNATE_COUNT枚をそのまま引き継ぐ（種族のアイデンティティ）。
+	# 属性が変わっても種族固有のスキルは変わらない。
+	var cmds: Array[CommandData] = []
+	for i in range(mini(INNATE_COUNT, bloodline.commands.size())):
+		cmds.append(bloodline.commands[i].duplicate(true))
 	var innate_names := {}
 	for c in cmds:
 		innate_names[c.command_name] = true

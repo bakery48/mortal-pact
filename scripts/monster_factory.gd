@@ -354,13 +354,17 @@ static func max_inheritable(a: MonsterData, b: MonsterData) -> int:
 	var gen_cap := maxi(a.commands.size(), b.commands.size()) + 1 - INNATE_COUNT
 	return clampi(mini(by_combined, gen_cap), 0, MAX_SKILLS - INNATE_COUNT)
 
-## 両親から継承候補にできるスキル一覧（技名で重複排除）。
+## 両親から継承候補にできるスキル一覧。
+## 同名スキルを複数持つ場合はその分だけ表示し、重複継承を許可する。
+## ただし合体後の固有スキル（血統属性の innate kit）と同名のものは除外する。
 static func inheritable_pool(a: MonsterData, b: MonsterData) -> Array[CommandData]:
+	var element := a.elements[0] if not a.elements.is_empty() else MonsterData.Element.NONE
+	var innate_names := {}
+	for c in element_innate_kit(element):
+		innate_names[c.command_name] = true
 	var pool: Array[CommandData] = []
-	var seen := {}
 	for c in (a.commands + b.commands):
-		if not seen.has(c.command_name):
-			seen[c.command_name] = true
+		if not innate_names.has(c.command_name):
 			pool.append(c)
 	return pool
 
@@ -416,18 +420,17 @@ static func make_child(bloodline: MonsterData, partner: MonsterData, inherited: 
 	child.rarity = bloodline.rarity
 	child.plus = fused_plus(bloodline, partner)
 
-	# スキル：血統の属性に応じた固有2 ＋ 継承（重複名は除外、最大6）。
+	# スキル：血統の属性に応じた固有2 ＋ 継承（固有と同名は除外、継承スキル同士の重複は許可、最大6）。
 	var element: int = bloodline.elements[0] if not bloodline.elements.is_empty() else MonsterData.Element.NONE
 	var cmds: Array[CommandData] = element_innate_kit(element)
-	var names := {}
+	var innate_names := {}
 	for c in cmds:
-		names[c.command_name] = true
+		innate_names[c.command_name] = true
 	for c in inherited:
 		if cmds.size() >= MAX_SKILLS:
 			break
 		var cmd := c as CommandData
-		if not names.has(cmd.command_name):
-			names[cmd.command_name] = true
+		if not innate_names.has(cmd.command_name):
 			cmds.append(cmd.duplicate(true))
 	child.commands = cmds
 

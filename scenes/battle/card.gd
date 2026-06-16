@@ -69,7 +69,10 @@ func _refresh_texts() -> void:
 	_title.text = "%s %s %s" % [monster.rarity_label(), monster.display_name(), monster.stage_label()]
 	_stats.text = "属:%s A:%d D:%d I:%d" % [monster.element_label(), monster.effective_attack(), monster.effective_defense(), monster.effective_int()]
 	_exp_bar.value = monster.exp_progress()
-	_cmd_button.text = "▶ %s  (コスト%d)\n%s" % [command.command_name, monster.effective_cost(command), _command_text()]
+	var cmd_prefix := "⚡奥義 " if command.is_ultimate else ""
+	_cmd_button.text = "▶ %s%s  (コスト%d)\n%s" % [cmd_prefix, command.command_name, monster.effective_cost(command), _command_text()]
+	if command.is_ultimate:
+		_cmd_button.add_theme_color_override("font_color", Color(1.0, 0.85, 0.1))
 	var breakdown := _stat_breakdown()
 	_stat_label.text = breakdown
 	_stat_label.visible = breakdown != ""

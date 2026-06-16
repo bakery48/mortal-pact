@@ -29,6 +29,8 @@ enum Effect {
 @export var stat_scale: float = -1.0
 ## 敵に作用する技で true なら全体対象（既定は単体）。
 @export var target_all: bool = false
+## 奥義フラグ：6枠埋まった際に自動解放される固有スキル。継承不可。
+@export var is_ultimate: bool = false
 
 ## 敵を対象に取る効果か（ダメージ・状態異常・弱体化）。
 func targets_enemy() -> bool:
@@ -55,6 +57,7 @@ func to_dict() -> Dictionary:
 		"description": description,
 		"stat_scale": stat_scale,
 		"target_all": target_all,
+		"is_ultimate": is_ultimate,
 	}
 
 static func from_dict(d: Dictionary) -> CommandData:
@@ -66,4 +69,5 @@ static func from_dict(d: Dictionary) -> CommandData:
 	c.description = String(d.get("description", ""))
 	c.stat_scale = float(d.get("stat_scale", -1.0))
 	c.target_all = bool(d.get("target_all", false))
+	c.is_ultimate = bool(d.get("is_ultimate", false))
 	return c

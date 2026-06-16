@@ -5,6 +5,11 @@ extends RefCounted
 ## ・starter_monsters(): リソース欠如時のフォールバック用初期デッキ
 ## ・fuse(): 成体2体から子孫カードを生成（フェーズ3：合体システム）
 
+static func _ult(name: String, cost: int, effect: int, power: int, desc: String, scale := -1.0) -> CommandData:
+	var c := _cmd(name, cost, effect, power, desc, scale)
+	c.is_ultimate = true
+	return c
+
 static func _cmd(name: String, cost: int, effect: int, power: int, desc: String, scale := -1.0) -> CommandData:
 	var c := CommandData.new()
 	c.command_name = name
@@ -311,6 +316,44 @@ static func reward_pool() -> Array[MonsterData]:
 
 	return list
 
+## 魔物名に対応する奥義を返す。未定義の種族は null。
+## 奥義は6枠埋まった時に自動解放され、継承不可。
+static func ultimate_skill(monster_name: String) -> CommandData:
+	match monster_name:
+		"フェンリル":
+			var c := _ult("極夜の咆哮", 3, CommandData.Effect.DAMAGE, 25, "全敵に25ダメージ")
+			c.target_all = true
+			return c
+		"サラマンダー":
+			var c := _ult("煉獄炎嵐", 3, CommandData.Effect.BURN, 4, "全敵を4ターン炎上")
+			c.target_all = true
+			return c
+		"ゴーレム":
+			return _ult("不動の大地", 2, CommandData.Effect.GUARD, 22, "ブロック22を得る")
+		"ウィスプ":
+			return _ult("極光の加護", 2, CommandData.Effect.BUFF_ATK, 15, "このターンの与ダメージ+15")
+		"ウンディーネ":
+			return _ult("聖水の奇跡", 3, CommandData.Effect.HEAL, 25, "HPを25回復")
+		"シルフ":
+			var c := _ult("嵐の奔流", 3, CommandData.Effect.DAMAGE, 20, "全敵に20ダメージ")
+			c.target_all = true
+			return c
+		"ケルベロス":
+			var c := _ult("冥界の三首", 3, CommandData.Effect.DAMAGE, 30, "全敵に30ダメージ")
+			c.target_all = true
+			return c
+		"大天使":
+			return _ult("神罰", 3, CommandData.Effect.BUFF_ATK, 25, "このターンの与ダメージ+25")
+		"大賢者":
+			return _ult("禁断の知恵", 2, CommandData.Effect.BUFF_ATK, 20, "このターンの与ダメージ+20")
+		"豊穣の女神":
+			return _ult("大地の慈雨", 3, CommandData.Effect.HEAL, 30, "HPを30回復")
+		"双頭の竜":
+			var c := _ult("世界の終焉", 3, CommandData.Effect.DAMAGE, 35, "全敵に35ダメージ")
+			c.target_all = true
+			return c
+	return null
+
 ## プールからランダムに count 体を選んで返す。
 static func random_rewards(count: int) -> Array[MonsterData]:
 	var pool := reward_pool()
@@ -364,7 +407,7 @@ static func inheritable_pool(a: MonsterData, b: MonsterData) -> Array[CommandDat
 		innate_names[c.command_name] = true
 	var pool: Array[CommandData] = []
 	for c in (a.commands + b.commands):
-		if not innate_names.has(c.command_name):
+		if not innate_names.has(c.command_name) and not c.is_ultimate:
 			pool.append(c)
 	return pool
 
@@ -433,6 +476,12 @@ static func make_child(bloodline: MonsterData, partner: MonsterData, inherited: 
 		if not innate_names.has(cmd.command_name):
 			cmds.append(cmd.duplicate(true))
 	child.commands = cmds
+
+	# 6枠埋まった時点で奥義を自動解放する。
+	if cmds.size() >= MAX_SKILLS:
+		var ult := ultimate_skill(child.monster_name)
+		if ult != null:
+			child.commands.append(ult)
 
 	# 幼体に戻って再育成。
 	child.stage = MonsterData.Stage.INFANT

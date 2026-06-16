@@ -191,7 +191,7 @@ func _open_fusion_picker() -> void:
 	vbox.add_child(title)
 
 	var hint := Label.new()
-	hint.text = "1体目のクリック＝血統 ／ 2体目＝相手。名前と属性は血統を引き継ぎ、+値が加算されます。"
+	hint.text = "1体目のクリック＝血統 ／ 2体目＝相手。名前は血統を引き継ぎ（属性は抽選）、+値が加算されます。"
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", Color(0.7, 0.72, 0.78))
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

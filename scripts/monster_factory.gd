@@ -44,7 +44,7 @@ static func starter_monsters() -> Array[MonsterData]:
 
 	list.append(_monster("ゴーレム", 8, 12, MonsterData.Element.EARTH, 0.8, [
 		_cmd("岩石投げ", 1, CommandData.Effect.DAMAGE, 7, "敵に7ダメージ"),
-		_cmd("地響き", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
+		_cmd("大地の守り", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
 	], 5))
 
 	list.append(_monster("ウィスプ", 6, 3, MonsterData.Element.LIGHT, 1.1, [

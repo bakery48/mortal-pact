@@ -73,15 +73,15 @@ static func reward_pool() -> Array[MonsterData]:
 	list.append(_monster("ハーピー", 11, 4, MonsterData.Element.WIND, 1.2, [
 		_cmd("旋風爪", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
 		_cmd("追い風", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
-	], 8))
+	], 6))
 	list.append(_monster("ケルベロス", 16, 7, MonsterData.Element.DARK, 0.9, [
 		_cmd("三連牙", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
 		_cmd("獄炎", 3, CommandData.Effect.DAMAGE, 24, "敵に24ダメージ"),
 	], 4))
 	list.append(_monster("ユニコーン", 9, 8, MonsterData.Element.LIGHT, 1.0, [
 		_cmd("聖なる角", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
-		_cmd("加護", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
-	], 9))
+		_cmd("加護", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	], 6))
 	list.append(_monster("リッチ", 13, 3, MonsterData.Element.DARK, 1.1, [
 		_cmd("呪詛", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 		_cmd("死の宣告", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
@@ -116,8 +116,8 @@ static func reward_pool() -> Array[MonsterData]:
 	], 5))
 	list.append(_monster("グリフォン", 14, 8, MonsterData.Element.WIND, 0.9, [
 		_cmd("鉤爪", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
-		_cmd("天翔ける", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
-	], 9))
+		_cmd("天翔ける", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	], 6))
 	list.append(_monster("サキュバス", 11, 5, MonsterData.Element.DARK, 1.1, [
 		_cmd("魅了", 1, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 		_cmd("精気吸収", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
@@ -148,16 +148,16 @@ static func reward_pool() -> Array[MonsterData]:
 	], 4))
 	list.append(_monster("マーメイド", 9, 7, MonsterData.Element.WATER, 1.1, [
 		_cmd("水鞭", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
-		_cmd("癒やしの歌", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
-	], 9))
+		_cmd("癒やしの歌", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	], 6))
 	list.append(_monster("デーモン", 18, 5, MonsterData.Element.FIRE, 0.8, [
 		_cmd("地獄爪", 1, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
 		_cmd("業炎弾", 3, CommandData.Effect.DAMAGE, 28, "敵に28ダメージ"),
 	], 4))
 	list.append(_monster("ホーリーナイト", 12, 11, MonsterData.Element.LIGHT, 0.9, [
 		_cmd("聖剣", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
-		_cmd("聖騎士の誓い", 2, CommandData.Effect.BUFF_ATK, 7, "このターンの与ダメージ+7"),
-	], 9))
+		_cmd("聖騎士の誓い", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	], 6))
 
 	# --- 役割特化（新コマンド効果）---
 	list.append(_monster("ヒーラースライム", 6, 6, MonsterData.Element.LIGHT, 1.2, [
@@ -182,8 +182,8 @@ static func reward_pool() -> Array[MonsterData]:
 	], 5))
 	list.append(_monster("プリーステス", 7, 7, MonsterData.Element.LIGHT, 1.0, [
 		_cmd("祈り", 1, CommandData.Effect.HEAL, 10, "HPを10回復"),
-		_cmd("聖なる加護", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
-	], 12))
+		_cmd("聖なる加護", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
+	], 8))
 	list.append(_monster("ストーンガード", 5, 16, MonsterData.Element.EARTH, 0.7, [
 		_cmd("岩の壁", 1, CommandData.Effect.GUARD, 11, "ブロック11を得る"),
 		_cmd("圧殺", 2, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
@@ -218,8 +218,8 @@ static func reward_pool() -> Array[MonsterData]:
 	], 9))
 	list.append(_monster("錬金術師", 7, 6, MonsterData.Element.NONE, 1.0, [
 		_cmd("触媒生成", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
-		_cmd("治癒薬", 2, CommandData.Effect.HEAL, 12, "HPを12回復"),
-	], 10))
+		_cmd("治癒薬", 2, CommandData.Effect.HEAL, 8, "HPを8回復"),
+	], 7))
 	list.append(_monster("タイタン", 14, 14, MonsterData.Element.EARTH, 0.7, [
 		_cmd("大地割り", 2, CommandData.Effect.DAMAGE, 20, "敵に20ダメージ"),
 		_cmd("巨壁", 1, CommandData.Effect.GUARD, 12, "ブロック12を得る"),
@@ -288,8 +288,8 @@ static func reward_pool() -> Array[MonsterData]:
 	], 5))
 	list.append(_monster("世界樹の苗", 5, 8, MonsterData.Element.LIGHT, 1.2, [
 		_cmd("芽吹き", 1, CommandData.Effect.REGEN, 4, "再生4を得る"),
-		_cmd("癒やしの光", 2, CommandData.Effect.HEAL, 12, "HPを12回復"),
-	], 11))
+		_cmd("癒やしの光", 2, CommandData.Effect.HEAL, 8, "HPを8回復"),
+	], 7))
 	list.append(_monster("コカトリス", 12, 5, MonsterData.Element.WIND, 1.0, [
 		_cmd("毒の翼", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
 		_cmd("つつき", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),

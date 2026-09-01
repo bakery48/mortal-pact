@@ -37,7 +37,7 @@ static func _monster(name: String, atk: int, def: int, element: int, growth: flo
 static func starter_monsters() -> Array[MonsterData]:
 	var list: Array[MonsterData] = []
 
-	list.append(_monster("フェンリル", 12, 6, MonsterData.Element.DARK, 1.0, [
+	list.append(_monster("フェンリル", 12, 6, MonsterData.Element.WIND, 1.0, [
 		_cmd("噛みつき", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 		_cmd("狂化", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	], 4))
@@ -52,7 +52,7 @@ static func starter_monsters() -> Array[MonsterData]:
 		_cmd("大地の守り", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
 	], 5))
 
-	list.append(_monster("ウィスプ", 6, 3, MonsterData.Element.LIGHT, 1.1, [
+	list.append(_monster("ウィスプ", 6, 3, MonsterData.Element.FIRE, 1.1, [
 		_cmd("導きの光", 1, CommandData.Effect.BUFF_ATK, 2, "このターンの与ダメージ+2"),
 		_cmd("呪いの炎", 2, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 	], 7))
@@ -79,15 +79,15 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("旋風爪", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
 		_cmd("追い風", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 	], 6))
-	list.append(_monster("ケルベロス", 16, 7, MonsterData.Element.DARK, 0.9, [
+	list.append(_monster("ケルベロス", 16, 7, MonsterData.Element.FIRE, 0.9, [
 		_cmd("三連牙", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
 		_cmd("獄炎", 3, CommandData.Effect.DAMAGE, 24, "敵に24ダメージ"),
 	], 4))
-	list.append(_monster("ユニコーン", 9, 8, MonsterData.Element.LIGHT, 1.0, [
+	list.append(_monster("ユニコーン", 9, 8, MonsterData.Element.WATER, 1.0, [
 		_cmd("聖なる角", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 		_cmd("加護", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 	], 6))
-	list.append(_monster("リッチ", 13, 3, MonsterData.Element.DARK, 1.1, [
+	list.append(_monster("リッチ", 13, 3, MonsterData.Element.EARTH, 1.1, [
 		_cmd("呪詛", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 		_cmd("死の宣告", 3, CommandData.Effect.DOUBLE_NEXT, 0, "次のダメージを2倍にする"),
 	], 4))
@@ -107,7 +107,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("急降下", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 		_cmd("竜巻", 2, CommandData.Effect.DAMAGE, 19, "敵に19ダメージ"),
 	], 4))
-	list.append(_monster("バンシー", 12, 3, MonsterData.Element.DARK, 1.2, [
+	list.append(_monster("バンシー", 12, 3, MonsterData.Element.WIND, 1.2, [
 		_cmd("怨嗟の叫び", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 		_cmd("絶望", 2, CommandData.Effect.DAMAGE, 17, "敵に17ダメージ"),
 	], 4))
@@ -123,7 +123,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("鉤爪", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 		_cmd("天翔ける", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 	], 6))
-	list.append(_monster("サキュバス", 11, 5, MonsterData.Element.DARK, 1.1, [
+	list.append(_monster("サキュバス", 11, 5, MonsterData.Element.FIRE, 1.1, [
 		_cmd("魅了", 1, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 		_cmd("精気吸収", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
 	], 10))
@@ -139,11 +139,11 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("突進", 1, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
 		_cmd("斧叩き", 2, CommandData.Effect.DAMAGE, 20, "敵に20ダメージ"),
 	], 4))
-	list.append(_monster("ピクシー", 5, 4, MonsterData.Element.LIGHT, 1.4, [
+	list.append(_monster("ピクシー", 5, 4, MonsterData.Element.WIND, 1.4, [
 		_cmd("妖精の粉", 1, CommandData.Effect.BUFF_ATK, 4, "このターンの与ダメージ+4"),
 		_cmd("光の矢", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 	], 8))
-	list.append(_monster("ヴァンパイア", 14, 6, MonsterData.Element.DARK, 1.0, [
+	list.append(_monster("ヴァンパイア", 14, 6, MonsterData.Element.WIND, 1.0, [
 		_cmd("牙", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 		_cmd("血の宴", 2, CommandData.Effect.DAMAGE, 18, "敵に18ダメージ"),
 	], 4))
@@ -159,13 +159,13 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("地獄爪", 1, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
 		_cmd("業炎弾", 3, CommandData.Effect.DAMAGE, 28, "敵に28ダメージ"),
 	], 4))
-	list.append(_monster("ホーリーナイト", 12, 11, MonsterData.Element.LIGHT, 0.9, [
+	list.append(_monster("ホーリーナイト", 12, 11, MonsterData.Element.FIRE, 0.9, [
 		_cmd("聖剣", 1, CommandData.Effect.DAMAGE, 11, "敵に11ダメージ"),
 		_cmd("聖騎士の誓い", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 	], 6))
 
 	# --- 役割特化（新コマンド効果）---
-	list.append(_monster("ヒーラースライム", 6, 6, MonsterData.Element.LIGHT, 1.2, [
+	list.append(_monster("ヒーラースライム", 6, 6, MonsterData.Element.WATER, 1.2, [
 		_cmd("癒やしの粘液", 1, CommandData.Effect.HEAL, 8, "HPを8回復"),
 		_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 7, "敵に7ダメージ"),
 	], 9))
@@ -173,11 +173,11 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("盾構え", 1, CommandData.Effect.GUARD, 9, "ブロック9を得る"),
 		_cmd("シールドバッシュ", 2, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
 	], 5))
-	list.append(_monster("アサシン", 15, 3, MonsterData.Element.DARK, 1.1, [
+	list.append(_monster("アサシン", 15, 3, MonsterData.Element.WIND, 1.1, [
 		_cmd("背後刺し", 1, CommandData.Effect.PIERCE, 11, "防御無視で11ダメージ"),
 		_cmd("毒刃", 2, CommandData.Effect.PIERCE, 17, "防御無視で17ダメージ"),
 	], 4))
-	list.append(_monster("妖術師", 10, 5, MonsterData.Element.DARK, 1.0, [
+	list.append(_monster("妖術師", 10, 5, MonsterData.Element.FIRE, 1.0, [
 		_cmd("呪いの目", 1, CommandData.Effect.WEAKEN, 5, "敵の攻撃力-5"),
 		_cmd("闇の波動", 2, CommandData.Effect.DAMAGE, 14, "敵に14ダメージ"),
 	], 10))
@@ -185,7 +185,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("魔力吸収", 1, CommandData.Effect.ENERGY, 2, "エネルギー+2"),
 		_cmd("噛みつき", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 	], 5))
-	list.append(_monster("プリーステス", 7, 7, MonsterData.Element.LIGHT, 1.0, [
+	list.append(_monster("プリーステス", 7, 7, MonsterData.Element.WATER, 1.0, [
 		_cmd("祈り", 1, CommandData.Effect.HEAL, 10, "HPを10回復"),
 		_cmd("聖なる加護", 2, CommandData.Effect.BUFF_ATK, 5, "このターンの与ダメージ+5"),
 	], 8))
@@ -193,7 +193,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("岩の壁", 1, CommandData.Effect.GUARD, 11, "ブロック11を得る"),
 		_cmd("圧殺", 2, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 	], 5))
-	list.append(_monster("シャドウ", 13, 4, MonsterData.Element.DARK, 1.2, [
+	list.append(_monster("シャドウ", 13, 4, MonsterData.Element.WIND, 1.2, [
 		_cmd("影縫い", 1, CommandData.Effect.PIERCE, 10, "防御無視で10ダメージ"),
 		_cmd("闇討ち", 2, CommandData.Effect.DAMAGE, 16, "敵に16ダメージ"),
 	], 4))
@@ -213,11 +213,11 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("裁きの雷", 1, CommandData.Effect.PIERCE, 12, "防御無視で12ダメージ"),
 		_cmd("雷鳴", 2, CommandData.Effect.DAMAGE, 18, "敵に18ダメージ"),
 	], 4))
-	list.append(_monster("ヴァルキリー", 13, 9, MonsterData.Element.LIGHT, 1.0, [
+	list.append(_monster("ヴァルキリー", 13, 9, MonsterData.Element.FIRE, 1.0, [
 		_cmd("聖槍", 1, CommandData.Effect.DAMAGE, 12, "敵に12ダメージ"),
 		_cmd("天盾", 1, CommandData.Effect.GUARD, 8, "ブロック8を得る"),
 	], 5))
-	list.append(_monster("呪術師", 8, 6, MonsterData.Element.DARK, 1.1, [
+	list.append(_monster("呪術師", 8, 6, MonsterData.Element.FIRE, 1.1, [
 		_cmd("衰弱の呪い", 1, CommandData.Effect.WEAKEN, 6, "敵の攻撃力-6"),
 		_cmd("骨の槍", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 	], 9))
@@ -239,7 +239,7 @@ static func reward_pool() -> Array[MonsterData]:
 	], 5))
 
 	# --- 補助特化（戦闘力は低いが INT が高く、両スキルとも補助） ---
-	list.append(_monster("大天使", 6, 7, MonsterData.Element.LIGHT, 0.9, [
+	list.append(_monster("大天使", 6, 7, MonsterData.Element.FIRE, 0.9, [
 		_cmd("聖光の加護", 2, CommandData.Effect.BUFF_ATK, 6, "このターンの与ダメージ+6"),
 		_cmd("天恵", 2, CommandData.Effect.HEAL, 8, "HPを8回復"),
 	], 16))
@@ -267,7 +267,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("強奪", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 		_cmd("鬨の声", 1, CommandData.Effect.BUFF_ATK, 3, "このターンの与ダメージ+3"),
 	], 6))
-	list.append(_monster("スケルトン", 10, 3, MonsterData.Element.DARK, 1.0, [
+	list.append(_monster("スケルトン", 10, 3, MonsterData.Element.EARTH, 1.0, [
 		_cmd("骨の槍", 1, CommandData.Effect.DAMAGE, 10, "敵に10ダメージ"),
 		_cmd("死者の呪い", 2, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
 	], 6))
@@ -283,13 +283,13 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("泥弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 		_cmd("粘液の壁", 1, CommandData.Effect.GUARD, 10, "ブロック10を得る"),
 	], 5))
-	list.append(_monster("毒蛇", 8, 4, MonsterData.Element.DARK, 1.1, [
+	list.append(_monster("毒蛇", 8, 4, MonsterData.Element.WATER, 1.1, [
 		_cmd("毒牙", 1, CommandData.Effect.POISON, 4, "敵に毒4を付与"),
 		_cmd("蛇の一撃", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 	], 7))
 
 	# --- 状態異常特化 ---
-	list.append(_monster("バジリスク", 11, 5, MonsterData.Element.DARK, 1.0, [
+	list.append(_monster("バジリスク", 11, 5, MonsterData.Element.WATER, 1.0, [
 		_cmd("猛毒の牙", 1, CommandData.Effect.POISON, 4, "敵に毒4を付与"),
 		_cmd("石化の眼", 2, CommandData.Effect.DAMAGE, 13, "敵に13ダメージ"),
 	], 8))
@@ -305,7 +305,7 @@ static func reward_pool() -> Array[MonsterData]:
 		_cmd("絶対零度", 2, CommandData.Effect.FREEZE, 1, "敵を1回凍結"),
 		_cmd("氷塊", 1, CommandData.Effect.DAMAGE, 9, "敵に9ダメージ"),
 	], 5))
-	list.append(_monster("世界樹の苗", 5, 8, MonsterData.Element.LIGHT, 1.2, [
+	list.append(_monster("世界樹の苗", 5, 8, MonsterData.Element.WATER, 1.2, [
 		_cmd("芽吹き", 1, CommandData.Effect.REGEN, 4, "再生4を得る"),
 		_cmd("癒やしの光", 2, CommandData.Effect.HEAL, 8, "HPを8回復"),
 	], 7))
@@ -575,16 +575,6 @@ static func element_innate_kit(element: int) -> Array[CommandData]:
 				_cmd("礫", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
 				_cmd("守りの構え", 1, CommandData.Effect.GUARD, 9, "ブロック9を得る"),
 			]
-		MonsterData.Element.LIGHT:
-			return [
-				_cmd("光弾", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("祝福", 1, CommandData.Effect.HEAL, 9, "HPを9回復"),
-			]
-		MonsterData.Element.DARK:
-			return [
-				_cmd("闇撃ち", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
-				_cmd("毒霧", 1, CommandData.Effect.POISON, 3, "敵に毒3を付与"),
-			]
 		_:
 			return [
 				_cmd("体当たり", 1, CommandData.Effect.DAMAGE, 8, "敵に8ダメージ"),
@@ -602,8 +592,8 @@ static func roll_child_element(bloodline: MonsterData, partner: MonsterData) -> 
 		return partner_el
 	# 残り10%：血統でも相手でもない属性からランダム（NONEは除外）。
 	var others: Array[int] = []
-	for e in [MonsterData.Element.FIRE, MonsterData.Element.WATER, MonsterData.Element.WIND,
-			MonsterData.Element.EARTH, MonsterData.Element.LIGHT, MonsterData.Element.DARK]:
+	for e in [MonsterData.Element.FIRE, MonsterData.Element.WATER,
+			MonsterData.Element.WIND, MonsterData.Element.EARTH]:
 		if e != blood_el and e != partner_el:
 			others.append(e)
 	if others.is_empty():

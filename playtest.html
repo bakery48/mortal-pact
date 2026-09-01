@@ -18,7 +18,7 @@
   --pact:#C8455A; --lineage:#D9A441; --good:#6FBF73;
   --weak:#FF6B57; --half:#6FA8DC;
   --fire:#E2573B; --water:#3E8FD0; --wind:#55B98A;
-  --earth:#B98A4A; --light:#E3CE6A; --dark:#8B62C4; --none:#7A7488;
+  --earth:#B98A4A; --none:#7A7488;
   --mincho:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
   --gothic:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
@@ -84,8 +84,7 @@ h1,h2,h3{font-family:var(--mincho); font-weight:800; margin:0; text-wrap:balance
 .el{display:inline-block; padding:0 6px; border-radius:2px; font-size:11px;
   font-weight:700; color:#12101A}
 .el-0{background:var(--none)} .el-1{background:var(--fire)} .el-2{background:var(--water)}
-.el-3{background:var(--wind)} .el-4{background:var(--earth)} .el-5{background:var(--light)}
-.el-6{background:var(--dark); color:#F0EAF8}
+.el-3{background:var(--wind)} .el-4{background:var(--earth)}
 
 /* ── 敵 ── */
 .enemies{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; padding:20px}
@@ -239,7 +238,7 @@ const INNATE_COUNT = 2, MAX_SKILLS = 6;
 const STARTING_HP = 65, STARTING_GOLD = 50, REST_RATIO = 0.3;
 
 const S  = { INFANT:0, YOUNG:1, ADULT:2, ELDER:3, DEAD:4 };
-const E  = { NONE:0, FIRE:1, WATER:2, WIND:3, EARTH:4, LIGHT:5, DARK:6 };
+const E  = { NONE:0, FIRE:1, WATER:2, WIND:3, EARTH:4 };
 const F  = { DAMAGE:0, BUFF_ATK:1, DOUBLE_NEXT:2, HEAL:3, GUARD:4, PIERCE:5,
              WEAKEN:6, ENERGY:7, POISON:8, BURN:9, FREEZE:10, REGEN:11 };
 const ST = { POISON:0, BURN:1, FREEZE:2, REGEN:3 };
@@ -249,7 +248,7 @@ const STAGE_MULT   = [0.6, 0.8, 1.0, 0.8, 0.0];
 const STAGE_COST   = [-1, 0, 0, 1, 0];
 const STAGE_THRESH = [0, 2, 4, 7, 10];
 const STAGE_LABEL  = ["🥚幼体","🌱若体","⚔️成体","🍂老体","💀消滅"];
-const EL_LABEL     = ["無","炎","水","風","土","光","闇"];
+const EL_LABEL     = ["無","炎","水","風","土"];
 const RARITY       = ["★","★★","★★★","★★★★"];
 const ST_ICON      = ["☠","🔥","❄","💚"];
 const IN_ICON      = ["⚔","🛡","💪","✚","☠"];
@@ -274,7 +273,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 /* 初期デッキ（monster_factory.gd starter_monsters） */
 function starterMonsters(){
   return [
-    M("フェンリル",12,6,E.DARK,1.0,[
+    M("フェンリル",12,6,E.WIND,1.0,[
       C("噛みつき",1,F.DAMAGE,12,"敵に12ダメージ"),
       C("狂化",3,F.DOUBLE_NEXT,0,"次のダメージを2倍にする")],4),
     M("サラマンダー",14,4,E.FIRE,1.2,[
@@ -283,7 +282,7 @@ function starterMonsters(){
     M("ゴーレム",8,12,E.EARTH,0.8,[
       C("岩石投げ",1,F.DAMAGE,7,"敵に7ダメージ"),
       C("大地の守り",1,F.GUARD,8,"ブロック8を得る")],5),
-    M("ウィスプ",6,3,E.LIGHT,1.1,[
+    M("ウィスプ",6,3,E.FIRE,1.1,[
       C("導きの光",1,F.BUFF_ATK,2,"このターンの与ダメージ+2"),
       C("呪いの炎",2,F.DAMAGE,11,"敵に11ダメージ")],7),
     M("ウンディーネ",7,7,E.WATER,1.1,[
@@ -299,61 +298,61 @@ function starterMonsters(){
 function rewardPool(){
   return [
     M("ハーピー",11,4,E.WIND,1.2,[C("旋風爪",1,F.DAMAGE,10,""),C("追い風",2,F.BUFF_ATK,5,"")],6),
-    M("ケルベロス",16,7,E.DARK,0.9,[C("三連牙",1,F.DAMAGE,13,""),C("獄炎",3,F.DAMAGE,24,"")],4),
-    M("ユニコーン",9,8,E.LIGHT,1.0,[C("聖なる角",1,F.DAMAGE,9,""),C("加護",2,F.BUFF_ATK,5,"")],6),
-    M("リッチ",13,3,E.DARK,1.1,[C("呪詛",1,F.DAMAGE,11,""),C("死の宣告",3,F.DOUBLE_NEXT,0,"")],4),
+    M("ケルベロス",16,7,E.FIRE,0.9,[C("三連牙",1,F.DAMAGE,13,""),C("獄炎",3,F.DAMAGE,24,"")],4),
+    M("ユニコーン",9,8,E.WATER,1.0,[C("聖なる角",1,F.DAMAGE,9,""),C("加護",2,F.BUFF_ATK,5,"")],6),
+    M("リッチ",13,3,E.EARTH,1.1,[C("呪詛",1,F.DAMAGE,11,""),C("死の宣告",3,F.DOUBLE_NEXT,0,"")],4),
     M("アイススピリット",10,6,E.WATER,1.0,[C("氷礫",1,F.DAMAGE,10,""),C("吹雪",2,F.DAMAGE,16,"")],5),
     M("スライム",7,7,E.NONE,1.3,[C("体当たり",1,F.DAMAGE,8,""),C("分裂の構え",1,F.BUFF_ATK,3,"")],7),
     M("ドライアド",8,9,E.EARTH,1.0,[C("蔦縛り",1,F.DAMAGE,8,""),C("生命の歌",2,F.BUFF_ATK,5,"")],8),
     M("ワイバーン",15,5,E.WIND,1.0,[C("急降下",1,F.DAMAGE,12,""),C("竜巻",2,F.DAMAGE,19,"")],4),
-    M("バンシー",12,3,E.DARK,1.2,[C("怨嗟の叫び",1,F.DAMAGE,11,""),C("絶望",2,F.DAMAGE,17,"")],4),
+    M("バンシー",12,3,E.WIND,1.2,[C("怨嗟の叫び",1,F.DAMAGE,11,""),C("絶望",2,F.DAMAGE,17,"")],4),
     M("ゴーストファイア",11,2,E.FIRE,1.3,[C("鬼火",1,F.DAMAGE,10,""),C("焼尽",3,F.DOUBLE_NEXT,0,"")],4),
     M("トレント",6,14,E.EARTH,0.8,[C("枝打ち",1,F.DAMAGE,7,""),C("大地の怒り",2,F.DAMAGE,15,"")],5),
     M("グリフォン",14,8,E.WIND,0.9,[C("鉤爪",1,F.DAMAGE,12,""),C("天翔ける",2,F.BUFF_ATK,5,"")],6),
-    M("サキュバス",11,5,E.DARK,1.1,[C("魅了",1,F.BUFF_ATK,5,""),C("精気吸収",2,F.DAMAGE,14,"")],10),
+    M("サキュバス",11,5,E.FIRE,1.1,[C("魅了",1,F.BUFF_ATK,5,""),C("精気吸収",2,F.DAMAGE,14,"")],10),
     M("フェニックス",13,6,E.FIRE,1.0,[C("火の翼",1,F.DAMAGE,11,""),C("再生の焔",3,F.DOUBLE_NEXT,0,"")],4),
     M("クラーケン",17,9,E.WATER,0.8,[C("触手",1,F.DAMAGE,13,""),C("大渦",3,F.DAMAGE,26,"")],4),
     M("ミノタウロス",16,7,E.EARTH,0.9,[C("突進",1,F.DAMAGE,13,""),C("斧叩き",2,F.DAMAGE,20,"")],4),
-    M("ピクシー",5,4,E.LIGHT,1.4,[C("妖精の粉",1,F.BUFF_ATK,4,""),C("光の矢",1,F.DAMAGE,8,"")],8),
-    M("ヴァンパイア",14,6,E.DARK,1.0,[C("牙",1,F.DAMAGE,12,""),C("血の宴",2,F.DAMAGE,18,"")],4),
+    M("ピクシー",5,4,E.WIND,1.4,[C("妖精の粉",1,F.BUFF_ATK,4,""),C("光の矢",1,F.DAMAGE,8,"")],8),
+    M("ヴァンパイア",14,6,E.WIND,1.0,[C("牙",1,F.DAMAGE,12,""),C("血の宴",2,F.DAMAGE,18,"")],4),
     M("サンダーバード",15,4,E.WIND,1.1,[C("電撃",1,F.DAMAGE,12,""),C("雷鳴",2,F.DAMAGE,19,"")],4),
     M("マーメイド",9,7,E.WATER,1.1,[C("水鞭",1,F.DAMAGE,9,""),C("癒やしの歌",2,F.BUFF_ATK,5,"")],6),
     M("デーモン",18,5,E.FIRE,0.8,[C("地獄爪",1,F.DAMAGE,14,""),C("業炎弾",3,F.DAMAGE,28,"")],4),
-    M("ホーリーナイト",12,11,E.LIGHT,0.9,[C("聖剣",1,F.DAMAGE,11,""),C("聖騎士の誓い",2,F.BUFF_ATK,5,"")],6),
-    M("ヒーラースライム",6,6,E.LIGHT,1.2,[C("癒やしの粘液",1,F.HEAL,8,""),C("体当たり",1,F.DAMAGE,7,"")],9),
+    M("ホーリーナイト",12,11,E.FIRE,0.9,[C("聖剣",1,F.DAMAGE,11,""),C("聖騎士の誓い",2,F.BUFF_ATK,5,"")],6),
+    M("ヒーラースライム",6,6,E.WATER,1.2,[C("癒やしの粘液",1,F.HEAL,8,""),C("体当たり",1,F.DAMAGE,7,"")],9),
     M("守護騎士",9,13,E.EARTH,0.8,[C("盾構え",1,F.GUARD,9,""),C("シールドバッシュ",2,F.DAMAGE,13,"")],5),
-    M("アサシン",15,3,E.DARK,1.1,[C("背後刺し",1,F.PIERCE,11,""),C("毒刃",2,F.PIERCE,17,"")],4),
-    M("妖術師",10,5,E.DARK,1.0,[C("呪いの目",1,F.WEAKEN,5,""),C("闇の波動",2,F.DAMAGE,14,"")],10),
+    M("アサシン",15,3,E.WIND,1.1,[C("背後刺し",1,F.PIERCE,11,""),C("毒刃",2,F.PIERCE,17,"")],4),
+    M("妖術師",10,5,E.FIRE,1.0,[C("呪いの目",1,F.WEAKEN,5,""),C("闇の波動",2,F.DAMAGE,14,"")],10),
     M("マナイーター",8,4,E.NONE,1.1,[C("魔力吸収",1,F.ENERGY,2,""),C("噛みつき",1,F.DAMAGE,8,"")],5),
-    M("プリーステス",7,7,E.LIGHT,1.0,[C("祈り",1,F.HEAL,10,""),C("聖なる加護",2,F.BUFF_ATK,5,"")],8),
+    M("プリーステス",7,7,E.WATER,1.0,[C("祈り",1,F.HEAL,10,""),C("聖なる加護",2,F.BUFF_ATK,5,"")],8),
     M("ストーンガード",5,16,E.EARTH,0.7,[C("岩の壁",1,F.GUARD,11,""),C("圧殺",2,F.DAMAGE,12,"")],5),
-    M("シャドウ",13,4,E.DARK,1.2,[C("影縫い",1,F.PIERCE,10,""),C("闇討ち",2,F.DAMAGE,16,"")],4),
+    M("シャドウ",13,4,E.WIND,1.2,[C("影縫い",1,F.PIERCE,10,""),C("闇討ち",2,F.DAMAGE,16,"")],4),
     M("氷壁の精",6,12,E.WATER,0.9,[C("氷の盾",1,F.GUARD,10,""),C("凍てつく息",2,F.WEAKEN,6,"")],8),
     M("バーサーカー",17,4,E.FIRE,0.9,[C("乱打",1,F.DAMAGE,12,""),C("戦いの咆哮",1,F.ENERGY,2,"")],5),
     M("ドルイド",9,8,E.EARTH,1.0,[C("自然の恵み",1,F.HEAL,9,""),C("茨の鞭",2,F.DAMAGE,14,"")],10),
     M("雷神",16,5,E.WIND,0.9,[C("裁きの雷",1,F.PIERCE,12,""),C("雷鳴",2,F.DAMAGE,18,"")],4),
-    M("ヴァルキリー",13,9,E.LIGHT,1.0,[C("聖槍",1,F.DAMAGE,12,""),C("天盾",1,F.GUARD,8,"")],5),
-    M("呪術師",8,6,E.DARK,1.1,[C("衰弱の呪い",1,F.WEAKEN,6,""),C("骨の槍",1,F.DAMAGE,9,"")],9),
+    M("ヴァルキリー",13,9,E.FIRE,1.0,[C("聖槍",1,F.DAMAGE,12,""),C("天盾",1,F.GUARD,8,"")],5),
+    M("呪術師",8,6,E.FIRE,1.1,[C("衰弱の呪い",1,F.WEAKEN,6,""),C("骨の槍",1,F.DAMAGE,9,"")],9),
     M("錬金術師",7,6,E.NONE,1.0,[C("触媒生成",1,F.ENERGY,2,""),C("治癒薬",2,F.HEAL,8,"")],7),
     M("タイタン",14,14,E.EARTH,0.7,[C("大地割り",2,F.DAMAGE,20,""),C("巨壁",1,F.GUARD,12,"")],5),
     M("セイレーン",10,6,E.WATER,1.1,[C("惑わしの歌",1,F.WEAKEN,5,""),C("水流弾",2,F.DAMAGE,15,"")],9),
     M("グリモワール",6,5,E.NONE,1.2,[C("詠唱",1,F.ENERGY,2,""),C("禁呪",3,F.DOUBLE_NEXT,0,"")],5),
-    M("大天使",6,7,E.LIGHT,0.9,[C("聖光の加護",2,F.BUFF_ATK,6,""),C("天恵",2,F.HEAL,8,"")],16),
+    M("大天使",6,7,E.FIRE,0.9,[C("聖光の加護",2,F.BUFF_ATK,6,""),C("天恵",2,F.HEAL,8,"")],16),
     M("大賢者",5,6,E.NONE,0.9,[C("鼓舞",1,F.BUFF_ATK,4,""),C("魔力供給",1,F.ENERGY,2,"")],15),
     M("豊穣の女神",4,8,E.EARTH,0.9,[C("再生の祝福",2,F.REGEN,6,""),C("大地の癒し",2,F.HEAL,8,"")],15),
     M("ウンディーネ",7,7,E.WATER,1.1,[C("水弾",1,F.DAMAGE,9,""),C("癒しの水",1,F.HEAL,7,"")],8),
     M("シルフ",8,4,E.WIND,1.2,[C("風刃",1,F.DAMAGE,9,""),C("追い風",1,F.BUFF_ATK,4,"")],8),
     M("ゴブリン",9,5,E.EARTH,1.2,[C("強奪",1,F.DAMAGE,9,""),C("鬨の声",1,F.BUFF_ATK,3,"")],6),
-    M("スケルトン",10,3,E.DARK,1.0,[C("骨の槍",1,F.DAMAGE,10,""),C("死者の呪い",2,F.POISON,3,"")],6),
+    M("スケルトン",10,3,E.EARTH,1.0,[C("骨の槍",1,F.DAMAGE,10,""),C("死者の呪い",2,F.POISON,3,"")],6),
     M("大コウモリ",9,3,E.WIND,1.3,[C("音波",1,F.DAMAGE,9,""),C("血吸い",2,F.DAMAGE,15,"")],4),
     M("ホブゴブリン",11,6,E.EARTH,0.9,[C("鉄槌",2,F.DAMAGE,14,""),C("集団突撃",1,F.BUFF_ATK,4,"")],7),
     M("マッドスライム",7,9,E.WATER,1.1,[C("泥弾",1,F.DAMAGE,8,""),C("粘液の壁",1,F.GUARD,10,"")],5),
-    M("毒蛇",8,4,E.DARK,1.1,[C("毒牙",1,F.POISON,4,""),C("蛇の一撃",1,F.DAMAGE,9,"")],7),
-    M("バジリスク",11,5,E.DARK,1.0,[C("猛毒の牙",1,F.POISON,4,""),C("石化の眼",2,F.DAMAGE,13,"")],8),
+    M("毒蛇",8,4,E.WATER,1.1,[C("毒牙",1,F.POISON,4,""),C("蛇の一撃",1,F.DAMAGE,9,"")],7),
+    M("バジリスク",11,5,E.WATER,1.0,[C("猛毒の牙",1,F.POISON,4,""),C("石化の眼",2,F.DAMAGE,13,"")],8),
     M("毒沼の主",9,9,E.EARTH,0.9,[C("汚泥",1,F.POISON,3,""),C("飲み込む",2,F.DAMAGE,14,"")],7),
     M("イグニス",13,4,E.FIRE,1.1,[C("発火",1,F.BURN,2,""),C("火炎弾",2,F.DAMAGE,15,"")],6),
     M("フロストゴーレム",8,13,E.WATER,0.8,[C("絶対零度",2,F.FREEZE,1,""),C("氷塊",1,F.DAMAGE,9,"")],5),
-    M("世界樹の苗",5,8,E.LIGHT,1.2,[C("芽吹き",1,F.REGEN,4,""),C("癒やしの光",2,F.HEAL,8,"")],7),
+    M("世界樹の苗",5,8,E.WATER,1.2,[C("芽吹き",1,F.REGEN,4,""),C("癒やしの光",2,F.HEAL,8,"")],7),
     M("コカトリス",12,5,E.WIND,1.0,[C("毒の翼",1,F.POISON,3,""),C("つつき",1,F.DAMAGE,9,"")],7),
   ];
 }
@@ -431,33 +430,33 @@ const mv = (type,value) => ({ type, value });
 const EN = (name,max_hp,pattern,element=E.NONE,is_boss=false) => ({ name,max_hp,pattern,element,is_boss });
 const ZAKO = () => [
   EN("ゴブリン",44,[mv(IN.ATTACK,8),mv(IN.ATTACK,6),mv(IN.DEFEND,6)],E.EARTH),
-  EN("スケルトン",50,[mv(IN.ATTACK,7),mv(IN.ATTACK,10)],E.DARK),
+  EN("スケルトン",50,[mv(IN.ATTACK,7),mv(IN.ATTACK,10)],E.EARTH),
   EN("大コウモリ",38,[mv(IN.ATTACK,6),mv(IN.ATTACK,6),mv(IN.ATTACK,9)],E.WIND),
   EN("ホブゴブリン",56,[mv(IN.ATTACK,9),mv(IN.BUFF,3),mv(IN.ATTACK,11)],E.EARTH),
   EN("マッドスライム",60,[mv(IN.DEFEND,8),mv(IN.ATTACK,7)],E.WATER),
   EN("インプ",46,[mv(IN.ATTACK,5),mv(IN.ATTACK,5),mv(IN.ATTACK,8)],E.FIRE),
-  EN("毒蛇",42,[mv(IN.POISON,3),mv(IN.ATTACK,7),mv(IN.ATTACK,9)],E.DARK),
+  EN("毒蛇",42,[mv(IN.POISON,3),mv(IN.ATTACK,7),mv(IN.ATTACK,9)],E.WATER),
   EN("サラマンダー",50,[mv(IN.ATTACK,10),mv(IN.ATTACK,16)],E.FIRE),
-  EN("フェンリル",46,[mv(IN.ATTACK,9),mv(IN.BUFF,3),mv(IN.ATTACK,13)],E.DARK),
+  EN("フェンリル",46,[mv(IN.ATTACK,9),mv(IN.BUFF,3),mv(IN.ATTACK,13)],E.WIND),
   EN("ゴーレム",62,[mv(IN.DEFEND,10),mv(IN.ATTACK,9)],E.EARTH),
-  EN("ウィスプ",34,[mv(IN.BUFF,3),mv(IN.ATTACK,9),mv(IN.ATTACK,7)],E.LIGHT),
+  EN("ウィスプ",34,[mv(IN.BUFF,3),mv(IN.ATTACK,9),mv(IN.ATTACK,7)],E.FIRE),
   EN("ウンディーネ",44,[mv(IN.ATTACK,7),mv(IN.HEAL,8),mv(IN.ATTACK,10)],E.WATER),
   EN("シルフ",38,[mv(IN.BUFF,4),mv(IN.ATTACK,8),mv(IN.ATTACK,8)],E.WIND),
 ];
 const ELITE = () => [
   EN("オーガ",88,[mv(IN.ATTACK,13),mv(IN.BUFF,4),mv(IN.ATTACK,18)],E.EARTH),
-  EN("闇の魔女",80,[mv(IN.ATTACK,10),mv(IN.HEAL,14),mv(IN.ATTACK,14)],E.DARK),
+  EN("闇の魔女",80,[mv(IN.ATTACK,10),mv(IN.HEAL,14),mv(IN.ATTACK,14)],E.WIND),
   EN("ガーゴイル",95,[mv(IN.DEFEND,12),mv(IN.ATTACK,15),mv(IN.ATTACK,9)],E.EARTH),
   EN("地獄の番犬",84,[mv(IN.ATTACK,12),mv(IN.ATTACK,12),mv(IN.BUFF,5)],E.FIRE),
-  EN("邪毒の妖蛆",78,[mv(IN.POISON,5),mv(IN.ATTACK,11),mv(IN.DEFEND,10)],E.DARK),
-  EN("ケルベロス",95,[mv(IN.ATTACK,14),mv(IN.ATTACK,22),mv(IN.BUFF,5)],E.DARK),
+  EN("邪毒の妖蛆",78,[mv(IN.POISON,5),mv(IN.ATTACK,11),mv(IN.DEFEND,10)],E.WATER),
+  EN("ケルベロス",95,[mv(IN.ATTACK,14),mv(IN.ATTACK,22),mv(IN.BUFF,5)],E.FIRE),
   EN("ミノタウロス",100,[mv(IN.ATTACK,13),mv(IN.BUFF,4),mv(IN.ATTACK,19)],E.EARTH),
-  EN("ヴァンパイア",88,[mv(IN.ATTACK,12),mv(IN.HEAL,12),mv(IN.ATTACK,18)],E.DARK),
+  EN("ヴァンパイア",88,[mv(IN.ATTACK,12),mv(IN.HEAL,12),mv(IN.ATTACK,18)],E.WIND),
 ];
 const BOSS = () => [
-  EN("死の騎士",150,[mv(IN.ATTACK,16),mv(IN.DEFEND,12),mv(IN.ATTACK,24),mv(IN.BUFF,4)],E.DARK,true),
+  EN("死の騎士",150,[mv(IN.ATTACK,16),mv(IN.DEFEND,12),mv(IN.ATTACK,24),mv(IN.BUFF,4)],E.EARTH,true),
   EN("双頭の竜",175,[mv(IN.ATTACK,14),mv(IN.ATTACK,14),mv(IN.BUFF,6),mv(IN.ATTACK,28)],E.FIRE,true),
-  EN("深淵の王",200,[mv(IN.POISON,6),mv(IN.ATTACK,18),mv(IN.HEAL,20),mv(IN.ATTACK,26)],E.DARK,true),
+  EN("深淵の王",200,[mv(IN.POISON,6),mv(IN.ATTACK,18),mv(IN.HEAL,20),mv(IN.ATTACK,26)],E.WATER,true),
 ];
 const FLOOR1_SETS = [
   ["ゴブリン"],["大コウモリ"],["スケルトン"],["ウィスプ"],["マッドスライム"],
@@ -505,7 +504,6 @@ function expProgress(m){
 const BEATS = { 2:1, 1:3, 3:4, 4:2 }; // 水>炎, 炎>風, 風>土, 土>水
 function pairMult(a,d){
   if (a === E.NONE || d === E.NONE) return 1;
-  if ((a === E.LIGHT && d === E.DARK) || (a === E.DARK && d === E.LIGHT)) return 1.5;
   if (BEATS[a] === d) return 1.5;
   if (BEATS[d] === a) return 0.75;
   return 1;
@@ -869,7 +867,7 @@ function rollChildElement(a,b){
   const r = rnd();
   if (r < 0.6) return be;
   if (r < 0.9) return pe;
-  const others = [E.FIRE,E.WATER,E.WIND,E.EARTH,E.LIGHT,E.DARK].filter(e => e !== be && e !== pe);
+  const others = [E.FIRE,E.WATER,E.WIND,E.EARTH].filter(e => e !== be && e !== pe);
   return others.length ? pick(others) : be;
 }
 function makeChild(blood, partner, inherited){

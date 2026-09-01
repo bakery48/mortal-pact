@@ -12,10 +12,11 @@ extends Resource
 ## 子孫カードが生まれる（MonsterFactory.make_child 参照）。
 
 enum Stage { INFANT, YOUNG, ADULT, ELDER, DEAD }
-enum Element { NONE, FIRE, WATER, WIND, EARTH, LIGHT, DARK }
+enum Element { NONE, FIRE, WATER, WIND, EARTH }
 enum Rarity { COMMON, UNCOMMON, RARE, EPIC }
 
-## 属性相性の「勝つ」関係（4すくみ）：水>炎>風>土>水。
+## 属性相性は4すくみのみ：水>炎>風>土>水。
+## （光・闇は輪の外にあり相互弱点という例外だったため廃止し、4属性に統合した）
 const ELEMENT_BEATS := {
 	Element.WATER: Element.FIRE,
 	Element.FIRE: Element.WIND,
@@ -70,8 +71,6 @@ const ELEMENT_LABEL := {
 	Element.WATER: "水",
 	Element.WIND: "風",
 	Element.EARTH: "土",
-	Element.LIGHT: "光",
-	Element.DARK: "闇",
 }
 
 const RARITY_LABEL := {
@@ -154,9 +153,6 @@ func element_label() -> String:
 static func element_pair_multiplier(atk: int, dfn: int) -> float:
 	if atk == Element.NONE or dfn == Element.NONE:
 		return 1.0
-	# 光⇔闇は相互弱点（双方が有利）。
-	if (atk == Element.LIGHT and dfn == Element.DARK) or (atk == Element.DARK and dfn == Element.LIGHT):
-		return AFFINITY_ADVANTAGE
 	if int(ELEMENT_BEATS.get(atk, -1)) == dfn:
 		return AFFINITY_ADVANTAGE
 	if int(ELEMENT_BEATS.get(dfn, -1)) == atk:
@@ -208,9 +204,11 @@ static func from_dict(d: Dictionary) -> MonsterData:
 	m.stage = int(d.get("stage", 0)) as Stage
 	m.exp = float(d.get("exp", 0.0))
 	m.growth_speed = float(d.get("growth_speed", 1.0))
+	# 廃止された属性（旧・光/闇）を含む古い引き継ぎデータは「無」に丸める。
 	var els: Array[int] = []
 	for e in d.get("elements", []):
-		els.append(int(e))
+		var ev := int(e)
+		els.append(ev if ELEMENT_LABEL.has(ev) else Element.NONE)
 	if els.is_empty():
 		els.append(Element.NONE)
 	m.elements = els

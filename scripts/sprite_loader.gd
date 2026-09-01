@@ -35,6 +35,4 @@ static func element_color(element: int) -> Color:
 		MonsterData.Element.WATER: return Color("5ab6e0")
 		MonsterData.Element.WIND: return Color("7ad6a0")
 		MonsterData.Element.EARTH: return Color("c79a5a")
-		MonsterData.Element.LIGHT: return Color("f0d860")
-		MonsterData.Element.DARK: return Color("a06ad0")
 		_: return Color("8a8398")

@@ -4,8 +4,8 @@
 import re, pathlib, html
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-ELEMENT = {0:"無",1:"炎",2:"水",3:"風",4:"土",5:"光",6:"闇"}
-ELEMENT_NAME = {0:"NONE",1:"FIRE",2:"WATER",3:"WIND",4:"EARTH",5:"LIGHT",6:"DARK"}
+ELEMENT = {0:"無",1:"炎",2:"水",3:"風",4:"土"}
+ELEMENT_NAME = {0:"NONE",1:"FIRE",2:"WATER",3:"WIND",4:"EARTH"}
 ELEM_BY_NAME = {v:k for k,v in ELEMENT_NAME.items()}
 RARITY = {0:"★",1:"★★",2:"★★★",3:"★★★★"}
 EFFECT_NAME = {0:"DAMAGE",1:"BUFF_ATK",2:"DOUBLE_NEXT",3:"HEAL",4:"GUARD",5:"PIERCE",6:"WEAKEN",7:"ENERGY",
@@ -29,7 +29,7 @@ def cmd_text(eff, p):
         8:f"毒{p}付与", 9:f"炎上{p}ターン", 10:f"凍結{p}回", 11:f"再生{p}",
     }[eff]
 
-ELEM_CLASS = {0:"e-none",1:"e-fire",2:"e-ice",3:"e-wind",4:"e-earth",5:"e-light",6:"e-dark"}
+ELEM_CLASS = {0:"e-none",1:"e-fire",2:"e-ice",3:"e-wind",4:"e-earth"}
 
 def parse_factory_pool(func_name):
     text = (ROOT/"scripts/monster_factory.gd").read_text(encoding="utf-8")

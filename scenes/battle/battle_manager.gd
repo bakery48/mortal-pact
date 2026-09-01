@@ -394,7 +394,9 @@ func _kill_monster(monster: MonsterData) -> void:
 	_flash_message("%s は老いて消滅した…" % monster.display_name())
 
 func _apply_command(card_data: MonsterData, cmd: CommandData, tgt: EnemyUI) -> void:
-	var p := card_data.effective_power(cmd)
+	# バフ・回復・弱体・毒・再生は INT 補正込みの実効値を使う（カード表示と一致させる）。
+	# 炎上/凍結の継続ターン・エネルギーだけは素の cmd.power を使う。
+	var p := card_data.command_value(cmd)
 	match cmd.effect:
 		CommandData.Effect.DAMAGE, CommandData.Effect.PIERCE:
 			var targets := _effect_targets(cmd, tgt)

@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mortal Pact 検証卓</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* ── Mortal Pact 検証卓 ───────────────────────────────────────────────
+   バランス検証用の単体HTMLビルド。演出なし・全数値可視。
+   左＝ゲーム、右＝計器（シード／ラン状態／デッキ／ログ／デバッグ）。 */
+
+:root{
+  --ink:#100D16; --panel:#1A1622; --panel-2:#221C2C; --rule:#2E2739;
+  --text:#E4DEEE; --muted:#918AA3; --dim:#6A6479;
+  --pact:#C8455A; --lineage:#D9A441; --good:#6FBF73;
+  --weak:#FF6B57; --half:#6FA8DC;
+  --fire:#E2573B; --water:#3E8FD0; --wind:#55B98A;
+  --earth:#B98A4A; --light:#E3CE6A; --dark:#8B62C4; --none:#7A7488;
+  --mincho:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --gothic:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--ink); color:var(--text);
+  font-family:var(--gothic); font-size:14px; line-height:1.6;
+  font-variant-numeric:tabular-nums;
+}
+button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--lineage); outline-offset:2px}
+h1,h2,h3{font-family:var(--mincho); font-weight:800; margin:0; text-wrap:balance; letter-spacing:.02em}
+
+/* ── フレーム ── */
+.frame{display:grid; grid-template-columns:minmax(0,1fr) 340px; height:100vh}
+@media (max-width:1080px){ .frame{grid-template-columns:1fr; height:auto} }
+
+.stage{min-width:0; display:flex; flex-direction:column; overflow-y:auto}
+.rail{
+  border-left:1px solid var(--rule); background:var(--panel);
+  display:flex; flex-direction:column; overflow-y:auto;
+}
+@media (max-width:1080px){ .rail{border-left:none; border-top:1px solid var(--rule)} }
+
+/* ── 見出し帯 ── */
+.topbar{
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+  padding:12px 20px; border-bottom:1px solid var(--rule); background:var(--panel);
+}
+.topbar h1{font-size:19px}
+.topbar h1 .sub{font-family:var(--gothic); font-size:11px; font-weight:500;
+  color:var(--lineage); letter-spacing:.16em; margin-left:10px}
+.runbits{display:flex; gap:14px; margin-left:auto; flex-wrap:wrap; font-size:13px}
+.runbits b{font-weight:700}
+
+/* ── 汎用 ── */
+.pad{padding:18px 20px}
+.col{display:flex; flex-direction:column; gap:14px}
+.row{display:flex; gap:10px; flex-wrap:wrap}
+.center{align-items:center; justify-content:center}
+.muted{color:var(--muted)}
+.dim{color:var(--dim)}
+.tiny{font-size:11px; line-height:1.5}
+.eyebrow{font-size:10px; letter-spacing:.18em; color:var(--dim); text-transform:uppercase}
+
+.btn{
+  background:var(--panel-2); border:1px solid var(--rule); border-radius:3px;
+  padding:7px 14px; font-weight:500;
+}
+.btn:hover:not(:disabled){border-color:var(--muted); background:#2A2336}
+.btn:disabled{opacity:.35; cursor:not-allowed}
+.btn.primary{background:#3A2430; border-color:var(--pact); color:#F2D6DC}
+.btn.primary:hover:not(:disabled){background:#4A2C3A}
+.btn.gold{background:#332A18; border-color:var(--lineage); color:#F2E0BA}
+.btn.gold:hover:not(:disabled){background:#42351D}
+.btn.sm{padding:4px 9px; font-size:12px}
+
+.card{background:var(--panel); border:1px solid var(--rule); border-radius:4px}
+
+/* ── 属性チップ ── */
+.el{display:inline-block; padding:0 6px; border-radius:2px; font-size:11px;
+  font-weight:700; color:#12101A}
+.el-0{background:var(--none)} .el-1{background:var(--fire)} .el-2{background:var(--water)}
+.el-3{background:var(--wind)} .el-4{background:var(--earth)} .el-5{background:var(--light)}
+.el-6{background:var(--dark); color:#F0EAF8}
+
+/* ── 敵 ── */
+.enemies{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; padding:20px}
+.enemy{
+  width:230px; background:var(--panel); border:1px solid var(--rule);
+  border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px;
+}
+.enemy.pick{border-color:var(--lineage); cursor:pointer; background:#241D2C}
+.enemy.pick:hover{background:#2C2436}
+.enemy .nm{font-family:var(--mincho); font-size:16px; font-weight:800;
+  display:flex; align-items:center; gap:7px}
+.enemy .aff{font-size:15px; font-weight:700; letter-spacing:.1em; text-align:center;
+  padding:2px; border-radius:2px}
+.aff.w{color:var(--weak); background:rgba(255,107,87,.13); border:1px solid rgba(255,107,87,.4)}
+.aff.h{color:var(--half); background:rgba(111,168,220,.13); border:1px solid rgba(111,168,220,.4)}
+.bar{height:9px; background:#0C0A11; border:1px solid var(--rule); border-radius:2px; overflow:hidden}
+.bar i{display:block; height:100%; background:var(--pact)}
+.bar.xp i{background:var(--lineage)}
+.hpline{display:flex; justify-content:space-between; font-size:12px}
+.intent{font-size:12px; color:var(--lineage)}
+.stat{font-size:12px; color:var(--muted); min-height:18px}
+
+/* ── プレイヤー帯 ── */
+.playerbar{
+  display:flex; gap:18px; align-items:center; flex-wrap:wrap;
+  padding:10px 20px; border-block:1px solid var(--rule); background:var(--panel);
+  position:sticky; bottom:0;
+}
+.playerbar .big{font-size:16px; font-weight:700}
+.energy{color:var(--lineage); font-weight:700}
+.pill{border:1px solid var(--rule); border-radius:2px; padding:1px 8px; font-size:12px}
+.pill.buff{border-color:var(--lineage); color:var(--lineage)}
+.pill.blk{border-color:var(--half); color:var(--half)}
+
+/* ── 手札 ── */
+.hand{display:flex; gap:11px; padding:16px 20px; justify-content:center; flex-wrap:wrap}
+.hcard{
+  width:196px; background:var(--panel); border:1px solid var(--rule);
+  border-radius:4px; padding:10px; display:flex; flex-direction:column; gap:6px;
+}
+.hcard.ult{border-color:var(--lineage)}
+.hcard .hd{font-family:var(--mincho); font-size:14px; font-weight:800;
+  display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.hcard .stats{font-size:11px; color:var(--muted); display:flex; gap:8px}
+.hcard .stats b{color:var(--text); font-weight:700}
+.xplabel{display:flex; justify-content:space-between; font-size:10px; color:var(--dim)}
+.skill{
+  text-align:left; width:100%; background:var(--panel-2); border:1px solid var(--rule);
+  border-radius:3px; padding:8px; display:flex; flex-direction:column; gap:3px;
+}
+.skill:hover:not(:disabled){border-color:var(--lineage); background:#2A2336}
+.skill:disabled{opacity:.4; cursor:not-allowed}
+.skill .sn{font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:6px}
+.skill .sv{font-size:12px; color:var(--text)}
+.skill .sb{font-size:10px; color:var(--dim); font-family:var(--mono)}
+.ultmark{color:var(--lineage)}
+
+/* ── マップ ── */
+.mapgrid{display:flex; flex-direction:column-reverse; gap:10px; padding:20px; align-items:center}
+.maprow{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+.node{
+  min-width:186px; text-align:left; background:var(--panel); border:1px solid var(--rule);
+  border-radius:4px; padding:9px 12px; display:flex; flex-direction:column; gap:2px;
+}
+.node.can{border-color:var(--lineage); background:#241D2C}
+.node.can:hover{background:#2E2538}
+.node.done{opacity:.34}
+.node .ntype{font-size:11px; letter-spacing:.1em; color:var(--muted)}
+.node .nname{font-family:var(--mincho); font-weight:800; font-size:14px}
+
+/* ── 一覧・モーダル ── */
+.grid2{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px}
+.modal{position:fixed; inset:0; background:rgba(6,5,9,.82); display:flex;
+  align-items:center; justify-content:center; padding:24px; z-index:50}
+.sheet{background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+  width:min(720px,100%); max-height:86vh; overflow-y:auto; padding:20px}
+.sheet h2{font-size:19px; margin-bottom:4px}
+
+.pickrow{
+  width:100%; text-align:left; background:var(--panel-2); border:1px solid var(--rule);
+  border-radius:3px; padding:8px 11px; display:flex; flex-direction:column; gap:2px;
+}
+.pickrow:hover:not(:disabled){border-color:var(--muted)}
+.pickrow:disabled{opacity:.35; cursor:not-allowed}
+.pickrow.on{border-color:var(--lineage); background:#332A18}
+.pickrow.blood{border-color:var(--lineage); background:#332A18}
+.pickrow.partner{border-color:var(--half); background:#1D2836}
+
+/* ── 計器レール ── */
+.rail section{border-bottom:1px solid var(--rule); padding:14px 16px}
+.rail h3{font-size:12px; letter-spacing:.14em; color:var(--lineage);
+  font-family:var(--gothic); font-weight:700; margin-bottom:9px; text-transform:uppercase}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:2px 12px; font-size:12px}
+.kv dt{color:var(--muted)} .kv dd{margin:0; text-align:right; font-weight:500}
+.seedrow{display:flex; gap:6px}
+.seedrow input{
+  flex:1; min-width:0; background:#0C0A11; border:1px solid var(--rule); color:var(--text);
+  border-radius:3px; padding:5px 8px; font-family:var(--mono); font-size:12px;
+}
+.mlist{display:flex; flex-direction:column; gap:7px; max-height:290px; overflow-y:auto}
+.mrow{border:1px solid var(--rule); border-radius:3px; padding:7px 9px; background:var(--panel-2)}
+.mrow .t{display:flex; justify-content:space-between; gap:6px; font-size:12px; font-weight:700}
+.mrow .s{font-size:11px; color:var(--muted); font-family:var(--mono)}
+.mrow .k{font-size:11px; color:var(--dim)}
+.log{font-family:var(--mono); font-size:11px; line-height:1.65; max-height:230px;
+  overflow-y:auto; display:flex; flex-direction:column-reverse; gap:1px}
+.log div{color:var(--muted)}
+.log div.hi{color:var(--lineage)}
+.log div.bad{color:var(--pact)}
+.dbg{display:flex; flex-wrap:wrap; gap:6px}
+
+.note{border-left:2px solid var(--lineage); padding:8px 12px; background:var(--panel-2);
+  font-size:12px; color:var(--muted); border-radius:0 3px 3px 0}
+.banner{font-family:var(--mincho); font-size:30px; font-weight:800; text-align:center; padding:14px}
+.banner.win{color:var(--good)} .banner.lose{color:var(--pact)}
+</style>
+</head>
+<body>
+<div class="frame">
+  <main class="stage">
+    <div class="topbar">
+      <h1>Mortal Pact<span class="sub">検証卓</span></h1>
+      <div class="runbits" id="runbits"></div>
+    </div>
+    <div id="screen"></div>
+  </main>
+  <aside class="rail" id="rail"></aside>
+</div>
+<div id="modal"></div>
+
+<script>
+"use strict";
+/* ══ 乱数（シード固定＝再現可能な検証） ══════════════════════════════ */
+let RS = 1;
+const srand = s => { RS = (s >>> 0) || 1; };
+function rnd(){
+  RS = (RS + 0x6D2B79F5) | 0;
+  let t = Math.imul(RS ^ (RS >>> 15), 1 | RS);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const randi  = n => Math.floor(rnd() * n);
+const rrange = (a,b) => a + Math.floor(rnd() * (b - a + 1));
+const pick   = a => a[randi(a.length)];
+const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=randi(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+/* ══ 定数（GDScript と一致） ═══════════════════════════════════════ */
+const POWER_SCALE = 0.6, MAX_ENERGY = 3, HAND_SIZE = 5;
+const DECK_LIMIT = 40, SHOP_COST = 50, START_DECK_SIZE = 6;
+const INNATE_COUNT = 2, MAX_SKILLS = 6;
+const STARTING_HP = 65, STARTING_GOLD = 50, REST_RATIO = 0.3;
+
+const S  = { INFANT:0, YOUNG:1, ADULT:2, ELDER:3, DEAD:4 };
+const E  = { NONE:0, FIRE:1, WATER:2, WIND:3, EARTH:4, LIGHT:5, DARK:6 };
+const F  = { DAMAGE:0, BUFF_ATK:1, DOUBLE_NEXT:2, HEAL:3, GUARD:4, PIERCE:5,
+             WEAKEN:6, ENERGY:7, POISON:8, BURN:9, FREEZE:10, REGEN:11 };
+const ST = { POISON:0, BURN:1, FREEZE:2, REGEN:3 };
+const IN = { ATTACK:0, DEFEND:1, BUFF:2, HEAL:3, POISON:4 };
+
+const STAGE_MULT   = [0.6, 0.8, 1.0, 0.8, 0.0];
+const STAGE_COST   = [-1, 0, 0, 1, 0];
+const STAGE_THRESH = [0, 2, 4, 7, 10];
+const STAGE_LABEL  = ["🥚幼体","🌱若体","⚔️成体","🍂老体","💀消滅"];
+const EL_LABEL     = ["無","炎","水","風","土","光","闇"];
+const RARITY       = ["★","★★","★★★","★★★★"];
+const ST_ICON      = ["☠","🔥","❄","💚"];
+const IN_ICON      = ["⚔","🛡","💪","✚","☠"];
+
+const ri = x => Math.sign(x) * Math.round(Math.abs(x));
+const clampi = (v,a,b) => Math.min(b, Math.max(a, v));
+const clampf = clampi;
+
+/* ══ データ定義 ════════════════════════════════════════════════════ */
+function C(name, cost, effect, power, desc, scale = -1){
+  return { name, cost, effect, power, desc, scale, targetAll:false, ult:false };
+}
+function U(name, cost, effect, power, desc, all = false){
+  const c = C(name, cost, effect, power, desc); c.ult = true; c.targetAll = all; return c;
+}
+function M(name, attack, defense, element, growth, commands, intPower = 5){
+  return { name, attack, defense, intPower, stage:S.INFANT, exp:0, growth,
+           elements:[element], rarity:0, plus:0, commands };
+}
+const clone = o => JSON.parse(JSON.stringify(o));
+
+/* 初期デッキ（monster_factory.gd starter_monsters） */
+function starterMonsters(){
+  return [
+    M("フェンリル",12,6,E.DARK,1.0,[
+      C("噛みつき",1,F.DAMAGE,12,"敵に12ダメージ"),
+      C("狂化",3,F.DOUBLE_NEXT,0,"次のダメージを2倍にする")],4),
+    M("サラマンダー",14,4,E.FIRE,1.2,[
+      C("火炎の牙",1,F.DAMAGE,9,"敵に9ダメージ"),
+      C("業火",2,F.DAMAGE,18,"敵に18ダメージ")],4),
+    M("ゴーレム",8,12,E.EARTH,0.8,[
+      C("岩石投げ",1,F.DAMAGE,7,"敵に7ダメージ"),
+      C("大地の守り",1,F.GUARD,8,"ブロック8を得る")],5),
+    M("ウィスプ",6,3,E.LIGHT,1.1,[
+      C("導きの光",1,F.BUFF_ATK,2,"このターンの与ダメージ+2"),
+      C("呪いの炎",2,F.DAMAGE,11,"敵に11ダメージ")],7),
+    M("ウンディーネ",7,7,E.WATER,1.1,[
+      C("水弾",1,F.DAMAGE,9,"敵に9ダメージ"),
+      C("癒しの水",1,F.HEAL,7,"HPを7回復")],8),
+    M("シルフ",8,4,E.WIND,1.2,[
+      C("風刃",1,F.DAMAGE,9,"敵に9ダメージ"),
+      C("追い風",1,F.BUFF_ATK,4,"このターンの与ダメージ+4")],8),
+  ];
+}
+
+/* 報酬・ショップ用プール（monster_factory.gd reward_pool） */
+function rewardPool(){
+  return [
+    M("ハーピー",11,4,E.WIND,1.2,[C("旋風爪",1,F.DAMAGE,10,""),C("追い風",2,F.BUFF_ATK,5,"")],6),
+    M("ケルベロス",16,7,E.DARK,0.9,[C("三連牙",1,F.DAMAGE,13,""),C("獄炎",3,F.DAMAGE,24,"")],4),
+    M("ユニコーン",9,8,E.LIGHT,1.0,[C("聖なる角",1,F.DAMAGE,9,""),C("加護",2,F.BUFF_ATK,5,"")],6),
+    M("リッチ",13,3,E.DARK,1.1,[C("呪詛",1,F.DAMAGE,11,""),C("死の宣告",3,F.DOUBLE_NEXT,0,"")],4),
+    M("アイススピリット",10,6,E.WATER,1.0,[C("氷礫",1,F.DAMAGE,10,""),C("吹雪",2,F.DAMAGE,16,"")],5),
+    M("スライム",7,7,E.NONE,1.3,[C("体当たり",1,F.DAMAGE,8,""),C("分裂の構え",1,F.BUFF_ATK,3,"")],7),
+    M("ドライアド",8,9,E.EARTH,1.0,[C("蔦縛り",1,F.DAMAGE,8,""),C("生命の歌",2,F.BUFF_ATK,5,"")],8),
+    M("ワイバーン",15,5,E.WIND,1.0,[C("急降下",1,F.DAMAGE,12,""),C("竜巻",2,F.DAMAGE,19,"")],4),
+    M("バンシー",12,3,E.DARK,1.2,[C("怨嗟の叫び",1,F.DAMAGE,11,""),C("絶望",2,F.DAMAGE,17,"")],4),
+    M("ゴーストファイア",11,2,E.FIRE,1.3,[C("鬼火",1,F.DAMAGE,10,""),C("焼尽",3,F.DOUBLE_NEXT,0,"")],4),
+    M("トレント",6,14,E.EARTH,0.8,[C("枝打ち",1,F.DAMAGE,7,""),C("大地の怒り",2,F.DAMAGE,15,"")],5),
+    M("グリフォン",14,8,E.WIND,0.9,[C("鉤爪",1,F.DAMAGE,12,""),C("天翔ける",2,F.BUFF_ATK,5,"")],6),
+    M("サキュバス",11,5,E.DARK,1.1,[C("魅了",1,F.BUFF_ATK,5,""),C("精気吸収",2,F.DAMAGE,14,"")],10),
+    M("フェニックス",13,6,E.FIRE,1.0,[C("火の翼",1,F.DAMAGE,11,""),C("再生の焔",3,F.DOUBLE_NEXT,0,"")],4),
+    M("クラーケン",17,9,E.WATER,0.8,[C("触手",1,F.DAMAGE,13,""),C("大渦",3,F.DAMAGE,26,"")],4),
+    M("ミノタウロス",16,7,E.EARTH,0.9,[C("突進",1,F.DAMAGE,13,""),C("斧叩き",2,F.DAMAGE,20,"")],4),
+    M("ピクシー",5,4,E.LIGHT,1.4,[C("妖精の粉",1,F.BUFF_ATK,4,""),C("光の矢",1,F.DAMAGE,8,"")],8),
+    M("ヴァンパイア",14,6,E.DARK,1.0,[C("牙",1,F.DAMAGE,12,""),C("血の宴",2,F.DAMAGE,18,"")],4),
+    M("サンダーバード",15,4,E.WIND,1.1,[C("電撃",1,F.DAMAGE,12,""),C("雷鳴",2,F.DAMAGE,19,"")],4),
+    M("マーメイド",9,7,E.WATER,1.1,[C("水鞭",1,F.DAMAGE,9,""),C("癒やしの歌",2,F.BUFF_ATK,5,"")],6),
+    M("デーモン",18,5,E.FIRE,0.8,[C("地獄爪",1,F.DAMAGE,14,""),C("業炎弾",3,F.DAMAGE,28,"")],4),
+    M("ホーリーナイト",12,11,E.LIGHT,0.9,[C("聖剣",1,F.DAMAGE,11,""),C("聖騎士の誓い",2,F.BUFF_ATK,5,"")],6),
+    M("ヒーラースライム",6,6,E.LIGHT,1.2,[C("癒やしの粘液",1,F.HEAL,8,""),C("体当たり",1,F.DAMAGE,7,"")],9),
+    M("守護騎士",9,13,E.EARTH,0.8,[C("盾構え",1,F.GUARD,9,""),C("シールドバッシュ",2,F.DAMAGE,13,"")],5),
+    M("アサシン",15,3,E.DARK,1.1,[C("背後刺し",1,F.PIERCE,11,""),C("毒刃",2,F.PIERCE,17,"")],4),
+    M("妖術師",10,5,E.DARK,1.0,[C("呪いの目",1,F.WEAKEN,5,""),C("闇の波動",2,F.DAMAGE,14,"")],10),
+    M("マナイーター",8,4,E.NONE,1.1,[C("魔力吸収",1,F.ENERGY,2,""),C("噛みつき",1,F.DAMAGE,8,"")],5),
+    M("プリーステス",7,7,E.LIGHT,1.0,[C("祈り",1,F.HEAL,10,""),C("聖なる加護",2,F.BUFF_ATK,5,"")],8),
+    M("ストーンガード",5,16,E.EARTH,0.7,[C("岩の壁",1,F.GUARD,11,""),C("圧殺",2,F.DAMAGE,12,"")],5),
+    M("シャドウ",13,4,E.DARK,1.2,[C("影縫い",1,F.PIERCE,10,""),C("闇討ち",2,F.DAMAGE,16,"")],4),
+    M("氷壁の精",6,12,E.WATER,0.9,[C("氷の盾",1,F.GUARD,10,""),C("凍てつく息",2,F.WEAKEN,6,"")],8),
+    M("バーサーカー",17,4,E.FIRE,0.9,[C("乱打",1,F.DAMAGE,12,""),C("戦いの咆哮",1,F.ENERGY,2,"")],5),
+    M("ドルイド",9,8,E.EARTH,1.0,[C("自然の恵み",1,F.HEAL,9,""),C("茨の鞭",2,F.DAMAGE,14,"")],10),
+    M("雷神",16,5,E.WIND,0.9,[C("裁きの雷",1,F.PIERCE,12,""),C("雷鳴",2,F.DAMAGE,18,"")],4),
+    M("ヴァルキリー",13,9,E.LIGHT,1.0,[C("聖槍",1,F.DAMAGE,12,""),C("天盾",1,F.GUARD,8,"")],5),
+    M("呪術師",8,6,E.DARK,1.1,[C("衰弱の呪い",1,F.WEAKEN,6,""),C("骨の槍",1,F.DAMAGE,9,"")],9),
+    M("錬金術師",7,6,E.NONE,1.0,[C("触媒生成",1,F.ENERGY,2,""),C("治癒薬",2,F.HEAL,8,"")],7),
+    M("タイタン",14,14,E.EARTH,0.7,[C("大地割り",2,F.DAMAGE,20,""),C("巨壁",1,F.GUARD,12,"")],5),
+    M("セイレーン",10,6,E.WATER,1.1,[C("惑わしの歌",1,F.WEAKEN,5,""),C("水流弾",2,F.DAMAGE,15,"")],9),
+    M("グリモワール",6,5,E.NONE,1.2,[C("詠唱",1,F.ENERGY,2,""),C("禁呪",3,F.DOUBLE_NEXT,0,"")],5),
+    M("大天使",6,7,E.LIGHT,0.9,[C("聖光の加護",2,F.BUFF_ATK,6,""),C("天恵",2,F.HEAL,8,"")],16),
+    M("大賢者",5,6,E.NONE,0.9,[C("鼓舞",1,F.BUFF_ATK,4,""),C("魔力供給",1,F.ENERGY,2,"")],15),
+    M("豊穣の女神",4,8,E.EARTH,0.9,[C("再生の祝福",2,F.REGEN,6,""),C("大地の癒し",2,F.HEAL,8,"")],15),
+    M("ウンディーネ",7,7,E.WATER,1.1,[C("水弾",1,F.DAMAGE,9,""),C("癒しの水",1,F.HEAL,7,"")],8),
+    M("シルフ",8,4,E.WIND,1.2,[C("風刃",1,F.DAMAGE,9,""),C("追い風",1,F.BUFF_ATK,4,"")],8),
+    M("ゴブリン",9,5,E.EARTH,1.2,[C("強奪",1,F.DAMAGE,9,""),C("鬨の声",1,F.BUFF_ATK,3,"")],6),
+    M("スケルトン",10,3,E.DARK,1.0,[C("骨の槍",1,F.DAMAGE,10,""),C("死者の呪い",2,F.POISON,3,"")],6),
+    M("大コウモリ",9,3,E.WIND,1.3,[C("音波",1,F.DAMAGE,9,""),C("血吸い",2,F.DAMAGE,15,"")],4),
+    M("ホブゴブリン",11,6,E.EARTH,0.9,[C("鉄槌",2,F.DAMAGE,14,""),C("集団突撃",1,F.BUFF_ATK,4,"")],7),
+    M("マッドスライム",7,9,E.WATER,1.1,[C("泥弾",1,F.DAMAGE,8,""),C("粘液の壁",1,F.GUARD,10,"")],5),
+    M("毒蛇",8,4,E.DARK,1.1,[C("毒牙",1,F.POISON,4,""),C("蛇の一撃",1,F.DAMAGE,9,"")],7),
+    M("バジリスク",11,5,E.DARK,1.0,[C("猛毒の牙",1,F.POISON,4,""),C("石化の眼",2,F.DAMAGE,13,"")],8),
+    M("毒沼の主",9,9,E.EARTH,0.9,[C("汚泥",1,F.POISON,3,""),C("飲み込む",2,F.DAMAGE,14,"")],7),
+    M("イグニス",13,4,E.FIRE,1.1,[C("発火",1,F.BURN,2,""),C("火炎弾",2,F.DAMAGE,15,"")],6),
+    M("フロストゴーレム",8,13,E.WATER,0.8,[C("絶対零度",2,F.FREEZE,1,""),C("氷塊",1,F.DAMAGE,9,"")],5),
+    M("世界樹の苗",5,8,E.LIGHT,1.2,[C("芽吹き",1,F.REGEN,4,""),C("癒やしの光",2,F.HEAL,8,"")],7),
+    M("コカトリス",12,5,E.WIND,1.0,[C("毒の翼",1,F.POISON,3,""),C("つつき",1,F.DAMAGE,9,"")],7),
+  ];
+}
+
+/* 奥義（6枠到達で自動解放・継承不可） */
+const ULTS = {
+  "フェンリル":U("極夜の咆哮",3,F.DAMAGE,25,"全敵に25ダメージ",true),
+  "サラマンダー":U("煉獄炎嵐",3,F.BURN,4,"全敵を4ターン炎上",true),
+  "ゴーレム":U("不動の大地",2,F.GUARD,22,"ブロック22を得る"),
+  "ウィスプ":U("極光の加護",2,F.BUFF_ATK,15,"このターンの与ダメージ+15"),
+  "ウンディーネ":U("聖水の奇跡",3,F.HEAL,25,"HPを25回復"),
+  "シルフ":U("嵐の奔流",3,F.DAMAGE,20,"全敵に20ダメージ",true),
+  "ハーピー":U("旋風嵐",3,F.DAMAGE,22,"全敵に22ダメージ",true),
+  "ケルベロス":U("冥界の三首",3,F.DAMAGE,30,"全敵に30ダメージ",true),
+  "ワイバーン":U("龍爪乱舞",3,F.DAMAGE,28,"全敵に28ダメージ",true),
+  "バンシー":U("魂の絶叫",3,F.DAMAGE,26,"全敵に26ダメージ",true),
+  "ゴーストファイア":U("業火の海",3,F.BURN,5,"全敵を5ターン炎上",true),
+  "グリフォン":U("天空の裁き",3,F.PIERCE,24,"全敵に防御無視24ダメージ",true),
+  "フェニックス":U("不死の炎",3,F.DAMAGE,25,"全敵に25ダメージ",true),
+  "クラーケン":U("海淵の怒り",3,F.DAMAGE,32,"全敵に32ダメージ",true),
+  "ミノタウロス":U("大地砕き",3,F.PIERCE,35,"防御無視で35ダメージ"),
+  "ヴァンパイア":U("永遠の呪い",3,F.DAMAGE,28,"全敵に28ダメージ",true),
+  "サンダーバード":U("雷帝降臨",3,F.DAMAGE,30,"全敵に30ダメージ",true),
+  "デーモン":U("地獄の業炎",3,F.DAMAGE,35,"全敵に35ダメージ",true),
+  "ホーリーナイト":U("聖剣の覚醒",3,F.PIERCE,22,"全敵に防御無視22ダメージ",true),
+  "アサシン":U("必殺の一閃",2,F.PIERCE,40,"防御無視で40ダメージ"),
+  "シャドウ":U("暗黒の嵐",3,F.DAMAGE,26,"全敵に26ダメージ",true),
+  "バーサーカー":U("修羅の覚醒",3,F.DAMAGE,38,"敵に38ダメージ"),
+  "雷神":U("神雷",3,F.PIERCE,25,"全敵に防御無視25ダメージ",true),
+  "ヴァルキリー":U("天の裁き",3,F.DAMAGE,24,"全敵に24ダメージ",true),
+  "ホブゴブリン":U("鬼神の一撃",3,F.DAMAGE,30,"敵に30ダメージ"),
+  "大コウモリ":U("超音波爆撃",3,F.DAMAGE,20,"全敵に20ダメージ",true),
+  "リッチ":U("死の支配",3,F.POISON,8,"全敵に毒8を付与",true),
+  "スケルトン":U("死の行進",3,F.POISON,6,"全敵に毒6を付与",true),
+  "毒蛇":U("猛毒の霧",3,F.POISON,8,"全敵に毒8を付与",true),
+  "バジリスク":U("絶死の視線",3,F.POISON,10,"全敵に毒10を付与",true),
+  "毒沼の主":U("毒の大洪水",3,F.POISON,8,"全敵に毒8を付与",true),
+  "コカトリス":U("猛毒の嵐",3,F.POISON,6,"全敵に毒6を付与",true),
+  "イグニス":U("業火爆発",3,F.BURN,5,"全敵を5ターン炎上",true),
+  "フロストゴーレム":U("極寒の嵐",3,F.FREEZE,2,"全敵を2回凍結",true),
+  "妖術師":U("闇の呪縛",3,F.WEAKEN,10,"全敵の攻撃力-10",true),
+  "呪術師":U("死の呪詛",3,F.WEAKEN,12,"全敵の攻撃力-12",true),
+  "セイレーン":U("魂を縛る歌声",3,F.WEAKEN,10,"全敵の攻撃力-10",true),
+  "氷壁の精":U("永久凍土",3,F.FREEZE,2,"全敵を2回凍結",true),
+  "タイタン":U("絶対防御",3,F.GUARD,35,"ブロック35を得る"),
+  "ストーンガード":U("鉄壁",3,F.GUARD,32,"ブロック32を得る"),
+  "守護騎士":U("難攻不落の砦",3,F.GUARD,28,"ブロック28を得る"),
+  "トレント":U("大森林の加護",3,F.GUARD,26,"ブロック26を得る"),
+  "マッドスライム":U("粘液要塞",3,F.GUARD,26,"ブロック26を得る"),
+  "ドライアド":U("大樹の守護",3,F.GUARD,22,"ブロック22を得る"),
+  "ヒーラースライム":U("大治癒",3,F.HEAL,28,"HPを28回復"),
+  "プリーステス":U("聖なる奇跡",3,F.HEAL,28,"HPを28回復"),
+  "ドルイド":U("大自然の恵み",3,F.HEAL,26,"HPを26回復"),
+  "錬金術師":U("賢者の石",3,F.HEAL,25,"HPを25回復"),
+  "世界樹の苗":U("世界樹の奇跡",3,F.REGEN,15,"再生15を得る"),
+  "ユニコーン":U("浄化の奇跡",2,F.HEAL,20,"HPを20回復"),
+  "スライム":U("大分裂",2,F.BUFF_ATK,12,"このターンの与ダメージ+12"),
+  "サキュバス":U("魂の収奪",3,F.BUFF_ATK,18,"このターンの与ダメージ+18"),
+  "マーメイド":U("海の女王",3,F.BUFF_ATK,16,"このターンの与ダメージ+16"),
+  "ピクシー":U("妖精の奇跡",2,F.BUFF_ATK,15,"このターンの与ダメージ+15"),
+  "マナイーター":U("魔力の暴食",2,F.ENERGY,5,"エネルギー+5"),
+  "グリモワール":U("禁断の魔法書",3,F.DOUBLE_NEXT,0,"次のダメージを2倍にする"),
+  "アイススピリット":U("永久凍土の嵐",3,F.DAMAGE,24,"全敵に24ダメージ",true),
+  "ゴブリン":U("群れの猛攻",3,F.DAMAGE,18,"全敵に18ダメージ",true),
+  "大天使":U("神罰",3,F.BUFF_ATK,25,"このターンの与ダメージ+25"),
+  "大賢者":U("禁断の知恵",2,F.BUFF_ATK,20,"このターンの与ダメージ+20"),
+  "豊穣の女神":U("大地の慈雨",3,F.HEAL,30,"HPを30回復"),
+  "死の騎士":U("死の宣告",3,F.POISON,12,"全敵に毒12を付与",true),
+  "双頭の竜":U("世界の終焉",3,F.DAMAGE,35,"全敵に35ダメージ",true),
+  "深淵の王":U("奈落の扉",3,F.WEAKEN,15,"全敵の攻撃力-15",true),
+};
+
+/* 敵カタログ（enemy_database.gd） */
+const mv = (type,value) => ({ type, value });
+const EN = (name,max_hp,pattern,element=E.NONE,is_boss=false) => ({ name,max_hp,pattern,element,is_boss });
+const ZAKO = () => [
+  EN("ゴブリン",44,[mv(IN.ATTACK,8),mv(IN.ATTACK,6),mv(IN.DEFEND,6)],E.EARTH),
+  EN("スケルトン",50,[mv(IN.ATTACK,7),mv(IN.ATTACK,10)],E.DARK),
+  EN("大コウモリ",38,[mv(IN.ATTACK,6),mv(IN.ATTACK,6),mv(IN.ATTACK,9)],E.WIND),
+  EN("ホブゴブリン",56,[mv(IN.ATTACK,9),mv(IN.BUFF,3),mv(IN.ATTACK,11)],E.EARTH),
+  EN("マッドスライム",60,[mv(IN.DEFEND,8),mv(IN.ATTACK,7)],E.WATER),
+  EN("インプ",46,[mv(IN.ATTACK,5),mv(IN.ATTACK,5),mv(IN.ATTACK,8)],E.FIRE),
+  EN("毒蛇",42,[mv(IN.POISON,3),mv(IN.ATTACK,7),mv(IN.ATTACK,9)],E.DARK),
+  EN("サラマンダー",50,[mv(IN.ATTACK,10),mv(IN.ATTACK,16)],E.FIRE),
+  EN("フェンリル",46,[mv(IN.ATTACK,9),mv(IN.BUFF,3),mv(IN.ATTACK,13)],E.DARK),
+  EN("ゴーレム",62,[mv(IN.DEFEND,10),mv(IN.ATTACK,9)],E.EARTH),
+  EN("ウィスプ",34,[mv(IN.BUFF,3),mv(IN.ATTACK,9),mv(IN.ATTACK,7)],E.LIGHT),
+  EN("ウンディーネ",44,[mv(IN.ATTACK,7),mv(IN.HEAL,8),mv(IN.ATTACK,10)],E.WATER),
+  EN("シルフ",38,[mv(IN.BUFF,4),mv(IN.ATTACK,8),mv(IN.ATTACK,8)],E.WIND),
+];
+const ELITE = () => [
+  EN("オーガ",88,[mv(IN.ATTACK,13),mv(IN.BUFF,4),mv(IN.ATTACK,18)],E.EARTH),
+  EN("闇の魔女",80,[mv(IN.ATTACK,10),mv(IN.HEAL,14),mv(IN.ATTACK,14)],E.DARK),
+  EN("ガーゴイル",95,[mv(IN.DEFEND,12),mv(IN.ATTACK,15),mv(IN.ATTACK,9)],E.EARTH),
+  EN("地獄の番犬",84,[mv(IN.ATTACK,12),mv(IN.ATTACK,12),mv(IN.BUFF,5)],E.FIRE),
+  EN("邪毒の妖蛆",78,[mv(IN.POISON,5),mv(IN.ATTACK,11),mv(IN.DEFEND,10)],E.DARK),
+  EN("ケルベロス",95,[mv(IN.ATTACK,14),mv(IN.ATTACK,22),mv(IN.BUFF,5)],E.DARK),
+  EN("ミノタウロス",100,[mv(IN.ATTACK,13),mv(IN.BUFF,4),mv(IN.ATTACK,19)],E.EARTH),
+  EN("ヴァンパイア",88,[mv(IN.ATTACK,12),mv(IN.HEAL,12),mv(IN.ATTACK,18)],E.DARK),
+];
+const BOSS = () => [
+  EN("死の騎士",150,[mv(IN.ATTACK,16),mv(IN.DEFEND,12),mv(IN.ATTACK,24),mv(IN.BUFF,4)],E.DARK,true),
+  EN("双頭の竜",175,[mv(IN.ATTACK,14),mv(IN.ATTACK,14),mv(IN.BUFF,6),mv(IN.ATTACK,28)],E.FIRE,true),
+  EN("深淵の王",200,[mv(IN.POISON,6),mv(IN.ATTACK,18),mv(IN.HEAL,20),mv(IN.ATTACK,26)],E.DARK,true),
+];
+const FLOOR1_SETS = [
+  ["ゴブリン"],["大コウモリ"],["スケルトン"],["ウィスプ"],["マッドスライム"],
+  ["ゴブリン","ゴブリン"],["インプ","大コウモリ"],["毒蛇","ゴブリン"],
+  ["スケルトン","大コウモリ"],["サラマンダー"],
+];
+const zakoByName = n => ZAKO().find(e => e.name === n) || ZAKO()[0];
+
+/* ══ モンスター派生値 ═══════════════════════════════════════════════ */
+const mult     = m => STAGE_MULT[m.stage];
+const plusAtk  = m => Math.floor((m.plus + 2) / 3);
+const plusDef  = m => Math.floor((m.plus + 1) / 3);
+const plusInt  = m => Math.floor(m.plus / 3);
+const effAtk   = m => ri(m.attack   * mult(m) * POWER_SCALE) + plusAtk(m);
+const effDef   = m => ri(m.defense  * mult(m) * POWER_SCALE) + plusDef(m);
+const effInt   = m => ri(m.intPower * mult(m) * POWER_SCALE) + plusInt(m);
+const effCost  = (m,c) => clampi(c.cost + STAGE_COST[m.stage], 1, 99);
+const effPower = (m,c) => Math.max(0, ri(c.power * mult(m) * POWER_SCALE));
+const scaleOf  = c => c.scale >= 0 ? c.scale : clampf(0.4 + 0.3 * (c.cost - 1), 0.4, 1.0);
+const dispName = m => m.name + (m.plus > 0 ? "+" + m.plus : "");
+const canFuse  = m => m.stage === S.ADULT || m.stage === S.ELDER;
+
+function cmdValue(m,c){
+  switch(c.effect){
+    case F.DAMAGE: case F.PIERCE: return effPower(m,c) + ri(effAtk(m) * scaleOf(c));
+    case F.GUARD:                 return effPower(m,c) + ri(effDef(m) * scaleOf(c));
+    case F.BUFF_ATK: case F.HEAL: case F.WEAKEN: case F.POISON: case F.REGEN:
+                                  return effPower(m,c) + ri(effInt(m) * scaleOf(c));
+    case F.ENERGY:                return c.power;
+    default:                      return effPower(m,c);
+  }
+}
+function updateStage(m){
+  let s = S.INFANT;
+  for (const k of [0,1,2,3,4]) if (m.exp >= STAGE_THRESH[k]) s = k;
+  m.stage = s;
+}
+function gainExp(m, amt){ const b = m.stage; m.exp += amt; updateStage(m); return m.stage !== b; }
+function expProgress(m){
+  if (m.stage === S.DEAD) return 1;
+  const cur = STAGE_THRESH[m.stage], nxt = STAGE_THRESH[m.stage + 1];
+  return nxt <= cur ? 1 : clampf((m.exp - cur) / (nxt - cur), 0, 1);
+}
+
+const BEATS = { 2:1, 1:3, 3:4, 4:2 }; // 水>炎, 炎>風, 風>土, 土>水
+function pairMult(a,d){
+  if (a === E.NONE || d === E.NONE) return 1;
+  if ((a === E.LIGHT && d === E.DARK) || (a === E.DARK && d === E.LIGHT)) return 1.5;
+  if (BEATS[a] === d) return 1.5;
+  if (BEATS[d] === a) return 0.75;
+  return 1;
+}
+function affinity(atkEls, def){
+  let adv = false, dis = false;
+  for (const e of atkEls){ const m = pairMult(e, def); if (m > 1) adv = true; else if (m < 1) dis = true; }
+  return adv ? 1.5 : dis ? 0.75 : 1;
+}
+
+/* ══ 状態異常 ══════════════════════════════════════════════════════ */
+const newStatus = () => ({});
+const stAmt = (s,k) => s[k] || 0;
+const stAdd = (s,k,n) => { s[k] = stAmt(s,k) + n; };
+function stTick(s){
+  const r = { poison: stAmt(s,ST.POISON), regen: stAmt(s,ST.REGEN) };
+  for (const k of [ST.POISON, ST.REGEN, ST.BURN])
+    if (stAmt(s,k) > 0){ s[k] = stAmt(s,k) - 1; if (s[k] <= 0) delete s[k]; }
+  return r;
+}
+function stFreeze(s){
+  if (stAmt(s,ST.FREEZE) > 0){ s[ST.FREEZE]--; if (s[ST.FREEZE] <= 0) delete s[ST.FREEZE]; return true; }
+  return false;
+}
+const stMult  = s => stAmt(s,ST.BURN) > 0 ? 1.5 : 1;
+const stLabel = s => [ST.POISON,ST.BURN,ST.FREEZE,ST.REGEN]
+  .filter(k => stAmt(s,k) > 0).map(k => ST_ICON[k] + stAmt(s,k)).join(" ");
+
+/* ══ ラン状態 ══════════════════════════════════════════════════════ */
+const G = { seed:1, floor:1, gold:0, maxHp:0, hp:0, deck:[], rows:[], row:-1, col:0,
+            encounter:null, screen:"map", log:[], carry:null, turn:0 };
+let B = null;
+
+function log(msg, cls=""){ G.log.push({ msg, cls }); if (G.log.length > 300) G.log.shift(); }
+
+function deckCards(){ return G.deck.reduce((n,m) => n + m.commands.length, 0); }
+const canAdd = n => deckCards() + n <= DECK_LIMIT;
+
+function startRun(seed){
+  srand(seed); G.seed = seed;
+  G.floor = 1;
+  G.maxHp = ri(STARTING_HP * POWER_SCALE);
+  G.hp = G.maxHp;
+  G.gold = STARTING_GOLD;
+  G.deck = G.carry && G.carry.length ? buildFromCarry() : starterMonsters();
+  G.carry = null;
+  G.log = [];
+  buildMap(); G.row = -1; G.col = 0; G.encounter = null;
+  log("ラン開始（seed " + seed + "）", "hi");
+  go("map");
+}
+function buildFromCarry(){
+  const out = G.carry.map(m => { const c = clone(m); c.stage = S.INFANT; c.exp = 0; return c; });
+  const names = new Set(out.map(m => m.name));
+  for (const d of starterMonsters()){
+    if (out.length >= START_DECK_SIZE) break;
+    if (!names.has(d.name)){ names.add(d.name); out.push(d); }
+  }
+  return out;
+}
+
+const MAP_LAYOUT = [
+  { types:["zako"], count:[2,3] },
+  { types:["zako"], count:[2,3] },
+  { types:["zako","rest"], count:[3,3] },
+  { types:["elite","zako"], count:[2,3] },
+  { types:["rest"], count:[2,2] },
+  { types:["elite","zako"], count:[2,3] },
+  { types:["boss"], count:[1,1] },
+];
+function buildMap(){
+  G.rows = [];
+  for (const spec of MAP_LAYOUT){
+    const n = rrange(spec.count[0], spec.count[1]);
+    const row = [];
+    for (let c = 0; c < n; c++) row.push(makeNode(pick(spec.types)));
+    if (spec.types.includes("rest") && !row.some(x => x.type === "rest"))
+      row[randi(row.length)] = makeNode("rest");
+    G.rows.push(row);
+  }
+  connectRows();
+}
+function connectRows(){
+  for (let r = 0; r < G.rows.length - 1; r++){
+    const cr = G.rows[r].length, cr1 = G.rows[r+1].length;
+    for (let c = 0; c < cr; c++){
+      let t = 0;
+      if (cr1 > 1) t = cr > 1 ? ri(c * (cr1 - 1) / Math.max(1, cr - 1)) : Math.floor(cr1 / 2);
+      const nexts = [t];
+      if (rnd() < 0.5){
+        const nb = clampi(t + (rnd() < 0.5 ? 1 : -1), 0, cr1 - 1);
+        if (!nexts.includes(nb)) nexts.push(nb);
+      }
+      G.rows[r][c].next = nexts;
+    }
+    const incoming = new Set();
+    for (let c = 0; c < cr; c++) for (const nc of G.rows[r][c].next) incoming.add(nc);
+    for (let j = 0; j < cr1; j++){
+      if (incoming.has(j)) continue;
+      let best = 0;
+      if (cr1 > 1) best = cr > 1 ? ri(j * (cr - 1) / Math.max(1, cr1 - 1)) : 0;
+      best = clampi(best, 0, cr - 1);
+      if (!G.rows[r][best].next.includes(j)) G.rows[r][best].next.push(j);
+    }
+  }
+}
+function makeNode(kind){
+  if (kind === "zako")  return battleNode("zako",  zakoGroup(), 25);
+  if (kind === "elite") return battleNode("elite", eliteGroup(), 55);
+  if (kind === "boss")  return battleNode("boss",  [pick(BOSS())], 120);
+  return { type:"rest", name:"休憩 / ショップ", next:[] };
+}
+function zakoGroup(){
+  if (G.floor <= 1) return pick(FLOOR1_SETS).map(zakoByName);
+  const g = []; for (let i = 0, n = rrange(1,3); i < n; i++) g.push(pick(ZAKO())); return g;
+}
+function eliteGroup(){
+  const g = [pick(ELITE())]; if (rnd() < 0.5) g.push(pick(ZAKO())); return g;
+}
+function battleNode(type, list, gold){
+  const sc = (1 + 0.25 * (G.floor - 1)) * POWER_SCALE;
+  let boss = false;
+  const scaled = list.map(e => {
+    if (e.is_boss) boss = true;
+    return {
+      name:e.name, element:e.element, is_boss:e.is_boss,
+      max_hp: ri(e.max_hp * sc),
+      pattern: e.pattern.map(m => ({ type:m.type, value: Math.max(1, ri(m.value * sc)) })),
+    };
+  });
+  let label = scaled[0].name;
+  if (scaled.length > 1) label += "他" + (scaled.length - 1) + "体";
+  return { type, name:label, enemies:scaled, gold, is_boss:boss, next:[] };
+}
+const nodeAt = (r,c) => (G.rows[r] || [])[c];
+const curNode = () => nodeAt(G.row, G.col);
+function reachable(){
+  if (G.row < 0) return G.rows[0].map((_,i) => i);
+  return (curNode().next || []).slice();
+}
+const runComplete = () => G.row >= 0 && G.row === G.rows.length - 1 && !!(curNode() || {}).is_boss;
+
+function chooseNode(r,c){
+  if (r !== G.row + 1 || !reachable().includes(c)) return;
+  G.row = r; G.col = c;
+  const n = curNode();
+  if (n.type === "rest"){ go("shop"); }
+  else { G.encounter = n; startBattle(); }
+}
+function afterNode(){ runComplete() ? go("clear") : go("map"); }
+
+/* ══ 戦闘 ══════════════════════════════════════════════════════════ */
+function startBattle(){
+  const draw = [];
+  for (const m of G.deck) for (const c of m.commands) draw.push({ m, c });
+  shuffle(draw);
+  B = {
+    draw, hand:[], discard:[],
+    energy:MAX_ENERGY, atkBuff:0, doubleNext:false, block:0,
+    status:newStatus(), over:false, targeting:null, turn:1,
+    enemies: G.encounter.enemies.map(e => ({
+      name:(e.is_boss ? "【ボス】" : "") + e.name, element:e.element,
+      maxHp:e.max_hp, hp:e.max_hp, block:0, atkBonus:0, status:newStatus(),
+      pattern:e.pattern, pi:0, itype:IN.ATTACK, ivalue:0,
+    })),
+  };
+  B.enemies.forEach(planNext);
+  log("── 戦闘開始：" + G.encounter.name, "hi");
+  startPlayerTurn();
+  go("battle");
+}
+function planNext(e){
+  if (!e.pattern.length){ e.itype = IN.ATTACK; e.ivalue = 8; return; }
+  const mvv = e.pattern[e.pi % e.pattern.length]; e.pi++;
+  e.itype = mvv.type;
+  e.ivalue = e.itype === IN.ATTACK ? Math.max(0, mvv.value + e.atkBonus) : mvv.value;
+}
+function drawCard(){
+  if (!B.draw.length){ B.draw = shuffle(B.discard); B.discard = []; }
+  if (!B.draw.length) return null;
+  const c = B.draw.shift(); B.hand.push(c); return c;
+}
+function startPlayerTurn(){
+  if (B.over) return;
+  const t = stTick(B.status);
+  if (t.poison > 0){ G.hp = Math.max(0, G.hp - t.poison); log("毒で " + t.poison + " ダメージ", "bad"); }
+  if (t.regen  > 0){ G.hp = Math.min(G.maxHp, G.hp + t.regen); log("再生で " + t.regen + " 回復"); }
+  if (G.hp <= 0) return lose();
+  B.energy = MAX_ENERGY; B.atkBuff = 0; B.doubleNext = false; B.block = 0;
+  for (let i = 0; i < HAND_SIZE; i++) if (!drawCard()) break;
+  log("― ターン " + B.turn);
+  render();
+}
+const needsTarget = c => targetsEnemy(c) && !c.targetAll;
+const targetsEnemy = c => [F.DAMAGE,F.PIERCE,F.WEAKEN,F.POISON,F.BURN,F.FREEZE].includes(c.effect);
+const targetLabel = c => !targetsEnemy(c) ? "" : (c.targetAll ? "敵全体" : "敵単体");
+
+function clickSkill(idx){
+  if (B.over) return;
+  const sc = B.hand[idx];
+  if (B.energy < effCost(sc.m, sc.c)) return;
+  if (needsTarget(sc.c) && B.enemies.length > 1){ B.targeting = idx; render(); return; }
+  playCard(idx, B.enemies[0] || null);
+}
+function cancelTarget(){ B.targeting = null; render(); }
+function pickTarget(ei){
+  const idx = B.targeting; B.targeting = null;
+  if (idx != null) playCard(idx, B.enemies[ei]);
+}
+function playCard(idx, tgt){
+  const sc = B.hand[idx]; if (!sc) return;
+  const m = sc.m, c = sc.c, cost = effCost(m,c);
+  if (B.energy < cost) return;
+  B.energy -= cost;
+  apply(m, c, tgt);
+
+  const grew = gainExp(m, m.growth);
+  if (grew && m.stage !== S.DEAD) log(dispName(m) + " は " + STAGE_LABEL[m.stage] + " に成長", "hi");
+
+  B.hand.splice(idx,1); B.discard.push(sc);
+  if (m.stage === S.DEAD) killMonster(m);
+
+  if (!B.enemies.length) return win();
+  if (B.energy <= 0){ render(); return endTurn(); }
+  render();
+}
+function killMonster(m){
+  const gone = x => x.m !== m;
+  B.draw = B.draw.filter(gone); B.hand = B.hand.filter(gone); B.discard = B.discard.filter(gone);
+  G.deck = G.deck.filter(x => x !== m);
+  log(dispName(m) + " は老いて消滅した…", "bad");
+}
+function effectTargets(c, tgt){
+  if (c.targetAll) return B.enemies.slice();
+  return tgt ? [tgt] : [];
+}
+function apply(m, c, tgt){
+  // GDScript 版と同じく、バフ/回復/弱体/毒/再生も INT 込みの実効値を使う。
+  const p = cmdValue(m,c);
+  switch(c.effect){
+    case F.DAMAGE: case F.PIERCE: {
+      const ts = effectTargets(c,tgt); if (!ts.length) return;
+      const dbl = B.doubleNext; B.doubleNext = false;
+      for (const t of ts){
+        if (!B.enemies.includes(t)) continue;
+        let base = cmdValue(m,c) + B.atkBuff;
+        if (dbl) base *= 2;
+        const mu = affinity(m.elements, t.element);
+        const dmg = ri(base * mu);
+        const dealt = c.effect === F.PIERCE ? hitPierce(t,dmg) : hit(t,dmg);
+        log(dispName(m) + "「" + c.name + "」→ " + t.name + " に " + dealt +
+            (mu > 1 ? "（WEAK ×1.5）" : mu < 1 ? "（HALF ×0.75）" : ""));
+        if (t.hp <= 0){ log(t.name + " を撃破", "hi"); B.enemies = B.enemies.filter(x => x !== t); }
+      }
+      break;
+    }
+    case F.BUFF_ATK: B.atkBuff += p; log("与ダメージ +" + p); break;
+    case F.DOUBLE_NEXT: B.doubleNext = true; log("次のダメージ2倍"); break;
+    case F.HEAL: {
+      const h = Math.min(G.maxHp, G.hp + p) - G.hp; G.hp += h; log("HP +" + h); break;
+    }
+    case F.GUARD: B.block += p; log("ブロック +" + p); break;
+    case F.WEAKEN:
+      for (const t of effectTargets(c,tgt)){
+        t.atkBonus -= p;
+        if (t.itype === IN.ATTACK) t.ivalue = Math.max(0, t.ivalue - p);
+        log(t.name + " の攻撃力 -" + p);
+      } break;
+    case F.ENERGY: B.energy += c.power; log("エネルギー +" + c.power); break;
+    case F.POISON:
+      for (const t of effectTargets(c,tgt)){ stAdd(t.status, ST.POISON, p); log(t.name + " に毒" + p); }
+      break;
+    case F.BURN:  // 継続ターンは素の値
+      for (const t of effectTargets(c,tgt)){ stAdd(t.status, ST.BURN, c.power); log(t.name + " を炎上" + c.power + "T"); }
+      break;
+    case F.FREEZE: // 回数は素の値
+      for (const t of effectTargets(c,tgt)){ stAdd(t.status, ST.FREEZE, c.power); log(t.name + " を凍結" + c.power + "回"); }
+      break;
+    case F.REGEN: stAdd(B.status, ST.REGEN, p); log("再生 " + p); break;
+  }
+}
+function hit(t, amount){
+  let rem = ri(amount * stMult(t.status));
+  if (t.block > 0){ const ab = Math.min(t.block, rem); t.block -= ab; rem -= ab; }
+  const before = t.hp; t.hp = Math.max(0, t.hp - rem); return before - t.hp;
+}
+function hitPierce(t, amount){
+  const before = t.hp; t.hp = Math.max(0, t.hp - ri(amount * stMult(t.status))); return before - t.hp;
+}
+function endTurn(){
+  if (B.over || B.targeting != null) return;
+  for (const e of B.enemies.slice()){
+    if (!B.enemies.includes(e)) continue;
+    const t = stTick(e.status);
+    if (t.poison > 0){
+      e.hp = Math.max(0, e.hp - t.poison);
+      log(e.name + " が毒で " + t.poison + " ダメージ");
+    }
+    if (t.regen > 0){ e.hp = Math.min(e.maxHp, e.hp + t.regen); }
+    if (e.hp <= 0){ log(e.name + " を撃破", "hi"); B.enemies = B.enemies.filter(x => x !== e); continue; }
+
+    if (stFreeze(e.status)){ log(e.name + " は凍結して動けない"); }
+    else {
+      e.block = 0;
+      let dmg = 0;
+      if (e.itype === IN.ATTACK) dmg = e.ivalue;
+      else if (e.itype === IN.DEFEND) e.block += e.ivalue;
+      else if (e.itype === IN.BUFF)   e.atkBonus += e.ivalue;
+      else if (e.itype === IN.HEAL)   e.hp = Math.min(e.maxHp, e.hp + e.ivalue);
+
+      if (e.itype === IN.POISON){
+        stAdd(B.status, ST.POISON, e.ivalue);
+        log(e.name + " が毒" + e.ivalue + " を付与", "bad");
+      } else if (dmg > 0){
+        const actual = Math.max(0, dmg - B.block);
+        B.block = Math.max(0, B.block - dmg);
+        if (actual > 0){
+          G.hp = Math.max(0, G.hp - actual);
+          log(e.name + " の攻撃 → " + actual + " ダメージ", "bad");
+        } else log(e.name + " の攻撃をブロック");
+      }
+    }
+    if (G.hp <= 0) return lose();
+  }
+  if (!B.enemies.length) return win();
+  B.enemies.forEach(planNext);
+  B.discard.push(...B.hand); B.hand = [];
+  B.turn++;
+  startPlayerTurn();
+}
+function win(){
+  B.over = true;
+  G.hp = Math.min(G.maxHp, G.hp + ri(G.maxHp * 0.12));
+  G.gold += G.encounter.gold || 0;
+  log("勝利（+" + (G.encounter.gold||0) + "G）", "hi");
+  go("reward");
+}
+function lose(){
+  B.over = true;
+  G.hp = 0;
+  log("敗北 — ラン終了", "bad");
+  go("legacy");
+}
+
+/* ══ 合体 ══════════════════════════════════════════════════════════ */
+const fusedPlus = (a,b) => a.plus + b.plus + 1;
+function maxInheritable(a,b){
+  const comb = a.commands.length + b.commands.length;
+  let byComb = 0;
+  if (comb >= 10) byComb = 4; else if (comb >= 8) byComb = 3;
+  else if (comb >= 6) byComb = 2; else if (comb >= 4) byComb = 1;
+  const genCap = Math.max(a.commands.length, b.commands.length) + 1 - INNATE_COUNT;
+  return clampi(Math.min(byComb, genCap), 0, MAX_SKILLS - INNATE_COUNT);
+}
+function inheritablePool(a,b){
+  const innate = new Set(a.commands.slice(0, INNATE_COUNT).map(c => c.name));
+  return a.commands.concat(b.commands).filter(c => !innate.has(c.name) && !c.ult);
+}
+function rollChildElement(a,b){
+  const be = a.elements[0] ?? E.NONE, pe = b.elements[0] ?? E.NONE;
+  const r = rnd();
+  if (r < 0.6) return be;
+  if (r < 0.9) return pe;
+  const others = [E.FIRE,E.WATER,E.WIND,E.EARTH,E.LIGHT,E.DARK].filter(e => e !== be && e !== pe);
+  return others.length ? pick(others) : be;
+}
+function makeChild(blood, partner, inherited){
+  const ch = {
+    name:blood.name, attack:blood.attack, defense:blood.defense, intPower:blood.intPower,
+    growth:blood.growth, rarity:blood.rarity, plus:fusedPlus(blood,partner),
+    stage:S.INFANT, exp:0, elements:[rollChildElement(blood,partner)], commands:[],
+  };
+  const cmds = blood.commands.slice(0, INNATE_COUNT).map(clone);
+  const names = new Set(cmds.map(c => c.name));
+  for (const c of inherited){
+    if (cmds.length >= MAX_SKILLS) break;
+    if (!names.has(c.name)) cmds.push(clone(c));
+  }
+  ch.commands = cmds;
+  if (cmds.length >= MAX_SKILLS && ULTS[ch.name]) ch.commands.push(clone(ULTS[ch.name]));
+  return ch;
+}
+
+/* ══ 描画 ══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m]));
+const elChip = e => '<span class="el el-' + e + '">' + EL_LABEL[e] + "</span>";
+let MODAL = null;
+
+function go(s){ G.screen = s; render(); }
+
+function skillValueText(m,c){
+  const v = cmdValue(m,c);
+  const sc = targetLabel(c), tg = sc ? "【" + sc + "】" : "";
+  switch(c.effect){
+    case F.DAMAGE:      return tg + v + "ダメージ";
+    case F.PIERCE:      return tg + "防御無視で" + v + "ダメージ";
+    case F.BUFF_ATK:    return "このターンの与ダメージ+" + v;
+    case F.DOUBLE_NEXT: return "次のダメージを2倍";
+    case F.HEAL:        return "HPを" + v + "回復";
+    case F.GUARD:       return "ブロック" + v + "を得る";
+    case F.WEAKEN:      return tg + "攻撃力-" + v;
+    case F.ENERGY:      return "エネルギー+" + c.power;
+    case F.POISON:      return tg + "に毒" + v;
+    case F.BURN:        return tg + "を" + c.power + "ターン炎上";
+    case F.FREEZE:      return tg + "を" + c.power + "回凍結";
+    case F.REGEN:       return "再生" + v + "を得る";
+  }
+  return c.desc;
+}
+function breakdown(m,c){
+  const s = scaleOf(c).toFixed(1), p = effPower(m,c);
+  switch(c.effect){
+    case F.DAMAGE: case F.PIERCE: return "基礎" + p + " + ATK" + effAtk(m) + "×" + s;
+    case F.GUARD:                 return "基礎" + p + " + DEF" + effDef(m) + "×" + s;
+    case F.BUFF_ATK: case F.HEAL: case F.WEAKEN: case F.POISON: case F.REGEN:
+                                  return "基礎" + p + " + INT" + effInt(m) + "×" + s;
+  }
+  return "";
+}
+
+function render(){
+  $("runbits").innerHTML =
+    '<span>B<b>' + G.floor + '</b>F</span>' +
+    '<span class="muted">HP</span><b>' + G.hp + " / " + G.maxHp + "</b>" +
+    '<span class="muted">💰</span><b>' + G.gold + "</b>" +
+    '<span class="muted">デッキ</span><b>' + deckCards() + " / " + DECK_LIMIT + "</b>";
+  const S_ = { map:mapScreen, battle:battleScreen, reward:rewardScreen, shop:shopScreen,
+               legacy:legacyScreen, clear:clearScreen };
+  $("screen").innerHTML = (S_[G.screen] || mapScreen)();
+  $("rail").innerHTML = railHTML();
+  $("modal").innerHTML = MODAL ? MODAL() : "";
+}
+
+/* ── マップ ── */
+function mapScreen(){
+  const reach = reachable(), nr = G.row + 1;
+  let h = '<div class="pad col"><h2>マップ — B' + G.floor + "F</h2>" +
+    '<p class="muted tiny">下から上へ進む。⚔＝戦闘 / ★＝エリート / ☠＝ボス / 🏕＝休憩・ショップ</p></div>' +
+    '<div class="mapgrid">';
+  G.rows.forEach((row, r) => {
+    h += '<div class="maprow">';
+    row.forEach((n, c) => {
+      const can = r === nr && reach.includes(c);
+      const done = r <= G.row;
+      const icon = n.type === "boss" ? "☠ ボス" : n.type === "elite" ? "★ エリート"
+                 : n.type === "zako" ? "⚔ 戦闘" : "🏕 休憩 / ショップ";
+      h += '<button class="node ' + (can ? "can" : done ? "done" : "") + '"' +
+        (can ? ' onclick="chooseNode(' + r + "," + c + ')"' : " disabled") + ">" +
+        '<span class="ntype">' + icon + "</span>" +
+        '<span class="nname">' + esc(n.name) + "</span>" +
+        (n.enemies ? '<span class="tiny dim">HP ' +
+          n.enemies.map(e => e.max_hp).join(" / ") + " ・ +" + n.gold + "G</span>" : "") +
+        "</button>";
+    });
+    h += "</div>";
+  });
+  return h + "</div>";
+}
+
+/* ── 戦闘 ── */
+function battleScreen(){
+  const tgt = B.targeting;
+  const card = tgt != null ? B.hand[tgt] : null;
+  let h = "";
+
+  if (tgt != null)
+    h += '<div class="pad"><div class="note">対象を選択：' + esc(card.c.name) +
+         ' <button class="btn sm" onclick="cancelTarget()">取消</button></div></div>';
+
+  h += '<div class="enemies">';
+  B.enemies.forEach((e, i) => {
+    let aff = "";
+    if (card){
+      const a = affinity(card.m.elements, e.element);
+      if (a > 1) aff = '<div class="aff w">▲ WEAK ×1.5</div>';
+      else if (a < 1) aff = '<div class="aff h">▽ HALF ×0.75</div>';
+    }
+    const it = e.itype === IN.ATTACK ? IN_ICON[0] + " " + e.ivalue + " ダメージ"
+             : e.itype === IN.DEFEND ? IN_ICON[1] + " 防御 " + e.ivalue
+             : e.itype === IN.BUFF   ? IN_ICON[2] + " 攻撃力+" + e.ivalue
+             : e.itype === IN.HEAL   ? IN_ICON[3] + " 回復 " + e.ivalue
+             : IN_ICON[4] + " 毒 " + e.ivalue;
+    const bits = [];
+    if (e.block > 0) bits.push("🛡" + e.block);
+    if (e.atkBonus !== 0) bits.push("攻撃" + (e.atkBonus > 0 ? "+" : "") + e.atkBonus);
+    const sl = stLabel(e.status); if (sl) bits.push(sl);
+    h += '<div class="enemy' + (tgt != null ? " pick" : "") + '"' +
+      (tgt != null ? ' onclick="pickTarget(' + i + ')"' : "") + ">" +
+      aff +
+      '<div class="nm">' + elChip(e.element) + esc(e.name) + "</div>" +
+      '<div class="bar"><i style="width:' + (e.hp / e.maxHp * 100) + '%"></i></div>' +
+      '<div class="hpline"><span>HP</span><span>' + e.hp + " / " + e.maxHp + "</span></div>" +
+      '<div class="intent">次の行動: ' + it + "</div>" +
+      '<div class="stat">' + bits.join("　") + "</div></div>";
+  });
+  h += "</div>";
+
+  const bits = [];
+  if (B.block > 0) bits.push('<span class="pill blk">🛡 ブロック ' + B.block + "</span>");
+  if (B.atkBuff > 0) bits.push('<span class="pill buff">与ダメ +' + B.atkBuff + "</span>");
+  if (B.doubleNext) bits.push('<span class="pill buff">次ダメ 2倍</span>');
+  const psl = stLabel(B.status); if (psl) bits.push('<span class="pill">' + psl + "</span>");
+
+  h += '<div class="playerbar">' +
+    '<span class="big">HP ' + G.hp + " / " + G.maxHp + "</span>" +
+    '<span class="big energy">⚡ ' + B.energy + " / " + MAX_ENERGY + "</span>" +
+    bits.join("") +
+    '<span class="tiny dim" style="margin-left:auto">山札 ' + B.draw.length +
+      " ・ 捨札 " + B.discard.length + " ・ ターン " + B.turn + "</span>" +
+    '<button class="btn primary" onclick="endTurn()"' + (B.targeting != null ? " disabled" : "") +
+      ">ターン終了</button></div>";
+
+  h += '<div class="hand">';
+  if (!B.hand.length) h += '<p class="muted">手札なし</p>';
+  B.hand.forEach((sc, i) => {
+    const m = sc.m, c = sc.c, cost = effCost(m,c), afford = B.energy >= cost;
+    const prog = expProgress(m), nxt = STAGE_LABEL[Math.min(4, m.stage + 1)];
+    const bd = breakdown(m,c);
+    h += '<div class="hcard' + (c.ult ? " ult" : "") + '">' +
+      '<div class="hd">' + elChip(m.elements[0]) + esc(dispName(m)) +
+        '<span class="tiny dim">' + STAGE_LABEL[m.stage] + "</span></div>" +
+      '<div class="stats"><span>ATK <b>' + effAtk(m) + "</b></span>" +
+        "<span>DEF <b>" + effDef(m) + "</b></span>" +
+        "<span>INT <b>" + effInt(m) + "</b></span></div>" +
+      '<div class="xplabel"><span>成長 ' + m.exp.toFixed(1) + " / " +
+        STAGE_THRESH[Math.min(4, m.stage + 1)] + "</span><span>→ " + nxt + "</span></div>" +
+      '<div class="bar xp"><i style="width:' + (prog * 100) + '%"></i></div>' +
+      '<button class="skill" onclick="clickSkill(' + i + ')"' + (afford ? "" : " disabled") + ">" +
+        '<span class="sn"><span>' + (c.ult ? '<span class="ultmark">⚡奥義 </span>' : "") +
+          esc(c.name) + "</span><span>コスト" + cost + "</span></span>" +
+        '<span class="sv">' + esc(skillValueText(m,c)) + "</span>" +
+        (bd ? '<span class="sb">' + bd + "</span>" : "") +
+      "</button></div>";
+  });
+  return h + "</div>";
+}
+
+/* ── 報酬 ── */
+let REWARDS = null;
+function rewardScreen(){
+  if (!REWARDS) REWARDS = shuffle(rewardPool()).slice(0,3);
+  let h = '<div class="pad col"><h2>報酬 — 仲間にする魔物を選ぶ</h2>' +
+    '<div class="grid2">';
+  REWARDS.forEach((m,i) => { h += offerCard(m, 'takeReward(' + i + ')', "獲得する", !canAdd(m.commands.length)); });
+  h += '</div><div class="row"><button class="btn" onclick="skipReward()">獲得せずに進む</button></div></div>';
+  return h;
+}
+function offerCard(m, action, label, disabled){
+  // 評価はピーク（成体）基準で見せる。加入時は幼体だが、判断材料は成体値。
+  const adult = clone(m); adult.stage = S.ADULT;
+  return '<div class="card pad col" style="gap:8px">' +
+    '<div class="hd" style="font-family:var(--mincho);font-weight:800;font-size:15px">' +
+      elChip(m.elements[0]) + " " + RARITY[m.rarity] + " " + esc(dispName(m)) + "</div>" +
+    '<div class="tiny muted">基礎 ATK ' + m.attack + " ・ DEF " + m.defense + " ・ INT " + m.intPower +
+      " ・ 成長 " + m.growth.toFixed(1) + "</div>" +
+    '<div class="eyebrow">⚔️成体時</div>' +
+    '<div class="tiny muted">ATK <b style="color:var(--text)">' + effAtk(adult) +
+      '</b> ・ DEF <b style="color:var(--text)">' + effDef(adult) +
+      '</b> ・ INT <b style="color:var(--text)">' + effInt(adult) + "</b></div>" +
+    adult.commands.map(c => '<div class="tiny">▸ ' + esc(c.name) + "（コスト" + effCost(adult,c) + "）" +
+      esc(skillValueText(adult,c)) + "</div>").join("") +
+    '<button class="btn gold" onclick="' + action + '"' + (disabled ? " disabled" : "") + ">" +
+      label + "</button></div>";
+}
+function takeReward(i){ G.deck.push(REWARDS[i]); log(REWARDS[i].name + " を仲間にした", "hi"); REWARDS = null; afterNode(); }
+function skipReward(){ REWARDS = null; afterNode(); }
+
+/* ── 休憩 / ショップ ── */
+let OFFERS = null, RESTED = false;
+function shopScreen(){
+  if (!OFFERS) { OFFERS = shuffle(rewardPool()).slice(0,2); RESTED = false; }
+  const fus = G.deck.filter(canFuse);
+  const healAmt = ri(G.maxHp * REST_RATIO);
+  let h = '<div class="pad col"><h2>休憩 / ショップ</h2>' +
+    '<div class="row"><button class="btn" onclick="doRest()"' +
+      (RESTED || G.hp >= G.maxHp ? " disabled" : "") + ">" +
+      (RESTED ? "休憩済み" : G.hp >= G.maxHp ? "HP満タン" : "休憩する（HP +" + healAmt + "）") +
+    "</button></div>" +
+    "<h3>ショップ（1枚 " + SHOP_COST + "G）</h3><div class=\"grid2\">";
+  OFFERS.forEach((m,i) => {
+    h += offerCard(m, "buyOffer(" + i + ")", "購入 (" + SHOP_COST + "G)",
+      G.gold < SHOP_COST || !canAdd(m.commands.length));
+  });
+  h += "</div><h3>合体（成体・老体2体から子孫を生む）</h3>" +
+    '<div class="row"><button class="btn gold" onclick="openFuse()"' + (fus.length < 2 ? " disabled" : "") +
+      ">合体する（候補 " + fus.length + "体）</button>" +
+    '<button class="btn primary" onclick="leaveShop()">進む</button></div></div>';
+  return h;
+}
+function doRest(){
+  const before = G.hp; G.hp = Math.min(G.maxHp, G.hp + ri(G.maxHp * REST_RATIO));
+  RESTED = true; log("休憩（HP +" + (G.hp - before) + "）"); render();
+}
+function buyOffer(i){
+  const m = OFFERS[i];
+  if (G.gold < SHOP_COST || !canAdd(m.commands.length)) return;
+  G.gold -= SHOP_COST; G.deck.push(m); OFFERS.splice(i,1);
+  log(m.name + " を購入", "hi"); render();
+}
+function leaveShop(){ OFFERS = null; afterNode(); }
+
+/* 合体モーダル */
+let FU = { blood:null, partner:null, chosen:[] };
+function openFuse(){ FU = { blood:null, partner:null, chosen:[] }; MODAL = fusePick; render(); }
+function closeModal(){ MODAL = null; render(); }
+function fuseRole(i){
+  const m = G.deck.filter(canFuse)[i];
+  if (FU.blood === m) FU.blood = null;
+  else if (FU.partner === m) FU.partner = null;
+  else if (!FU.blood) FU.blood = m;
+  else if (!FU.partner) FU.partner = m;
+  render();
+}
+function fusePick(){
+  const fus = G.deck.filter(canFuse);
+  let h = '<div class="modal"><div class="sheet col">' +
+    "<h2>合体：血統（残る側）と相手（消える側）</h2>" +
+    '<p class="tiny muted">1体目＝血統 ／ 2体目＝相手。名前・ステータスは血統を継ぎ、属性は抽選、+値が加算されます。</p>';
+  h += '<div class="col" style="gap:6px">';
+  fus.forEach((m,i) => {
+    const role = m === FU.blood ? "blood" : m === FU.partner ? "partner" : "";
+    const tag = role === "blood" ? "【血統】" : role === "partner" ? "【相手】" : "";
+    const dis = !role && FU.blood && FU.partner;
+    h += '<button class="pickrow ' + role + '" onclick="fuseRole(' + i + ')"' + (dis ? " disabled" : "") + ">" +
+      "<span><b>" + tag + esc(dispName(m)) + "</b> " + STAGE_LABEL[m.stage] + " " + elChip(m.elements[0]) + "</span>" +
+      '<span class="tiny muted">ATK ' + effAtk(m) + " ・ DEF " + effDef(m) + " ・ INT " + effInt(m) +
+        " ・ スキル" + m.commands.length + "</span></button>";
+  });
+  h += "</div>";
+  if (FU.blood && FU.partner)
+    h += '<div class="note">→ ' + esc(FU.blood.name) + "+" + fusedPlus(FU.blood, FU.partner) +
+         " が誕生（幼体から再育成）</div>";
+  h += '<div class="row" style="justify-content:flex-end">' +
+    '<button class="btn" onclick="closeModal()">キャンセル</button>' +
+    '<button class="btn gold" onclick="MODAL=fuseInherit;render()"' +
+      (FU.blood && FU.partner ? "" : " disabled") + ">次へ（継承スキル選択）</button></div></div></div>";
+  return h;
+}
+function toggleInherit(i){
+  const pool = inheritablePool(FU.blood, FU.partner);
+  const c = pool[i], at = FU.chosen.indexOf(i);
+  if (at >= 0) FU.chosen.splice(at,1);
+  else if (FU.chosen.length < maxInheritable(FU.blood, FU.partner)) FU.chosen.push(i);
+  render();
+}
+function fuseInherit(){
+  const bl = FU.blood, pt = FU.partner;
+  const maxN = maxInheritable(bl,pt), pool = inheritablePool(bl,pt);
+  const innate = bl.commands.slice(0, INNATE_COUNT);
+  const be = EL_LABEL[bl.elements[0]], pe = EL_LABEL[pt.elements[0]];
+  let h = '<div class="modal"><div class="sheet col">' +
+    "<h2>" + esc(bl.name) + "+" + fusedPlus(bl,pt) + " ／ 継承スキルを選択</h2>" +
+    '<div class="note">属性抽選: 血統' + be + " 60% / 相手" + pe + " 30% / その他 10%</div>" +
+    '<div><div class="eyebrow">固有スキル（引き継ぎ確定）</div>' +
+      innate.map(c => '<div class="tiny">・' + esc(c.name) + "（コスト" + c.cost + "）" +
+        esc(skillValueText(bl,c)) + "</div>").join("") + "</div>" +
+    '<div class="eyebrow">継承 ' + FU.chosen.length + " / " + maxN + "</div>" +
+    '<div class="col" style="gap:6px">';
+  if (!pool.length) h += '<p class="muted tiny">継承できるスキルがありません（固有2つで誕生）</p>';
+  pool.forEach((c,i) => {
+    const on = FU.chosen.includes(i);
+    h += '<button class="pickrow' + (on ? " on" : "") + '" onclick="toggleInherit(' + i + ')"' +
+      (maxN <= 0 ? " disabled" : "") + "><span><b>" + esc(c.name) + "</b>（コスト" + c.cost + "）" +
+      (c.ult ? ' <span class="ultmark">⚡</span>' : "") + "</span>" +
+      '<span class="tiny muted">' + esc(skillValueText(bl,c)) + "</span></button>";
+  });
+  const total = INNATE_COUNT + FU.chosen.length;
+  h += "</div>";
+  if (total >= MAX_SKILLS && ULTS[bl.name])
+    h += '<div class="note">6枠到達 → 奥義「' + esc(ULTS[bl.name].name) + "」が解放されます</div>";
+  h += '<div class="row" style="justify-content:flex-end">' +
+    '<button class="btn" onclick="MODAL=fusePick;render()">戻る</button>' +
+    '<button class="btn gold" onclick="doFuse()">合体する</button></div></div></div>';
+  return h;
+}
+function doFuse(){
+  const pool = inheritablePool(FU.blood, FU.partner);
+  const child = makeChild(FU.blood, FU.partner, FU.chosen.map(i => pool[i]));
+  G.deck = G.deck.filter(m => m !== FU.blood && m !== FU.partner);
+  G.deck.push(child);
+  log("合体 → " + dispName(child) + "（" + EL_LABEL[child.elements[0]] + "・スキル" +
+      child.commands.length + "）", "hi");
+  MODAL = null; render();
+}
+
+/* ── 継承（死亡時）／クリア ── */
+let LEGACY = [];
+function legacyScreen(){
+  let h = '<div class="pad col"><h2 style="color:var(--pact)">敗北 — 血脈を残す</h2>' +
+    '<p class="muted tiny">次のランへ引き継ぐ魔物を最大' + START_DECK_SIZE + '体選ぶ（幼体に戻る）。</p>' +
+    '<div class="col" style="gap:6px">';
+  G.deck.forEach((m,i) => {
+    const on = LEGACY.includes(i);
+    h += '<button class="pickrow' + (on ? " on" : "") + '" onclick="toggleLegacy(' + i + ')">' +
+      "<span>" + elChip(m.elements[0]) + " <b>" + esc(dispName(m)) + "</b> " + STAGE_LABEL[m.stage] + "</span>" +
+      '<span class="tiny muted">' + m.commands.map(c => c.name).join(" / ") + "</span></button>";
+  });
+  h += '</div><div class="row"><button class="btn primary" onclick="nextRun()">次のランへ（' +
+    LEGACY.length + " / " + START_DECK_SIZE + "）</button></div></div>";
+  return h;
+}
+function toggleLegacy(i){
+  const at = LEGACY.indexOf(i);
+  if (at >= 0) LEGACY.splice(at,1);
+  else if (LEGACY.length < START_DECK_SIZE) LEGACY.push(i);
+  render();
+}
+function nextRun(){
+  G.carry = LEGACY.map(i => G.deck[i]); LEGACY = [];
+  startRun((G.seed + 1) >>> 0);
+}
+function clearScreen(){
+  return '<div class="pad col center" style="padding:60px 20px">' +
+    '<div class="banner win">B' + G.floor + "F 制覇</div>" +
+    '<p class="muted">デッキ ' + G.deck.length + "体 ・ " + deckCards() + "枚 ・ 💰" + G.gold + "</p>" +
+    '<div class="row"><button class="btn primary" onclick="nextFloor()">次のフロアへ（B' +
+      (G.floor + 1) + "F）</button>" +
+    '<button class="btn" onclick="startRun(G.seed+1)">新しいランを始める</button></div></div>';
+}
+function nextFloor(){
+  G.floor++;
+  G.hp = Math.min(G.maxHp, G.hp + ri(20 * POWER_SCALE));
+  buildMap(); G.row = -1; G.col = 0;
+  log("B" + G.floor + "F へ", "hi");
+  go("map");
+}
+
+/* ── 計器レール ── */
+function railHTML(){
+  const inBattle = G.screen === "battle" && B;
+  let h = "";
+
+  h += '<section><h3>Seed</h3><div class="seedrow">' +
+    '<input id="seedin" value="' + G.seed + '">' +
+    '<button class="btn sm" onclick="reseed()">再開</button></div>' +
+    '<p class="tiny dim" style="margin:6px 0 0">同じ seed は同じマップ・同じ抽選になります。</p></section>';
+
+  h += '<section><h3>ラン状態</h3><dl class="kv">' +
+    "<dt>フロア</dt><dd>B" + G.floor + "F</dd>" +
+    "<dt>HP</dt><dd>" + G.hp + " / " + G.maxHp + "</dd>" +
+    "<dt>所持金</dt><dd>" + G.gold + "G</dd>" +
+    "<dt>デッキ</dt><dd>" + G.deck.length + "体 / " + deckCards() + "枚</dd>" +
+    (inBattle ? "<dt>山札 / 捨札</dt><dd>" + B.draw.length + " / " + B.discard.length + "</dd>" +
+                "<dt>ターン</dt><dd>" + B.turn + "</dd>" : "") +
+    "</dl></section>";
+
+  h += '<section><h3>デッキ</h3><div class="mlist">';
+  if (!G.deck.length) h += '<p class="tiny dim">（空）</p>';
+  G.deck.forEach((m,i) => {
+    h += '<div class="mrow"><div class="t"><span>' + elChip(m.elements[0]) + " " + esc(dispName(m)) +
+      "</span><span>" + STAGE_LABEL[m.stage] + "</span></div>" +
+      '<div class="s">A' + effAtk(m) + " D" + effDef(m) + " I" + effInt(m) +
+        " ・ exp " + m.exp.toFixed(1) + "/" + STAGE_THRESH[Math.min(4,m.stage+1)] +
+        " ・ 成長" + m.growth.toFixed(1) + "</div>" +
+      '<div class="k">' + m.commands.map(c => (c.ult ? "⚡" : "") + esc(c.name)).join(" / ") + "</div>" +
+      '<div class="row" style="gap:4px;margin-top:4px">' +
+        '<button class="btn sm" onclick="dbgExp(' + i + ',1)">+1exp</button>' +
+        '<button class="btn sm" onclick="dbgAdult(' + i + ')">成体化</button>' +
+      "</div></div>";
+  });
+  h += "</div></section>";
+
+  h += '<section><h3>デバッグ</h3><div class="dbg">' +
+    '<button class="btn sm" onclick="dbgHeal()">HP全回復</button>' +
+    '<button class="btn sm" onclick="dbgGold()">+100G</button>' +
+    '<button class="btn sm" onclick="dbgAllAdult()">全員成体</button>' +
+    (inBattle ? '<button class="btn sm" onclick="dbgKill()">敵を全滅</button>' +
+                '<button class="btn sm" onclick="dbgEnergy()">⚡+3</button>' +
+                '<button class="btn sm" onclick="dbgDraw()">1枚ドロー</button>' : "") +
+    '<button class="btn sm" onclick="startRun(G.seed)">ランをやり直す</button>' +
+  "</div></section>";
+
+  h += '<section style="flex:1"><h3>ログ</h3><div class="log">' +
+    G.log.slice(-120).map(l => '<div class="' + l.cls + '">' + esc(l.msg) + "</div>").reverse().join("") +
+  "</div></section>";
+
+  h += '<section><p class="tiny dim">初期デッキは <code>monster_factory.gd</code> の ' +
+    "starter_monsters() を使用（Godot 実機は resources/monsters/*.tres を優先するため差異あり）。</p></section>";
+  return h;
+}
+function reseed(){ const v = parseInt($("seedin").value, 10); startRun(Number.isFinite(v) ? v : 1); }
+function dbgHeal(){ G.hp = G.maxHp; render(); }
+function dbgGold(){ G.gold += 100; render(); }
+function dbgExp(i,n){ gainExp(G.deck[i], n); if (G.deck[i].stage === S.DEAD && B) killMonster(G.deck[i]); render(); }
+function dbgAdult(i){ const m = G.deck[i]; m.exp = STAGE_THRESH[S.ADULT]; updateStage(m); render(); }
+function dbgAllAdult(){ G.deck.forEach(m => { m.exp = STAGE_THRESH[S.ADULT]; updateStage(m); }); render(); }
+function dbgKill(){ B.enemies = []; win(); }
+function dbgEnergy(){ B.energy += 3; render(); }
+function dbgDraw(){ drawCard(); render(); }
+
+/* ══ 起動 ═══════════════════════════════════════════════════════════ */
+startRun(Math.floor(Math.random() * 100000) + 1);
+</script>
+</body>
+</html>

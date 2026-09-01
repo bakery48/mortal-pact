@@ -21,7 +21,7 @@ const SCENE_LEGACY := "res://scenes/ui/legacy.tscn"
 const SCENE_CODEX := "res://scenes/ui/codex.tscn"
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 3 # 全体デフレで数値が変わったため更新
+const SAVE_VERSION := 4 # INT追加・初期デッキ刷新（旧セーブは int_power 既定値になるため破棄）
 
 ## 図鑑（出会った魔物の記録）。ランをまたいで永続。
 const UNLOCK_PATH := "user://unlocks.json"

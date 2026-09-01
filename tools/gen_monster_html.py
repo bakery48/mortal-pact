@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # game_design.html に「魔物図鑑」セクションを生成して差し込む。
-# データ元: resources/monsters/*.tres（初期デッキ5体） + scripts/monster_factory.gd の reward_pool（図鑑40体）
+# データ元: scripts/monster_factory.gd の starter_monsters（初期デッキ） + reward_pool（図鑑）
 import re, pathlib, html
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -31,36 +31,6 @@ def cmd_text(eff, p):
 
 ELEM_CLASS = {0:"e-none",1:"e-fire",2:"e-ice",3:"e-wind",4:"e-earth",5:"e-light",6:"e-dark"}
 
-def parse_tres(path):
-    text = path.read_text(encoding="utf-8")
-    subs = {}
-    for blk in re.split(r"\n\[", text):
-        blk = "[" + blk if not blk.startswith("[") else blk
-        m = re.match(r'\[sub_resource type="Resource" id="([^"]+)"\]', blk)
-        if not m: continue
-        sid = m.group(1)
-        def field(name, default=None):
-            mm = re.search(rf'^{name} = (.+)$', blk, re.M)
-            return mm.group(1).strip() if mm else default
-        subs[sid] = {
-            "name": field("command_name", '""').strip('"'),
-            "cost": int(field("cost", "1")),
-            "effect": int(field("effect", "0")),
-            "power": int(field("power", "0")),
-        }
-    res = text.split("[resource]")[-1]
-    def rf(name, default=""):
-        mm = re.search(rf'^{name} = (.+)$', res, re.M)
-        return mm.group(1).strip() if mm else default
-    name = rf("monster_name", '""').strip('"')
-    atk = int(rf("attack","0")); dfn = int(rf("defense","0"))
-    growth = float(rf("growth_speed","1.0"))
-    rarity = int(rf("rarity","0"))
-    els = [int(x) for x in re.findall(r"\d+", rf("elements","[0]"))]
-    order = re.findall(r'SubResource\("([^"]+)"\)', rf("commands","[]"))
-    cmds = [subs[o] for o in order if o in subs]
-    return dict(name=name, atk=atk, dfn=dfn, growth=growth, rarity=rarity, elements=els, cmds=cmds)
-
 def parse_factory_pool(func_name):
     text = (ROOT/"scripts/monster_factory.gd").read_text(encoding="utf-8")
     # 関数本文を抽出
@@ -69,14 +39,16 @@ def parse_factory_pool(func_name):
     end = body.index("\n\treturn list")
     body = body[:end]
     monsters = []
-    # 各 _monster(...) ブロックを抽出
-    for m in re.finditer(r'_monster\(\s*"([^"]+)",\s*(\d+),\s*(\d+),\s*MonsterData\.Element\.(\w+),\s*([\d.]+),\s*\[(.*?)\]\s*\)', body, re.S):
-        name, atk, dfn, elem, growth, cmds_blk = m.groups()
+    # 各 _monster(...) ブロックを抽出（末尾の int_power は省略可）
+    for m in re.finditer(r'_monster\(\s*"([^"]+)",\s*(\d+),\s*(\d+),\s*MonsterData\.Element\.(\w+),'
+                         r'\s*([\d.]+),\s*\[(.*?)\](?:\s*,\s*(\d+))?\s*\)', body, re.S):
+        name, atk, dfn, elem, growth, cmds_blk, intp = m.groups()
         cmds = []
         for cm in re.finditer(r'_cmd\(\s*"([^"]+)",\s*(\d+),\s*CommandData\.Effect\.(\w+),\s*(\d+),', cmds_blk):
             cn, cc, ce, cp = cm.groups()
             cmds.append(dict(name=cn, cost=int(cc), effect=EFF_BY_NAME[ce], power=int(cp)))
         monsters.append(dict(name=name, atk=int(atk), dfn=int(dfn), growth=float(growth),
+                             intp=int(intp) if intp else 5,
                              rarity=0, elements=[ELEM_BY_NAME[elem]], cmds=cmds))
     return monsters
 
@@ -88,14 +60,16 @@ def card_html(mon):
         cmds += f'<li><span class="cmd-name">{html.escape(c["name"])}</span> <span class="cmd-cost">コスト{c["cost"]}</span><br><span class="cmd-eff">{html.escape(cmd_text(c["effect"], c["power"]))}</span></li>'
     return f'''<div class="mon {eclass}">
   <div class="mon-head"><span class="mon-name">{html.escape(mon["name"])}</span><span class="mon-rarity">{RARITY[mon["rarity"]]}</span></div>
-  <div class="mon-meta"><span class="tag">{els}</span> ATK {round(mon["atk"]*POWER_SCALE)} / DEF {round(mon["dfn"]*POWER_SCALE)} / 成長 {mon["growth"]:g}</div>
+  <div class="mon-meta"><span class="tag">{els}</span> ATK {round(mon["atk"]*POWER_SCALE)} / DEF {round(mon["dfn"]*POWER_SCALE)} / INT {round(mon["intp"]*POWER_SCALE)} / 成長 {mon["growth"]:g}</div>
   <ul class="mon-cmds">{cmds}</ul>
 </div>'''
 
-# データ収集
-starter_files = ["fenrir","salamander","golem","wisp","imp","yousei"]
-starters = [parse_tres(ROOT/f"resources/monsters/{n}.tres") for n in starter_files]
+# データ収集（定義元は monster_factory.gd 一箇所）
+starters = parse_factory_pool("starter_monsters")
 catalog = parse_factory_pool("reward_pool")
+if not starters or not catalog:
+    raise SystemExit(f"パース失敗: starters={len(starters)} catalog={len(catalog)} "
+                     "— monster_factory.gd の _monster(...) 記法が変わっていないか確認してください")
 
 section = ['<h2 id="monsters">魔物図鑑 <span class="badge">初期 %d種 + 図鑑 %d種</span></h2>' % (len(starters), len(catalog))]
 section.append(f'<p>初期デッキの{len(starters)}体と、報酬・ショップで仲間にできる{len(catalog)}体。すべて幼体から育ち、合体で特性を継承できる。<br><small>※数値は全体デフレ係数({POWER_SCALE})適用後・成体時の目安。実際は成長段階で増減します。</small></p>')

@@ -9,8 +9,6 @@ var draw_pile: Array[SkillCard] = []
 var hand: Array[SkillCard] = []
 var discard_pile: Array[SkillCard] = []
 
-const MONSTER_DIR := "res://resources/monsters"
-
 ## モンスター群から、各コマンドを1枚のスキルカードに展開して山札を作る。
 func setup_from(monsters: Array[MonsterData]) -> void:
 	draw_pile.clear()
@@ -70,17 +68,11 @@ func add_monster_to_hand(monster: MonsterData) -> Array[SkillCard]:
 		added.append(sc)
 	return added
 
-## 初期デッキを生成する。resources/monsters/*.tres を優先し、無ければコード生成。
+## 初期デッキを生成する。
+## 魔物データの定義元は MonsterFactory 一箇所に集約している
+## （かつては resources/monsters/*.tres を優先していたが、二重管理で
+##  スターターの調整が実機に反映されない不具合を招いたため廃止）。
 static func load_monster_resources() -> Array[MonsterData]:
 	var result: Array[MonsterData] = []
-	var dir := DirAccess.open(MONSTER_DIR)
-	if dir != null:
-		for file_name in dir.get_files():
-			var clean := file_name.trim_suffix(".remap")
-			if clean.ends_with(".tres") or clean.ends_with(".res"):
-				var res := load(MONSTER_DIR + "/" + clean)
-				if res is MonsterData:
-					result.append((res as MonsterData).duplicate(true))
-	if result.is_empty():
-		result.assign(MonsterFactory.starter_monsters())
+	result.assign(MonsterFactory.starter_monsters())
 	return result

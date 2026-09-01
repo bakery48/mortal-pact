@@ -139,8 +139,7 @@ res://
 │   ├── enemy_database.gd   # 敵・ボスのカタログ（行動パターン付き）
 │   ├── run_state.gd        # ラン全体の状態管理（autoload "Run"）
 │   └── audio_manager.gd    # BGM/SE 管理（autoload "Audio"、SEは手続き生成）
-├── resources/
-│   └── monsters/           # 魔物データ（.tres カスタムリソース）
+├── playtest.html           # バランス検証用の単体HTMLビルド（演出なし・シード固定）
 └── assets/
     ├── sprites/            # （ドット絵を配置予定）
     └── audio/              # bgm_battle.ogg / bgm_map.ogg を置くとBGM再生
@@ -158,8 +157,16 @@ res://
 
 ### データ管理
 - 魔物・コマンドは `Resource` を継承したカスタムリソース（`MonsterData` / `CommandData`）
-- 初期デッキは `resources/monsters/*.tres` から読み込み、見つからない場合は `MonsterFactory` がコードから生成
+- **魔物データの定義元は `scripts/monster_factory.gd` の一箇所**（初期デッキ=`starter_monsters()`、報酬・ショップ=`reward_pool()`、奥義=`ultimate_skill()`）。
+  以前は `resources/monsters/*.tres` を優先読み込みしていたが、二重管理でスターターの調整が実機に反映されない不具合を招いたため廃止した
 - 各カードはドロー時に複製され、独立したインスタンスになる。`exp` と `stage` を各カードが保持し、個別に成長・老化する
+- `tools/gen_monster_html.py` が `monster_factory.gd` を解析して `game_design.html` の魔物図鑑を再生成する
+
+### バランス検証（playtest.html）
+- `playtest.html` をブラウザで開くと、Godot 無しでランを一周できる（演出なし・全数値可視）
+- ロジックは GDScript からの移植。ダメージ式・成長曲線・合体・属性相性・状態異常まで同じ計算
+- **シードを固定できる**ため、調整前後を同じマップ・同じ抽選で比較できる
+- 各スキルに `基礎N + ATK/DEF/INT×係数` の内訳、ログに相性倍率、デッキの成長状況を常時表示
 
 ### バランス調整
 - **全体デフレ係数 `MonsterData.POWER_SCALE`（現在0.6）** … ダメージ/HP/ATK/DEF/回復/毒量などの能力値を一律に縮める。コスト・エネルギー・状態異常の継続ターン・EXP閾値には掛からない＝バランス比率は維持。図鑑(`game_design.html`)の数値は素の基礎値で、実際のゲーム内はこの係数ぶん小さく表示される。

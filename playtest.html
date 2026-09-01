@@ -1283,8 +1283,8 @@ function railHTML(){
     G.log.slice(-120).map(l => '<div class="' + l.cls + '">' + esc(l.msg) + "</div>").reverse().join("") +
   "</div></section>";
 
-  h += '<section><p class="tiny dim">初期デッキは <code>monster_factory.gd</code> の ' +
-    "starter_monsters() を使用（Godot 実機は resources/monsters/*.tres を優先するため差異あり）。</p></section>";
+  h += '<section><p class="tiny dim">魔物データの定義元は <code>monster_factory.gd</code>（' +
+    "starter_monsters / reward_pool / ultimate_skill）。Godot 実機と同じ定義を参照しています。</p></section>";
   return h;
 }
 function reseed(){ const v = parseInt($("seedin").value, 10); startRun(Number.isFinite(v) ? v : 1); }
